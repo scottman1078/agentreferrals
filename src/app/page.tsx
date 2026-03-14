@@ -403,7 +403,7 @@ export default function LandingPage() {
                   return
                 }
               } else {
-                const { error } = await supabase.auth.signUp({
+                const { data: signUpData, error } = await supabase.auth.signUp({
                   email,
                   password,
                   options: { data: { full_name: fullName } },
@@ -413,6 +413,15 @@ export default function LandingPage() {
                   setAuthLoading(false)
                   return
                 }
+                // Send welcome email
+                const referralCode = signUpData?.user?.id
+                  ? 'AR-' + signUpData.user.id.substring(0, 8).toUpperCase()
+                  : 'WELCOME'
+                fetch('/api/welcome', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email, name: fullName, referralCode }),
+                }).catch(() => {}) // fire-and-forget
               }
 
               setAuthLoading(false)
