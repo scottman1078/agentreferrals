@@ -6,6 +6,7 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { voidZones } from '@/data/coverage-gaps'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
+import { getAgentReviewStats } from '@/data/reviews'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
 import type { Agent } from '@/types'
 
@@ -151,6 +152,14 @@ export default function AgentMap() {
 
       const marker = L!.marker(center, { icon: markerIcon }).addTo(map)
 
+      const reviewStats = getAgentReviewStats(agent.id)
+      const starsHtml = reviewStats ? `
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
+            ${'★'.repeat(Math.round(reviewStats.avgRating)).split('').map(() => '<span style="color:#fbbf24;font-size:13px;">★</span>').join('')}${'★'.repeat(5 - Math.round(reviewStats.avgRating)).split('').map(() => '<span style="color:rgba(128,128,128,0.3);font-size:13px;">★</span>').join('')}
+            <span style="font-weight:700;font-size:12px;margin-left:2px;">${reviewStats.avgRating}</span>
+            <span style="font-size:11px;opacity:0.5;">(${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''})</span>
+          </div>` : ''
+
       const popupContent = `
         <div style="min-width:220px;font-family:var(--font-dm-sans),system-ui,sans-serif;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -160,6 +169,7 @@ export default function AgentMap() {
               <div style="font-size:11px;opacity:0.6;">${agent.brokerage}</div>
             </div>
           </div>
+          ${starsHtml}
           <div style="font-size:12px;margin-bottom:8px;opacity:0.8;">${agent.area}</div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
             ${agent.tags.map((t) => `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${TAG_COLORS[t]};color:white;">${TAG_EMOJIS[t] || ''} ${t}</span>`).join('')}

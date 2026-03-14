@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { agents } from '@/data/agents'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
-import { X, Send, Sparkles } from 'lucide-react'
+import { X, Send, Sparkles, Star } from 'lucide-react'
+import { getAgentReviewStats } from '@/data/reviews'
 import type { Agent, NoraMessage } from '@/types'
 
 const NORA_RESPONSES: { patterns: string[]; response: string; matchLogic?: (query: string) => Agent[] }[] = [
@@ -111,6 +112,13 @@ export default function NoraChat() {
                             )}
                           </div>
                           <div className="text-[10px] text-muted-foreground truncate">{agent.brokerage}</div>
+                          {(() => { const stats = getAgentReviewStats(agent.id); return stats ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                              <span className="text-[9px] font-bold">{stats.avgRating}</span>
+                              <span className="text-[9px] text-muted-foreground">({stats.count})</span>
+                            </div>
+                          ) : null })()}
                           <div className="flex gap-0.5 mt-1">
                             {agent.tags.slice(0, 2).map((t) => (
                               <span key={t} className="px-1 py-0.5 rounded text-[8px] font-semibold text-white" style={{ background: TAG_COLORS[t] }}>{t}</span>
