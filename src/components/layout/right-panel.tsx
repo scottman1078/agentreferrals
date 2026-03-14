@@ -1,15 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { coverageGaps } from '@/data/coverage-gaps'
-import { agents } from '@/data/agents'
-import { referrals } from '@/data/referrals'
+import { useState, useEffect } from 'react'
+import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, ALL_TAGS } from '@/lib/constants'
 import { Check, AlertTriangle, TrendingUp } from 'lucide-react'
+import type { CoverageGap } from '@/types'
 
 export default function RightPanel() {
+  const { agents, referrals, coverageGaps } = useAppData()
   const [activeTab, setActiveTab] = useState<'gaps' | 'stats'>('gaps')
-  const [gaps, setGaps] = useState(coverageGaps)
+  const [gaps, setGaps] = useState<CoverageGap[]>(coverageGaps)
+
+  // Sync when data source changes
+  useEffect(() => {
+    setGaps(coverageGaps)
+  }, [coverageGaps])
 
   const toggleGap = (id: string) => {
     setGaps((prev) => prev.map((g) => (g.id === id ? { ...g, checked: !g.checked } : g)))

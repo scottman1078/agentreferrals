@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { useBrokerage } from '@/contexts/brokerage-context'
-import { voidZones } from '@/data/coverage-gaps'
+import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { getAgentReviewStats } from '@/data/reviews'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
 import type { Agent } from '@/types'
 
@@ -28,6 +27,7 @@ export default function AgentMap() {
   const [mounted, setMounted] = useState(false)
   const { resolvedTheme } = useTheme()
   const { filteredAgents } = useBrokerage()
+  const { voidZones, getAgentReviewStats } = useAppData()
 
   useEffect(() => setMounted(true), [])
 

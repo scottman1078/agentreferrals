@@ -1,10 +1,11 @@
 'use client'
 
-import { getAgentReviewStats } from '@/data/reviews'
+import { useAppData } from '@/lib/data-provider'
 import { Star } from 'lucide-react'
 
 /** Compact inline badge showing star rating + count. Use on any agent card. */
 export function AgentReviewBadge({ agentId, size = 'sm' }: { agentId: string; size?: 'sm' | 'md' }) {
+  const { getAgentReviewStats } = useAppData()
   const stats = getAgentReviewStats(agentId)
   if (!stats) return null
 

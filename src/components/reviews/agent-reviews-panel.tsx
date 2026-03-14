@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { getAgentReviewStats } from '@/data/reviews'
+import { useAppData } from '@/lib/data-provider'
 import { getInitials } from '@/lib/utils'
 import { Star, MessageSquare, X, Shield, Clock, Heart, ChevronDown, ChevronUp } from 'lucide-react'
 import type { AgentReview } from '@/data/reviews'
 
 /** Full reviews panel — shows in a modal or inline. Pass agentId + agentName. */
 export function AgentReviewsPanel({ agentId, agentName, onClose }: { agentId: string; agentName: string; onClose?: () => void }) {
+  const { getAgentReviewStats } = useAppData()
   const stats = getAgentReviewStats(agentId)
   const [showAll, setShowAll] = useState(false)
 

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { agentsNeedingPartner, coverageGapOpportunities } from '@/data/partnerships'
+import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
+import CreateReferralModal from '@/components/referral/create-referral-modal'
 import {
   Handshake,
   AlertTriangle,
@@ -16,6 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  ArrowRight,
 } from 'lucide-react'
 
 type Tab = 'need-you' | 'your-gaps'
@@ -27,11 +29,13 @@ const TREND_COLORS: Record<string, string> = {
 }
 
 export default function PartnershipsPage() {
+  const { agentsNeedingPartner, coverageGapOpportunities } = useAppData()
   const [activeTab, setActiveTab] = useState<Tab>('need-you')
   const [offeredIds, setOfferedIds] = useState<Set<string>>(new Set())
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set())
   const [expandedGaps, setExpandedGaps] = useState<Set<string>>(new Set(['gap-1', 'gap-2', 'gap-3']))
   const [searchQuery, setSearchQuery] = useState('')
+  const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
 
   const handleOffer = (agentId: string) => {
     setOfferedIds((prev) => new Set(prev).add(agentId))
@@ -237,28 +241,39 @@ export default function PartnershipsPage() {
                       </span>
                     </div>
 
-                    {/* Action button */}
-                    <button
-                      onClick={() => handleOffer(agent.id)}
-                      disabled={isOffered}
-                      className={`w-full h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                        isOffered
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-primary text-primary-foreground hover:opacity-90'
-                      }`}
-                    >
-                      {isOffered ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Partnership Offered
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" />
-                          Offer Partnership
-                        </>
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOffer(agent.id)}
+                        disabled={isOffered}
+                        className={`flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                          isOffered
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : 'bg-primary text-primary-foreground hover:opacity-90'
+                        }`}
+                      >
+                        {isOffered ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Offered
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            Offer Partnership
+                          </>
+                        )}
+                      </button>
+                      {isOffered && (
+                        <button
+                          onClick={() => setReferralAgentId(agent.id)}
+                          className="flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-primary text-primary hover:bg-primary/10"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
+                          Start Referral
+                        </button>
                       )}
-                    </button>
+                    </div>
                   </div>
                 )
               })}
@@ -426,6 +441,14 @@ export default function PartnershipsPage() {
           </div>
         )}
       </div>
+
+      {referralAgentId && (
+        <CreateReferralModal
+          onClose={() => setReferralAgentId(null)}
+          preselectedAgentId={referralAgentId}
+          onCreated={() => setReferralAgentId(null)}
+        />
+      )}
     </div>
   )
 }

@@ -1,14 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { referrals as initialReferrals } from '@/data/referrals'
+import { useState, useEffect } from 'react'
+import { useAppData } from '@/lib/data-provider'
 import { PIPELINE_STAGES, STAGE_COLORS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import type { PipelineStage } from '@/types'
+import CreateReferralModal from '@/components/referral/create-referral-modal'
+import { Plus } from 'lucide-react'
+import type { PipelineStage, Referral } from '@/types'
 
 export default function PipelinePage() {
-  const [referralList, setReferralList] = useState(initialReferrals)
+  const { referrals } = useAppData()
+  const [referralList, setReferralList] = useState<Referral[]>(referrals)
+
+  // Sync when data source changes (e.g., auth state resolves)
+  useEffect(() => {
+    setReferralList(referrals)
+  }, [referrals])
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const stageReferrals = (stage: PipelineStage) => referralList.filter((r) => r.stage === stage)
   const totalValue = referralList.reduce((s, r) => s + r.estimatedPrice, 0)
@@ -24,6 +33,13 @@ export default function PipelinePage() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-5 px-6 pt-5 pb-4 shrink-0 border-b border-border">
         <h1 className="font-bold text-xl">Referral Pipeline</h1>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+        >
+          <Plus className="w-4 h-4" />
+          New Referral
+        </button>
         <div className="flex gap-5 ml-auto">
           <div className="text-right">
             <div className="font-bold text-lg">{referralList.length}</div>
@@ -77,6 +93,13 @@ export default function PipelinePage() {
           )
         })}
       </div>
+
+      {showCreateModal && (
+        <CreateReferralModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => setShowCreateModal(false)}
+        />
+      )}
     </div>
   )
 }

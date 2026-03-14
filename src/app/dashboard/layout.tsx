@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/contexts/auth-context'
 import { BrokerageProvider } from '@/contexts/brokerage-context'
 import TopNav from '@/components/layout/top-nav'
@@ -11,7 +12,20 @@ import NoraChat from '@/components/nora/nora-chat'
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [showInvite, setShowInvite] = useState(false)
-  const { isLoading } = useAuth()
+  const { isLoading, profile, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  // Redirect to onboarding if profile is incomplete (no markets_served set)
+  useEffect(() => {
+    if (isLoading) return
+    if (
+      isAuthenticated &&
+      profile &&
+      (!profile.markets_served || profile.markets_served.length === 0)
+    ) {
+      router.push('/onboarding')
+    }
+  }, [isLoading, isAuthenticated, profile, router])
 
   if (isLoading) {
     return (

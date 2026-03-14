@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { referrals } from '@/data/referrals'
-import { agents } from '@/data/agents'
+import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, formatFullCurrency } from '@/lib/utils'
 import { DollarSign, BarChart3, Handshake, Target } from 'lucide-react'
 
 export default function ROIPage() {
+  const { referrals, agents } = useAppData()
   const chartRef = useRef<HTMLCanvasElement>(null)
 
   const closedRefs = referrals.filter((r) => r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')

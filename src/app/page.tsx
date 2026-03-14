@@ -417,7 +417,9 @@ export default function LandingPage() {
 
               setAuthLoading(false)
               const params = new URLSearchParams(window.location.search)
-              const redirect = params.get('redirect') || '/dashboard'
+              // New signups go to onboarding; returning users go to dashboard
+              const defaultRedirect = authMode === 'signup' ? '/onboarding' : '/dashboard'
+              const redirect = params.get('redirect') || defaultRedirect
               router.push(redirect)
             }}>
               {authMode === 'signup' && (

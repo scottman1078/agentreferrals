@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import BrokerageSwitcher from './brokerage-switcher'
-import { Map, BarChart3, Search, FileText, TrendingUp, Settings, Plus, UserPlus, Handshake } from 'lucide-react'
+import { Map, BarChart3, Search, FileText, TrendingUp, Settings, Plus, UserPlus, Handshake, CreditCard } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Map', icon: Map, id: 'map' },
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard/partnerships', label: 'Partners', icon: Handshake, id: 'partnerships' },
   { href: '/dashboard/roi', label: 'ROI', icon: TrendingUp, id: 'roi' },
   { href: '/dashboard/invite', label: 'Invite', icon: UserPlus, id: 'invite' },
+  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard, id: 'billing' },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings, id: 'settings' },
 ]
 

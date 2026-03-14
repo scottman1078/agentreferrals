@@ -1,0 +1,278 @@
+import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { agents } from '@/data/agents'
+import { getAgentReviewStats } from '@/data/reviews'
+import { formatCurrency, getInitials } from '@/lib/utils'
+import { TAG_COLORS } from '@/lib/constants'
+import { APP_DOMAIN } from '@/lib/constants'
+import {
+  Star,
+  BadgeCheck,
+  ShieldCheck,
+  Zap,
+  Clock,
+  Home,
+  Calendar,
+  DollarSign,
+  Handshake,
+  Send,
+  Users,
+  MessageCircle,
+  MapPin,
+  Building2,
+} from 'lucide-react'
+import { AgentProfileReviews } from './agent-profile-reviews'
+import { AgentProfileMap } from './agent-profile-map'
+
+// --------------- Static params ---------------
+export function generateStaticParams() {
+  return agents.map((agent) => ({ id: agent.id }))
+}
+
+// --------------- OG Metadata ---------------
+type PageProps = { params: Promise<{ id: string }> }
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const agent = agents.find((a) => a.id === id)
+  if (!agent) return { title: 'Agent Not Found' }
+
+  const stats = getAgentReviewStats(agent.id)
+  const ratingStr = stats ? ` | ${stats.avgRating} stars from ${stats.count} reviews` : ''
+
+  return {
+    title: `${agent.name} — ${agent.area} | ${APP_DOMAIN}`,
+    description: `${agent.name} at ${agent.brokerage}. ${agent.dealsPerYear} deals/yr, ${agent.yearsLicensed} years licensed, ${formatCurrency(agent.avgSalePrice)} avg sale price.${ratingStr} Send a referral on AgentReferrals.ai.`,
+    openGraph: {
+      title: `${agent.name} — ${agent.area}`,
+      description: `${agent.brokerage} · ${agent.dealsPerYear} deals/yr · ${formatCurrency(agent.avgSalePrice)} avg${ratingStr}`,
+      type: 'profile',
+    },
+  }
+}
+
+// --------------- Page ---------------
+export default async function AgentProfilePage({ params }: PageProps) {
+  const { id } = await params
+  const agent = agents.find((a) => a.id === id)
+  if (!agent) notFound()
+
+  const stats = getAgentReviewStats(agent.id)
+  const isElite = (agent.referNetScore ?? 0) >= 90
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* ═══ HERO ═══ */}
+      <section className="relative overflow-hidden">
+        {/* Gradient backdrop */}
+        <div
+          className="absolute inset-0 opacity-[0.07] dark:opacity-[0.12]"
+          style={{
+            background: `linear-gradient(135deg, ${agent.color} 0%, transparent 60%)`,
+          }}
+        />
+        <div className="relative max-w-4xl mx-auto px-6 pt-12 pb-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-extrabold text-white shrink-0 shadow-lg ring-4 ring-background"
+              style={{ background: agent.color }}
+            >
+              {getInitials(agent.name)}
+            </div>
+
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">
+                {agent.name}
+              </h1>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm text-muted-foreground mb-3">
+                <span className="flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5" />
+                  {agent.brokerage}
+                </span>
+                <span className="hidden sm:inline text-border">|</span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  {agent.area}
+                </span>
+              </div>
+
+              {/* Badges row */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                {/* Status badge */}
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <BadgeCheck className="w-3.5 h-3.5" />
+                  {agent.status === 'active' ? 'Active' : 'Invited'}
+                </span>
+
+                {/* Elite badge */}
+                {isElite && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Verified Elite
+                  </span>
+                )}
+
+                {/* ReferNet Score */}
+                {agent.referNetScore && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    <Zap className="w-3.5 h-3.5" />
+                    ReferNet Score: {agent.referNetScore}
+                  </span>
+                )}
+
+                {/* Star rating */}
+                {stats && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-card border border-border">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    {stats.avgRating} ({stats.count} review{stats.count !== 1 ? 's' : ''})
+                  </span>
+                )}
+
+                {/* Response time */}
+                {agent.responseTime && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    {agent.responseTime}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-6 pb-16 space-y-10">
+        {/* ═══ QUICK STATS ═══ */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              icon: Home,
+              label: 'Deals / Year',
+              value: agent.dealsPerYear.toString(),
+              color: 'text-blue-500',
+            },
+            {
+              icon: Calendar,
+              label: 'Years Licensed',
+              value: agent.yearsLicensed.toString(),
+              color: 'text-emerald-500',
+            },
+            {
+              icon: DollarSign,
+              label: 'Avg Sale Price',
+              value: formatCurrency(agent.avgSalePrice),
+              color: 'text-amber-500',
+            },
+            {
+              icon: Handshake,
+              label: 'Closed Referrals',
+              value: (agent.closedReferrals ?? 0).toString(),
+              color: 'text-violet-500',
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="p-4 rounded-xl border border-border bg-card text-center"
+            >
+              <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
+              <div className="text-2xl font-extrabold">{stat.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+            </div>
+          ))}
+        </section>
+
+        {/* ═══ SPECIALIZATIONS ═══ */}
+        <section>
+          <h2 className="text-lg font-bold mb-3">Specializations</h2>
+          <div className="flex flex-wrap gap-2">
+            {agent.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                style={{ background: TAG_COLORS[tag] || '#6b7280' }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ ABOUT / BIO ═══ */}
+        <section>
+          <h2 className="text-lg font-bold mb-3">About</h2>
+          <div className="p-5 rounded-xl border border-border bg-card">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {agent.name} is a licensed real estate professional with{' '}
+              {agent.yearsLicensed} years of experience serving the {agent.area} market.
+              Specializing in{' '}
+              {agent.tags.length > 1
+                ? agent.tags.slice(0, -1).join(', ') + ' and ' + agent.tags[agent.tags.length - 1]
+                : agent.tags[0]}
+              , {agent.name.split(' ')[0]} consistently delivers exceptional results with{' '}
+              {agent.dealsPerYear} transactions per year and an average sale price of{' '}
+              {formatCurrency(agent.avgSalePrice)}. As a member of {agent.brokerage},{' '}
+              {agent.name.split(' ')[0]} brings deep local market knowledge and a commitment to
+              client satisfaction that makes referral partnerships seamless and productive.
+            </p>
+          </div>
+        </section>
+
+        {/* ═══ REVIEWS ═══ */}
+        <section>
+          <h2 className="text-lg font-bold mb-3">Referral Reviews</h2>
+          <div className="p-5 rounded-xl border border-border bg-card">
+            <AgentProfileReviews agentId={agent.id} agentName={agent.name} />
+          </div>
+        </section>
+
+        {/* ═══ COVERAGE MAP ═══ */}
+        <section>
+          <h2 className="text-lg font-bold mb-3">Coverage Area</h2>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <AgentProfileMap
+              polygon={agent.polygon}
+              color={agent.color}
+              name={agent.name}
+              area={agent.area}
+            />
+          </div>
+        </section>
+
+        {/* ═══ CTA ═══ */}
+        <section className="p-6 rounded-xl border border-border bg-card text-center space-y-4">
+          <h2 className="text-xl font-bold">
+            Interested in partnering with {agent.name.split(' ')[0]}?
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Send a referral, request a partnership, or start a conversation.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              <Send className="w-4 h-4" />
+              Send Referral to {agent.name.split(' ')[0]}
+            </a>
+            <a
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Request Partnership
+            </a>
+            <a
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Message {agent.name.split(' ')[0]}
+            </a>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}

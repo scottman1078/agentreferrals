@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { documents } from '@/data/documents'
+import { useAppData } from '@/lib/data-provider'
 import { formatFullCurrency } from '@/lib/utils'
 import { X, Check, Clock, FileText } from 'lucide-react'
 import type { Document } from '@/types'
@@ -14,6 +14,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
 }
 
 export default function DocumentsPage() {
+  const { documents } = useAppData()
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null)
 
   return (

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { candidatesByZone } from '@/data/candidates'
-import { voidZones } from '@/data/coverage-gaps'
+import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials, formatCurrency } from '@/lib/utils'
 import { MapPin, Check } from 'lucide-react'
 import type { Candidate } from '@/types'
 
 export default function RecruitingPage() {
+  const { candidatesByZone, voidZones } = useAppData()
   const [selectedZone, setSelectedZone] = useState('')
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set())
   const candidates = selectedZone ? (candidatesByZone[selectedZone] || []) : []

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { invites as initialInvites, REFERRAL_CODE, REFERRAL_LINK } from '@/data/invites'
+import { useState, useEffect } from 'react'
+import { useAppData } from '@/lib/data-provider'
 import type { Invite } from '@/data/invites'
 import {
   Copy, Check, Send, Link2, Mail, MessageSquare, UserPlus,
@@ -17,7 +17,13 @@ const STATUS_CONFIG: Record<Invite['status'], { label: string; color: string; bg
 }
 
 export default function InvitePage() {
-  const [inviteList, setInviteList] = useState(initialInvites)
+  const { invites: initialInvites, referralCode: REFERRAL_CODE, referralLink: REFERRAL_LINK } = useAppData()
+  const [inviteList, setInviteList] = useState<Invite[]>(initialInvites)
+
+  // Sync when data source changes
+  useEffect(() => {
+    setInviteList(initialInvites)
+  }, [initialInvites])
   const [copied, setCopied] = useState(false)
   const [showBulkInvite, setShowBulkInvite] = useState(false)
   const [showSingleInvite, setShowSingleInvite] = useState(false)

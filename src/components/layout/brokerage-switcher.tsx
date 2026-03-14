@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useBrokerage } from '@/contexts/brokerage-context'
-import { agents } from '@/data/agents'
+import { useAppData } from '@/lib/data-provider'
 import { ChevronDown, Check } from 'lucide-react'
 
 export default function BrokerageSwitcher() {
   const { currentBrokerage, allBrokerages, scope, setScope, switchBrokerage } = useBrokerage()
+  const { agents } = useAppData()
   const [showDropdown, setShowDropdown] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
