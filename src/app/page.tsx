@@ -56,14 +56,14 @@ export default function LoginPage() {
             className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-lg"
             style={{ background: 'linear-gradient(135deg, var(--accent), #d4880a)', color: '#0f1117' }}
           >
-            R
+            A
           </div>
           <div className="font-[family-name:var(--font-d)] font-extrabold text-2xl tracking-tight">
-            Refer<span style={{ color: 'var(--accent)' }}>Net</span>
+            Agent<span style={{ color: 'var(--accent)' }}>Referrals</span><span className="text-sm font-medium ml-0.5" style={{ color: 'var(--text-muted)' }}>.ai</span>
           </div>
         </div>
         <div className="text-[13px] mb-9" style={{ color: 'var(--text-dim)' }}>
-          Referral network management for high-performing agents
+          AI-powered referral network for real estate agents
         </div>
 
         {/* Fields */}
@@ -108,11 +108,17 @@ export default function LoginPage() {
             borderRadius: 'var(--r-sm)',
           }}
         >
-          Sign In to ReferNet
+          Sign In to AgentReferrals.ai
         </button>
 
         <div className="text-center mt-5 text-xs" style={{ color: 'var(--text-muted)' }}>
           Demo credentials pre-filled — <span style={{ color: 'var(--accent)', fontWeight: 500 }}>click Sign In to explore</span>
+        </div>
+
+        {/* Powered by */}
+        <div className="flex items-center justify-center gap-2 mt-6 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Powered by</span>
+          <span className="font-[family-name:var(--font-d)] font-bold text-[12px]" style={{ color: 'var(--accent)' }}>✦ NORA AI</span>
         </div>
       </form>
     </div>

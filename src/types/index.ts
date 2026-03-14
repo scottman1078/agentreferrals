@@ -1,7 +1,19 @@
+export interface Brokerage {
+  id: string
+  name: string
+  logo: string // emoji or initial
+  color: string
+  memberCount: number
+  marketsServed: number
+  description: string
+  isUserBrokerage?: boolean
+}
+
 export interface Agent {
   id: string
   name: string
   brokerage: string
+  brokerageId: string
   area: string
   tags: string[]
   status: 'active' | 'invited'
@@ -13,6 +25,9 @@ export interface Agent {
   polygon: [number, number][]
   color: string
   isPrimary?: boolean
+  referNetScore?: number // 0-100 composite trust/performance metric
+  responseTime?: string // "< 1hr", "< 4hr", etc.
+  closedReferrals?: number
 }
 
 export interface Referral {
@@ -69,6 +84,7 @@ export interface Candidate {
   id: string
   name: string
   brokerage: string
+  brokerageId?: string
   area: string
   tags: string[]
   dealsPerYear: number
@@ -77,4 +93,14 @@ export interface Candidate {
   phone: string
   email: string
   color: string
+}
+
+export type BrokerageScope = 'my-brokerage' | 'all-network'
+
+export interface NoraMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+  matchedAgents?: Agent[]
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import BrokerageSwitcher from './brokerage-switcher'
 
 const navItems = [
   { href: '/dashboard', label: '🗺 Map', id: 'map' },
@@ -22,20 +23,20 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
       style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 mr-6 shrink-0">
+      <div className="flex items-center gap-2 mr-4 shrink-0">
         <div
           className="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-sm"
           style={{ background: 'linear-gradient(135deg, var(--accent), #d4880a)', color: '#0f1117' }}
         >
-          R
+          A
         </div>
-        <div className="font-[family-name:var(--font-d)] font-extrabold text-lg tracking-tight">
-          Refer<span style={{ color: 'var(--accent)' }}>Net</span>
+        <div className="font-[family-name:var(--font-d)] font-extrabold text-[17px] tracking-tight hidden sm:block">
+          Agent<span style={{ color: 'var(--accent)' }}>Referrals</span><span className="text-[11px] font-medium ml-0.5" style={{ color: 'var(--text-muted)' }}>.ai</span>
         </div>
       </div>
 
       {/* Nav links */}
-      <div className="hidden md:flex items-center gap-0.5 flex-1">
+      <div className="hidden lg:flex items-center gap-0.5 flex-1">
         {navItems.map((item) => {
           const isActive = item.href === '/dashboard'
             ? pathname === '/dashboard'
@@ -45,7 +46,7 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
               key={item.id}
               href={item.href}
               className={cn(
-                'px-3.5 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap font-[family-name:var(--font-d)] transition-all',
+                'px-3 py-1.5 rounded-md text-[12px] font-medium whitespace-nowrap font-[family-name:var(--font-d)] transition-all',
                 isActive ? 'text-[var(--accent)]' : 'text-[var(--text-dim)] hover:text-[var(--text)]'
               )}
               style={isActive ? { background: 'var(--accent-bg)' } : { background: 'none' }}
@@ -56,11 +57,13 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
         })}
       </div>
 
-      {/* Right */}
+      {/* Right section */}
       <div className="flex items-center gap-3 ml-auto">
+        <BrokerageSwitcher />
+
         <button
           onClick={onInvite}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold font-[family-name:var(--font-d)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold font-[family-name:var(--font-d)] transition-all"
           style={{
             background: 'var(--accent-bg)',
             border: '1px solid rgba(240,165,0,0.3)',
@@ -68,7 +71,7 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
           }}
         >
           <span className="text-sm">＋</span>
-          <span className="hidden sm:inline">Invite Agent</span>
+          <span className="hidden md:inline">Invite</span>
         </button>
         <Link
           href="/dashboard/settings"

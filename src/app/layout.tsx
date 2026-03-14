@@ -15,8 +15,8 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'ReferNet — Referral Network Platform',
-  description: 'Referral network management for high-performing real estate agents',
+  title: 'AgentReferrals.ai — AI-Powered Referral Network',
+  description: 'AI-powered referral network for real estate agents. Find, match, and manage referrals across brokerages.',
 }
 
 export default function RootLayout({

@@ -1,3 +1,9 @@
+export const APP_NAME = 'AgentReferrals'
+export const APP_NAME_SHORT = 'AR'
+export const APP_DOMAIN = 'agentreferrals.ai'
+export const APP_ACCENT_WORD = 'Referrals'
+export const APP_TAGLINE = 'AI-powered referral network for real estate agents'
+
 export const TAG_COLORS: Record<string, string> = {
   'Homes for Heroes': '#3b82f6',
   'Luxury': '#f0a500',
