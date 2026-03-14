@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import BrokerageSwitcher from './brokerage-switcher'
-import { Map, BarChart3, Search, FileText, TrendingUp, Settings, Plus } from 'lucide-react'
+import { Map, BarChart3, Search, FileText, TrendingUp, Settings, Plus, UserPlus } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Map', icon: Map, id: 'map' },
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/dashboard/recruiting', label: 'Recruiting', icon: Search, id: 'recruiting' },
   { href: '/dashboard/documents', label: 'Documents', icon: FileText, id: 'documents' },
   { href: '/dashboard/roi', label: 'ROI', icon: TrendingUp, id: 'roi' },
+  { href: '/dashboard/invite', label: 'Invite', icon: UserPlus, id: 'invite' },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings, id: 'settings' },
 ]
 
@@ -59,13 +60,13 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
       <div className="flex items-center gap-2 ml-auto">
         <BrokerageSwitcher />
         <ThemeToggle />
-        <button
-          onClick={onInvite}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold font-bold hover:opacity-90 transition-opacity"
+        <Link
+          href="/dashboard/invite"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Invite</span>
-        </button>
+        </Link>
         <Link
           href="/dashboard/settings"
           className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-[11px] text-primary-foreground shrink-0"
