@@ -89,9 +89,9 @@ export default function LandingPage() {
             </button>
           </div>
           <div className="flex items-center justify-center gap-6 mt-10 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> No referral fee to the platform</span>
+            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero platform fees</span>
             <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> 17,000+ agents</span>
-            <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-primary" /> 5% flat at close</span>
+            <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-primary" /> Keep 100% of your fees</span>
           </div>
         </div>
       </section>
@@ -248,24 +248,29 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Pricing</span>
-            <h2 className="font-extrabold text-4xl mt-3 mb-4">Keep more of your commission.</h2>
-            <p className="text-muted-foreground">Others charge 25-40%. We charge 5%. Your referrals, your money.</p>
+            <h2 className="font-extrabold text-4xl mt-3 mb-4">Keep 100% of your referral fees.</h2>
+            <p className="text-muted-foreground">No platform fees. No percentage cuts. Just a simple monthly subscription.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
-                name: 'Free', price: '$0', period: '/forever', desc: 'Get started with basic referrals',
-                features: ['Post & browse referrals', 'Basic agent profile', 'Direct messaging', 'Up to 3 active referrals'],
-                cta: 'Start Free', highlight: false,
+                name: 'Starter', price: '$0', period: '/forever', desc: 'Try the network risk-free',
+                features: ['Browse the agent network', 'Basic agent profile', 'Up to 2 active referrals', 'Direct messaging', 'Coverage gap alerts'],
+                cta: 'Get Started Free', highlight: false,
               },
               {
-                name: 'Pro', price: '$49', period: '/month', desc: 'AI-powered matching & full pipeline',
-                features: ['Everything in Free', 'NORA AI matching', 'Unlimited referrals', 'Pipeline tracking', 'CRM integration', 'Analytics dashboard', 'Priority in search'],
+                name: 'Growth', price: '$29', period: '/month', desc: 'For agents building their network',
+                features: ['Everything in Starter', 'Up to 10 active referrals', 'Referral pipeline tracking', 'Partnership requests', 'Agent reviews', 'Invite up to 25 agents/mo'],
+                cta: 'Start Growth', highlight: false,
+              },
+              {
+                name: 'Pro', price: '$59', period: '/month', desc: 'AI-powered referral machine',
+                features: ['Everything in Growth', 'NORA AI matching', 'Unlimited referrals', 'Smart agreements & e-sign', 'ROI analytics dashboard', 'CRM integration', 'Priority in search results'],
                 cta: 'Start Pro Trial', highlight: true,
               },
               {
-                name: 'Elite', price: '$149', period: '/month', desc: 'Market exclusivity & verified badges',
-                features: ['Everything in Pro', 'Market exclusivity (limited slots)', 'Verified badges', 'White-label referral page', 'Brokerage admin tools', 'API access', 'Dedicated support'],
+                name: 'Elite', price: '$149', period: '/month', desc: 'Dominate your market',
+                features: ['Everything in Pro', 'Market exclusivity (limited slots)', 'Verified Elite badge', 'White-label referral page', 'Brokerage admin tools', 'API access', 'Dedicated success manager'],
                 cta: 'Contact Sales', highlight: false,
               },
             ].map((plan) => (
@@ -306,7 +311,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="text-center text-sm text-muted-foreground mt-8">
-            + 5% platform fee per closed referral · <span className="text-primary font-semibold">vs. 25-40% at competitors</span>
+            Zero platform fees. Zero referral cuts. <span className="text-primary font-semibold">You keep 100% of every referral fee you earn.</span>
           </p>
         </div>
       </section>
