@@ -20,7 +20,7 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
   const pathname = usePathname()
 
   return (
-    <nav className="h-14 min-h-14 flex items-center px-4 gap-1 relative z-[100] border-b border-border bg-card">
+    <nav className="h-14 min-h-14 flex items-center px-4 gap-1 relative z-[1100] border-b border-border bg-card">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mr-4 shrink-0">
         <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">

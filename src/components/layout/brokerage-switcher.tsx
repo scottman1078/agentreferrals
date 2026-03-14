@@ -1,16 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { agents } from '@/data/agents'
-import { Building2, ChevronDown, Check } from 'lucide-react'
+import { ChevronDown, Check } from 'lucide-react'
 
 export default function BrokerageSwitcher() {
   const { currentBrokerage, allBrokerages, scope, setScope, switchBrokerage } = useBrokerage()
   const [showDropdown, setShowDropdown] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
 
   const myAgentCount = agents.filter((a) => a.brokerageId === currentBrokerage.id).length
   const allAgentCount = agents.length
+
+  useEffect(() => {
+    if (showDropdown && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      })
+    }
+  }, [showDropdown])
 
   return (
     <div className="relative">
@@ -41,6 +53,7 @@ export default function BrokerageSwitcher() {
 
         {/* Brokerage button */}
         <button
+          ref={buttonRef}
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
@@ -54,8 +67,11 @@ export default function BrokerageSwitcher() {
 
       {showDropdown && (
         <>
-          <div className="fixed inset-0 z-[2000]" onClick={() => setShowDropdown(false)} />
-          <div className="absolute top-full right-0 mt-2 w-[300px] rounded-xl border border-border bg-card shadow-xl z-[2001] overflow-hidden">
+          <div className="fixed inset-0 z-[9998]" onClick={() => setShowDropdown(false)} />
+          <div
+            className="fixed w-[300px] rounded-xl border border-border bg-card shadow-2xl z-[9999] overflow-hidden"
+            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          >
             <div className="px-4 py-3 border-b border-border">
               <div className="font-bold text-sm">Brokerage Spaces</div>
               <div className="text-[11px] text-muted-foreground mt-0.5">View agents within a brokerage</div>
