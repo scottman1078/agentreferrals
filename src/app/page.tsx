@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
@@ -12,6 +13,12 @@ import {
 export default function LandingPage() {
   const router = useRouter()
   const [showLogin, setShowLogin] = useState(false)
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
+  const [email, setEmail] = useState('jason@jobrienhomes.com')
+  const [password, setPassword] = useState('demo1234')
+  const [fullName, setFullName] = useState('')
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -338,7 +345,7 @@ export default function LandingPage() {
       {showLogin && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowLogin(false) }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowLogin(false); setAuthError(null) } }}
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
@@ -347,26 +354,102 @@ export default function LandingPage() {
                 Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
               </span>
             </div>
-            <p className="text-sm text-muted-foreground mb-8">Sign in to your referral network</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              {authMode === 'signin' ? 'Sign in to your referral network' : 'Create your account'}
+            </p>
 
-            <form onSubmit={(e) => { e.preventDefault(); router.push('/dashboard') }}>
+            {/* Tabs */}
+            <div className="flex gap-1 p-1 rounded-lg bg-muted mb-6">
+              <button
+                onClick={() => { setAuthMode('signin'); setAuthError(null) }}
+                className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
+                  authMode === 'signin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setAuthMode('signup'); setAuthError(null) }}
+                className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
+                  authMode === 'signup' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            {authError && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium mb-4">
+                {authError}
+              </div>
+            )}
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              setAuthLoading(true)
+              setAuthError(null)
+              const supabase = createClient()
+
+              if (authMode === 'signin') {
+                const { error } = await supabase.auth.signInWithPassword({ email, password })
+                if (error) {
+                  setAuthError(error.message)
+                  setAuthLoading(false)
+                  return
+                }
+              } else {
+                const { error } = await supabase.auth.signUp({
+                  email,
+                  password,
+                  options: { data: { full_name: fullName } },
+                })
+                if (error) {
+                  setAuthError(error.message)
+                  setAuthLoading(false)
+                  return
+                }
+              }
+
+              setAuthLoading(false)
+              const params = new URLSearchParams(window.location.search)
+              const redirect = params.get('redirect') || '/dashboard'
+              router.push(redirect)
+            }}>
+              {authMode === 'signup' && (
+                <>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    required
+                  />
+                </>
+              )}
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
               <input
                 type="email"
-                defaultValue="jason@jobrienhomes.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                required
               />
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
               <input
                 type="password"
-                defaultValue="••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                required
               />
               <button
                 type="submit"
-                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity"
+                disabled={authLoading}
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                Sign In
+                {authLoading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
               </button>
             </form>
             <p className="text-center text-xs text-muted-foreground mt-5">

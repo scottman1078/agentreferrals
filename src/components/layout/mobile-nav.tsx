@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Map, BarChart3, Search, TrendingUp, Settings } from 'lucide-react'
+import { Map, BarChart3, Search, TrendingUp, Settings, Handshake } from 'lucide-react'
 
 const items = [
   { href: '/dashboard', label: 'Map', icon: Map },
   { href: '/dashboard/pipeline', label: 'Pipeline', icon: BarChart3 },
+  { href: '/dashboard/partnerships', label: 'Partners', icon: Handshake },
   { href: '/dashboard/recruiting', label: 'Find', icon: Search },
   { href: '/dashboard/roi', label: 'ROI', icon: TrendingUp },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },

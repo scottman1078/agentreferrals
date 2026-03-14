@@ -104,3 +104,58 @@ export interface NoraMessage {
   timestamp: Date
   matchedAgents?: Agent[]
 }
+
+// Partnership types
+export type PartnershipStatus = 'pending' | 'accepted' | 'declined' | 'active' | 'expired'
+
+export interface PartnershipRequest {
+  id: string
+  requestingAgentId: string
+  receivingAgentId: string
+  requestingMarket: string
+  receivingMarket: string
+  status: PartnershipStatus
+  message?: string
+  acceptedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AgentNeedingPartner {
+  id: string
+  name: string
+  brokerage: string
+  brokerageId: string
+  area: string
+  dealsPerYear: number
+  avgSalePrice: number
+  referNetScore: number
+  responseTime: string
+  closedReferrals: number
+  color: string
+  tags: string[]
+  missingMarket: string // the market they lack a partner in (user's area)
+}
+
+export interface CoverageGapOpportunity {
+  id: string
+  market: string
+  state: string
+  migrationTrend: 'High' | 'Medium' | 'Low'
+  suggestedAgents: SuggestedPartner[]
+}
+
+export interface SuggestedPartner {
+  id: string
+  name: string
+  brokerage: string
+  brokerageId: string
+  area: string
+  dealsPerYear: number
+  avgSalePrice: number
+  referNetScore: number
+  responseTime: string
+  closedReferrals: number
+  color: string
+  tags: string[]
+}

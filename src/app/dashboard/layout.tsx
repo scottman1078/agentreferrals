@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AuthProvider, useAuth } from '@/contexts/auth-context'
 import { BrokerageProvider } from '@/contexts/brokerage-context'
 import TopNav from '@/components/layout/top-nav'
 import RightPanel from '@/components/layout/right-panel'
@@ -8,8 +9,22 @@ import MobileNav from '@/components/layout/mobile-nav'
 import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardShell({ children }: { children: React.ReactNode }) {
   const [showInvite, setShowInvite] = useState(false)
+  const { isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground animate-pulse">
+            A
+          </div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <BrokerageProvider>
@@ -26,5 +41,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       </div>
     </BrokerageProvider>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthProvider>
   )
 }
