@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 
 interface AgentContext {
   id: string
@@ -18,7 +17,7 @@ interface AgentContext {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.OPENROUTER_API_KEY
 
   if (!apiKey) {
     return NextResponse.json({ fallback: true }, { status: 200 })
@@ -60,17 +59,31 @@ IMPORTANT: At the very end of your response, on its own line, include a hidden c
 <!-- MATCHED_AGENTS: ["agent_id_1", "agent_id_2"] -->
 Only include agent IDs that you specifically recommended. If you didn't recommend any specific agents, use an empty array: <!-- MATCHED_AGENTS: [] -->`
 
-    const client = new Anthropic({ apiKey })
-
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
-      max_tokens: 512,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://agentreferrals.ai',
+        'X-Title': 'AgentReferrals.ai NORA',
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-sonnet-4',
+        max_tokens: 512,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message },
+        ],
+      }),
     })
 
-    const text =
-      response.content[0].type === 'text' ? response.content[0].text : ''
+    if (!response.ok) {
+      console.error('OpenRouter error:', response.status, await response.text())
+      return NextResponse.json({ fallback: true }, { status: 200 })
+    }
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content || ''
 
     // Extract matched agent IDs from the hidden comment
     const matchRegex = /<!-- MATCHED_AGENTS: (\[.*?\]) -->/
