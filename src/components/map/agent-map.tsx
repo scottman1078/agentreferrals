@@ -168,7 +168,7 @@ export default function AgentMap() {
 
         <button
           onClick={() => setShowVoids(!showVoids)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-[family-name:var(--font-d)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all"
           style={{
             background: showVoids ? 'rgba(239,68,68,0.1)' : 'rgba(15,17,23,0.88)',
             border: showVoids ? '1px solid var(--red)' : '1px solid var(--border2)',
@@ -182,7 +182,7 @@ export default function AgentMap() {
 
         <button
           onClick={() => setShowMigration(!showMigration)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-[family-name:var(--font-d)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all"
           style={{
             background: showMigration ? 'rgba(240,165,0,0.1)' : 'rgba(15,17,23,0.88)',
             border: showMigration ? '1px solid var(--accent)' : '1px solid var(--border2)',
@@ -205,7 +205,7 @@ export default function AgentMap() {
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div className="font-[family-name:var(--font-d)] text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-dim)' }}>
+          <div className="font-bold text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-dim)' }}>
             Migration Flow
           </div>
           {[

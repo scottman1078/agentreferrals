@@ -19,7 +19,7 @@ export default function DocumentsPage() {
   return (
     <div className="overflow-y-auto h-full p-6">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="font-[family-name:var(--font-d)] font-bold text-xl">Referral Agreements</h1>
+        <h1 className="font-bold text-xl">Referral Agreements</h1>
         <span className="px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground">{documents.length} documents</span>
       </div>
 
@@ -50,7 +50,7 @@ export default function DocumentsPage() {
         <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setSelectedDoc(null) }}>
           <div className="w-full max-w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-              <div className="font-[family-name:var(--font-d)] font-bold text-lg">Referral Agreement</div>
+              <div className="font-bold text-lg">Referral Agreement</div>
               <button onClick={() => setSelectedDoc(null)} className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-5">
@@ -65,7 +65,7 @@ export default function DocumentsPage() {
                 </div>
               )}
               <div className="p-6 rounded-xl border border-border bg-background mb-4">
-                <div className="font-[family-name:var(--font-d)] font-extrabold text-base text-center uppercase tracking-wider text-primary mb-1.5">Referral Fee Agreement</div>
+                <div className="font-extrabold text-base text-center uppercase tracking-wider text-primary mb-1.5">Referral Fee Agreement</div>
                 <div className="text-center text-xs text-muted-foreground mb-5 pb-4 border-b border-border">AgentReferrals.ai · Generated {selectedDoc.date}</div>
                 {[
                   { label: 'Referring Agent', value: selectedDoc.parties.from },
@@ -87,7 +87,7 @@ export default function DocumentsPage() {
                     return (
                       <div key={party} className="p-4 text-center rounded-lg border border-dashed border-border bg-secondary">
                         <div className="text-[11px] text-muted-foreground mb-2">Signature</div>
-                        <div className="font-[family-name:var(--font-d)] text-sm font-bold">{party}</div>
+                        <div className="font-bold text-sm font-bold">{party}</div>
                         {signed && <div className="text-[11px] text-emerald-500 mt-1 font-medium">✓ Signed</div>}
                       </div>
                     )

@@ -23,10 +23,10 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
     <nav className="h-14 min-h-14 flex items-center px-4 gap-1 relative z-[100] border-b border-border bg-card">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mr-4 shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-xs text-primary-foreground">
+        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">
           A
         </div>
-        <span className="font-[family-name:var(--font-d)] font-extrabold text-[15px] tracking-tight hidden sm:block">
+        <span className="font-extrabold text-[15px] tracking-tight hidden sm:block">
           Agent<span className="text-primary">Referrals</span>
         </span>
       </Link>
@@ -61,14 +61,14 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
         <ThemeToggle />
         <button
           onClick={onInvite}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold font-[family-name:var(--font-d)] hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold font-bold hover:opacity-90 transition-opacity"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Invite</span>
         </button>
         <Link
           href="/dashboard/settings"
-          className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-[family-name:var(--font-d)] font-bold text-[11px] text-primary-foreground shrink-0"
+          className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-[11px] text-primary-foreground shrink-0"
           title="Jason O'Brien"
         >
           JO

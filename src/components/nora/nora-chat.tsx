@@ -72,7 +72,7 @@ export default function NoraChat() {
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="flex-1">
-              <div className="font-[family-name:var(--font-d)] font-bold text-sm">NORA</div>
+              <div className="font-bold text-sm">NORA</div>
               <div className="text-[10px] text-muted-foreground">AI Referral Assistant</div>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10">
@@ -98,7 +98,7 @@ export default function NoraChat() {
                   <div className="mt-2 space-y-1.5">
                     {msg.matchedAgents.map((agent) => (
                       <div key={agent.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-background">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-[family-name:var(--font-d)] font-bold text-[10px] text-white shrink-0" style={{ background: agent.color }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0" style={{ background: agent.color }}>
                           {getInitials(agent.name)}
                         </div>
                         <div className="flex-1 min-w-0">

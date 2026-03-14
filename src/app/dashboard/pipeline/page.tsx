@@ -23,18 +23,18 @@ export default function PipelinePage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-5 px-6 pt-5 pb-4 shrink-0 border-b border-border">
-        <h1 className="font-[family-name:var(--font-d)] font-bold text-xl">Referral Pipeline</h1>
+        <h1 className="font-bold text-xl">Referral Pipeline</h1>
         <div className="flex gap-5 ml-auto">
           <div className="text-right">
-            <div className="font-[family-name:var(--font-d)] font-bold text-lg">{referralList.length}</div>
+            <div className="font-bold text-lg">{referralList.length}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Active</div>
           </div>
           <div className="text-right">
-            <div className="font-[family-name:var(--font-d)] font-bold text-lg">{formatCurrency(totalValue)}</div>
+            <div className="font-bold text-lg">{formatCurrency(totalValue)}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Volume</div>
           </div>
           <div className="text-right">
-            <div className="font-[family-name:var(--font-d)] font-bold text-lg text-emerald-500">{formatCurrency(totalFees)}</div>
+            <div className="font-bold text-lg text-emerald-500">{formatCurrency(totalFees)}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Est. Fees</div>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function PipelinePage() {
           return (
             <div key={stage} className="min-w-[220px] max-w-[220px] flex flex-col gap-2">
               <div className="flex items-center justify-between px-3 py-2 rounded-lg mb-1" style={{ background: `${stageColor}12` }}>
-                <div className="font-[family-name:var(--font-d)] text-[11px] font-bold uppercase tracking-wider" style={{ color: stageColor }}>{stage}</div>
+                <div className="font-bold text-[11px] font-bold uppercase tracking-wider" style={{ color: stageColor }}>{stage}</div>
                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold bg-secondary text-secondary-foreground">{cards.length}</div>
               </div>
               <div

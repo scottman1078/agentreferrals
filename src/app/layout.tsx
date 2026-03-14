@@ -1,17 +1,12 @@
 import type { Metadata } from 'next'
-import { Syne, DM_Sans } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const syne = Syne({
-  subsets: ['latin'],
-  variable: '--font-d',
-  display: 'swap',
-})
-
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-b',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-dm-sans',
   display: 'swap',
 })
 
@@ -26,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable}`} suppressHydrationWarning>
-      <body className="font-[family-name:var(--font-b)] antialiased">
+    <html lang="en" className={dmSans.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

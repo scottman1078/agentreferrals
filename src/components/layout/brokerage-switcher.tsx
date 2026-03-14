@@ -57,7 +57,7 @@ export default function BrokerageSwitcher() {
           <div className="fixed inset-0 z-[800]" onClick={() => setShowDropdown(false)} />
           <div className="absolute top-full right-0 mt-2 w-[300px] rounded-xl border border-border bg-card shadow-xl z-[801] overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <div className="font-[family-name:var(--font-d)] font-bold text-sm">Brokerage Spaces</div>
+              <div className="font-bold text-sm">Brokerage Spaces</div>
               <div className="text-[11px] text-muted-foreground mt-0.5">View agents within a brokerage</div>
             </div>
             <div className="max-h-[360px] overflow-y-auto p-1.5">

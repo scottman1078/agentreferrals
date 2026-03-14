@@ -19,10 +19,10 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-sm text-primary-foreground">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">
               A
             </div>
-            <span className="font-[family-name:var(--font-d)] font-extrabold text-lg tracking-tight">
+            <span className="font-extrabold text-lg tracking-tight">
               Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
             </span>
           </div>
@@ -42,7 +42,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={() => setShowLogin(true)}
-              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold font-[family-name:var(--font-d)] hover:opacity-90 transition-opacity"
+              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold font-bold hover:opacity-90 transition-opacity"
             >
               Get Started
             </button>
@@ -62,7 +62,7 @@ export default function LandingPage() {
             <Sparkles className="w-3.5 h-3.5" />
             Powered by NORA AI
           </div>
-          <h1 className="font-[family-name:var(--font-d)] font-extrabold text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
+          <h1 className="font-extrabold text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             Stop posting in<br />
             <span className="text-primary">Facebook groups.</span><br />
             Start closing referrals.
@@ -73,11 +73,11 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => setShowLogin(true)}
-              className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-[family-name:var(--font-d)] font-bold text-base hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+              className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
             >
               Start Free Trial <ArrowRight className="w-4 h-4" />
             </button>
-            <button className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-[family-name:var(--font-d)] font-semibold text-base hover:bg-accent transition-all flex items-center gap-2">
+            <button className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all flex items-center gap-2">
               Watch Demo <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -95,7 +95,7 @@ export default function LandingPage() {
           <p className="text-center text-sm text-muted-foreground mb-8 font-medium">Trusted by agents at leading brokerages</p>
           <div className="flex items-center justify-center gap-10 flex-wrap opacity-60">
             {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker', 'Berkshire Hathaway'].map((b) => (
-              <span key={b} className="font-[family-name:var(--font-d)] font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
+              <span key={b} className="font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
             ))}
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-destructive">The Problem</span>
-              <h2 className="font-[family-name:var(--font-d)] font-extrabold text-3xl mt-3 mb-4">3,000 agents. One Facebook group. Zero structure.</h2>
+              <h2 className="font-extrabold text-3xl mt-3 mb-4">3,000 agents. One Facebook group. Zero structure.</h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Every day, agents post &quot;Looking for someone in [city]!&quot; into brokerage Facebook groups. Replies get buried. There&apos;s no vetting, no tracking, no accountability. Referral fees get lost. Clients fall through the cracks.
               </p>
@@ -127,7 +127,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-primary">The Solution</span>
-              <h2 className="font-[family-name:var(--font-d)] font-extrabold text-3xl mt-3 mb-4">AI-matched referrals in seconds. Not hours.</h2>
+              <h2 className="font-extrabold text-3xl mt-3 mb-4">AI-matched referrals in seconds. Not hours.</h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Tell NORA your client&apos;s needs. She instantly surfaces verified agents matched by market, price point, specialization, and track record — with one-click referral agreements.
               </p>
@@ -154,7 +154,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Features</span>
-            <h2 className="font-[family-name:var(--font-d)] font-extrabold text-4xl mt-3">Everything you need to refer with confidence</h2>
+            <h2 className="font-extrabold text-4xl mt-3">Everything you need to refer with confidence</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -170,7 +170,7 @@ export default function LandingPage() {
             ].map((f) => (
               <div key={f.title} className="p-6 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group">
                 <f.icon className={`w-10 h-10 ${f.color} mb-4 group-hover:scale-110 transition-transform`} />
-                <h3 className="font-[family-name:var(--font-d)] font-bold text-base mb-2">{f.title}</h3>
+                <h3 className="font-bold text-base mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
@@ -183,7 +183,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">How It Works</span>
-            <h2 className="font-[family-name:var(--font-d)] font-extrabold text-4xl mt-3">Three steps. One closed referral.</h2>
+            <h2 className="font-extrabold text-4xl mt-3">Three steps. One closed referral.</h2>
           </div>
           <div className="space-y-12">
             {[
@@ -192,11 +192,11 @@ export default function LandingPage() {
               { step: '03', title: 'Send agreement & track to close', desc: 'One-click referral agreement with auto-filled terms. Track the referral through every stage — from introduction to fee received.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-6 items-start">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-xl text-primary shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-xl text-primary shrink-0">
                   {s.step}
                 </div>
                 <div>
-                  <h3 className="font-[family-name:var(--font-d)] font-bold text-xl mb-2">{s.title}</h3>
+                  <h3 className="font-bold text-xl mb-2">{s.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{s.desc}</p>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export default function LandingPage() {
       <section id="brokerages" className="py-24 px-6 bg-card/50 border-y border-border">
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Multi-Brokerage</span>
-          <h2 className="font-[family-name:var(--font-d)] font-extrabold text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
+          <h2 className="font-extrabold text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-12">
             Every brokerage gets their own private space. Search within your brokerage first — when you need to go outside, expand to the full AgentReferrals.ai network with one click.
           </p>
@@ -225,10 +225,10 @@ export default function LandingPage() {
               { name: 'Coldwell Banker', agents: '1,567', color: '#6366F1' },
             ].map((b) => (
               <div key={b.name} className="p-5 rounded-xl border border-border bg-card hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-xs text-white mb-3 mx-auto" style={{ background: b.color }}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs text-white mb-3 mx-auto" style={{ background: b.color }}>
                   {b.name.charAt(0)}
                 </div>
-                <div className="font-[family-name:var(--font-d)] font-bold text-sm">{b.name}</div>
+                <div className="font-bold text-sm">{b.name}</div>
                 <div className="text-xs text-muted-foreground mt-1">{b.agents} agents</div>
               </div>
             ))}
@@ -241,7 +241,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Pricing</span>
-            <h2 className="font-[family-name:var(--font-d)] font-extrabold text-4xl mt-3 mb-4">Keep more of your commission.</h2>
+            <h2 className="font-extrabold text-4xl mt-3 mb-4">Keep more of your commission.</h2>
             <p className="text-muted-foreground">Others charge 25-40%. We charge 5%. Your referrals, your money.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
@@ -267,19 +267,19 @@ export default function LandingPage() {
                 className={`p-8 rounded-2xl border ${plan.highlight ? 'border-primary shadow-xl shadow-primary/10 relative' : 'border-border'} bg-card`}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold font-[family-name:var(--font-d)]">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold">
                     Most Popular
                   </div>
                 )}
                 <div className="text-sm font-semibold text-muted-foreground mb-2">{plan.name}</div>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="font-[family-name:var(--font-d)] font-extrabold text-4xl">{plan.price}</span>
+                  <span className="font-extrabold text-4xl">{plan.price}</span>
                   <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
                 <button
                   onClick={() => setShowLogin(true)}
-                  className={`w-full h-11 rounded-lg font-[family-name:var(--font-d)] font-bold text-sm transition-all ${
+                  className={`w-full h-11 rounded-lg font-bold text-sm transition-all ${
                     plan.highlight
                       ? 'bg-primary text-primary-foreground hover:opacity-90'
                       : 'border border-border bg-card hover:bg-accent'
@@ -307,11 +307,11 @@ export default function LandingPage() {
       {/* ═══ CTA ═══ */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-[family-name:var(--font-d)] font-extrabold text-4xl mb-4">Ready to modernize your referral network?</h2>
+          <h2 className="font-extrabold text-4xl mb-4">Ready to modernize your referral network?</h2>
           <p className="text-muted-foreground text-lg mb-8">Join 17,000+ agents who&apos;ve upgraded from Facebook groups to AI-powered referrals.</p>
           <button
             onClick={() => setShowLogin(true)}
-            className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-[family-name:var(--font-d)] font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+            className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-primary/20"
           >
             Get Started Free
           </button>
@@ -322,8 +322,8 @@ export default function LandingPage() {
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-xs text-primary-foreground">A</div>
-            <span className="font-[family-name:var(--font-d)] font-bold text-sm">Agent<span className="text-primary">Referrals</span>.ai</span>
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">A</div>
+            <span className="font-bold text-sm">Agent<span className="text-primary">Referrals</span>.ai</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
@@ -342,8 +342,8 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-[family-name:var(--font-d)] font-extrabold text-sm text-primary-foreground">A</div>
-              <span className="font-[family-name:var(--font-d)] font-extrabold text-xl tracking-tight">
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
+              <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
               </span>
             </div>
@@ -364,7 +364,7 @@ export default function LandingPage() {
               />
               <button
                 type="submit"
-                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-[family-name:var(--font-d)] font-bold text-sm hover:opacity-90 transition-opacity"
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity"
               >
                 Sign In
               </button>

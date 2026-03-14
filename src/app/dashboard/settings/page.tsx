@@ -9,10 +9,10 @@ export default function SettingsPage() {
   return (
     <div className="overflow-y-auto h-full p-6">
       <div className="max-w-[700px]">
-        <h1 className="font-[family-name:var(--font-d)] font-bold text-xl mb-6">Settings</h1>
+        <h1 className="font-bold text-xl mb-6">Settings</h1>
 
         <div className="p-6 rounded-xl border border-border bg-card mb-4">
-          <div className="font-[family-name:var(--font-d)] font-bold text-base mb-5 pb-3 border-b border-border">Your Profile</div>
+          <div className="font-bold text-base mb-5 pb-3 border-b border-border">Your Profile</div>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Full Name</label>
@@ -37,13 +37,13 @@ export default function SettingsPage() {
               <input defaultValue="Plainwell / Allegan County, MI" className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm" />
             </div>
             <div className="text-right">
-              <button className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-[family-name:var(--font-d)] font-bold text-sm hover:opacity-90 transition-opacity">Save Changes</button>
+              <button className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity">Save Changes</button>
             </div>
           </div>
         </div>
 
         <div className="p-6 rounded-xl border border-border bg-card mb-4">
-          <div className="font-[family-name:var(--font-d)] font-bold text-base mb-5 pb-3 border-b border-border">Referral Defaults</div>
+          <div className="font-bold text-base mb-5 pb-3 border-b border-border">Referral Defaults</div>
           {[
             { label: 'Default Referral Fee %', sub: 'Applied when creating new agreements', defaultVal: '25%', w: 'w-20' },
             { label: 'Agreement Expiration', sub: 'Days before agreement expires', defaultVal: '180 days', w: 'w-24' },
@@ -56,7 +56,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="p-6 rounded-xl border border-border bg-card">
-          <div className="font-[family-name:var(--font-d)] font-bold text-base mb-5 pb-3 border-b border-border">Notifications</div>
+          <div className="font-bold text-base mb-5 pb-3 border-b border-border">Notifications</div>
           {([
             { key: 'agreementSigned' as const, label: 'Referral agreement signed', sub: 'Email when a partner signs' },
             { key: 'clientIntroduced' as const, label: 'Client introduced', sub: 'Notify when partner introduces client' },

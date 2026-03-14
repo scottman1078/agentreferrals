@@ -50,7 +50,7 @@ export default function RightPanel() {
                 { count: gaps.filter((g) => g.priority === 'Low' && !g.checked).length, label: 'Low', color: 'text-muted-foreground' },
               ].map((s) => (
                 <div key={s.label} className="text-center p-2 rounded-lg border border-border bg-background">
-                  <div className={`font-[family-name:var(--font-d)] font-extrabold text-lg leading-none ${s.color}`}>{s.count}</div>
+                  <div className={`font-extrabold text-lg leading-none ${s.color}`}>{s.count}</div>
                   <div className="text-[9px] uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
                 </div>
               ))}
@@ -103,7 +103,7 @@ export default function RightPanel() {
                   { val: totalDeals, label: 'Deals/Yr', color: '' },
                 ].map((s) => (
                   <div key={s.label} className="p-3 rounded-lg border border-border bg-background">
-                    <div className={`font-[family-name:var(--font-d)] font-extrabold text-xl leading-none ${s.color}`}>{s.val}</div>
+                    <div className={`font-extrabold text-xl leading-none ${s.color}`}>{s.val}</div>
                     <div className="text-[11px] text-muted-foreground mt-1">{s.label}</div>
                   </div>
                 ))}
@@ -138,7 +138,7 @@ export default function RightPanel() {
                   <div key={tag} className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: TAG_COLORS[tag] }} />
                     <span className="text-xs flex-1">{tag}</span>
-                    <span className="font-[family-name:var(--font-d)] font-bold text-xs text-muted-foreground">{specCounts[tag] || 0}</span>
+                    <span className="font-bold text-xs text-muted-foreground">{specCounts[tag] || 0}</span>
                   </div>
                 ))}
               </div>
@@ -152,7 +152,7 @@ export default function RightPanel() {
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-xs text-muted-foreground">{row.label}</span>
-                  <span className={`font-[family-name:var(--font-d)] font-bold text-sm ${row.color}`}>{row.value}</span>
+                  <span className={`font-bold text-sm ${row.color}`}>{row.value}</span>
                 </div>
               ))}
             </div>

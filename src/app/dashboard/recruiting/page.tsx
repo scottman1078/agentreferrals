@@ -17,7 +17,7 @@ export default function RecruitingPage() {
     <div className="flex h-full overflow-hidden">
       {/* Filters */}
       <div className="hidden md:flex flex-col w-[260px] min-w-[260px] overflow-y-auto p-5 border-r border-border bg-card">
-        <div className="font-[family-name:var(--font-d)] font-bold text-base mb-5">Find Agents</div>
+        <div className="font-bold text-base mb-5">Find Agents</div>
         <div className="space-y-5">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Production</div>
@@ -43,7 +43,7 @@ export default function RecruitingPage() {
               <input defaultValue="$800k" className="flex-1 min-w-0 h-9 px-3 rounded-lg border border-input bg-background text-sm" />
             </div>
           </div>
-          <button className="w-full h-9 rounded-lg bg-primary text-primary-foreground font-[family-name:var(--font-d)] font-bold text-sm hover:opacity-90 transition-opacity">
+          <button className="w-full h-9 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity">
             Apply Filters
           </button>
         </div>
@@ -62,20 +62,20 @@ export default function RecruitingPage() {
         {!selectedZone ? (
           <div className="text-center py-16 text-muted-foreground">
             <MapPin className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <div className="font-[family-name:var(--font-d)] font-bold text-base mb-1.5">Select a coverage gap</div>
+            <div className="font-bold text-base mb-1.5">Select a coverage gap</div>
             <div className="text-sm">Choose a void zone above to find agent candidates</div>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-[family-name:var(--font-d)] font-bold text-lg">Matching Agents</h2>
+              <h2 className="font-bold text-lg">Matching Agents</h2>
               <span className="px-2.5 py-1 rounded-full text-xs border border-border text-muted-foreground">{candidates.length} found</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {candidates.map((c) => (
                 <div key={c.id} className="p-4 rounded-xl border border-border bg-card hover:shadow-md hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-[family-name:var(--font-d)] font-bold text-[11px] text-white shrink-0" style={{ background: c.color }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0" style={{ background: c.color }}>
                       {getInitials(c.name)}
                     </div>
                     <div>
@@ -86,7 +86,7 @@ export default function RecruitingPage() {
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {[{ val: c.dealsPerYear, lbl: 'Deals/Yr' }, { val: `${c.yearsLicensed}yr`, lbl: 'Licensed' }, { val: formatCurrency(c.avgSalePrice), lbl: 'Avg Price' }].map((s) => (
                       <div key={s.lbl} className="text-center p-1.5 rounded-lg bg-secondary">
-                        <div className="font-[family-name:var(--font-d)] font-bold text-xs">{s.val}</div>
+                        <div className="font-bold text-xs">{s.val}</div>
                         <div className="text-[9px] text-muted-foreground mt-0.5">{s.lbl}</div>
                       </div>
                     ))}

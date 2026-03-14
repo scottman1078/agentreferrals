@@ -12,7 +12,7 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-          <div className="font-[family-name:var(--font-d)] font-bold text-lg">Invite Agent</div>
+          <div className="font-bold text-lg">Invite Agent</div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
             <X className="w-4 h-4" />
           </button>

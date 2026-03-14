@@ -69,7 +69,7 @@ export default function ROIPage() {
   return (
     <div className="overflow-y-auto h-full p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-[family-name:var(--font-d)] font-bold text-xl">ROI Dashboard</h1>
+        <h1 className="font-bold text-xl">ROI Dashboard</h1>
         <div className="text-xs text-muted-foreground">YTD · January – March 2025</div>
       </div>
 
@@ -79,7 +79,7 @@ export default function ROIPage() {
             <div className={`w-9 h-9 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
               <s.icon className={`w-4 h-4 ${s.color}`} />
             </div>
-            <div className={`font-[family-name:var(--font-d)] font-extrabold text-2xl leading-none mb-1 ${s.color}`}>{s.value}</div>
+            <div className={`font-extrabold text-2xl leading-none mb-1 ${s.color}`}>{s.value}</div>
             <div className="text-xs text-muted-foreground">{s.label}</div>
           </div>
         ))}
@@ -87,17 +87,17 @@ export default function ROIPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
         <div className="p-5 rounded-xl border border-border bg-card">
-          <div className="font-[family-name:var(--font-d)] font-bold text-sm mb-4">Referral Fees by Month</div>
+          <div className="font-bold text-sm mb-4">Referral Fees by Month</div>
           <div className="h-[160px]"><canvas ref={chartRef} /></div>
         </div>
         <div className="p-5 rounded-xl border border-border bg-card">
-          <div className="font-[family-name:var(--font-d)] font-bold text-sm mb-4">Top Markets</div>
+          <div className="font-bold text-sm mb-4">Top Markets</div>
           {topMarkets.map(([market, data]) => (
             <div key={market} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
               <div className="text-sm font-medium">{market}</div>
               <div className="flex gap-4">
-                <div className="text-right"><div className="font-[family-name:var(--font-d)] font-bold text-xs">{data.count}</div><div className="text-[9px] text-muted-foreground">Referrals</div></div>
-                <div className="text-right"><div className="font-[family-name:var(--font-d)] font-bold text-xs">{formatCurrency(data.volume)}</div><div className="text-[9px] text-muted-foreground">Volume</div></div>
+                <div className="text-right"><div className="font-bold text-xs">{data.count}</div><div className="text-[9px] text-muted-foreground">Referrals</div></div>
+                <div className="text-right"><div className="font-bold text-xs">{formatCurrency(data.volume)}</div><div className="text-[9px] text-muted-foreground">Volume</div></div>
               </div>
             </div>
           ))}
@@ -105,12 +105,12 @@ export default function ROIPage() {
       </div>
 
       <div className="p-5 rounded-xl border border-border bg-card">
-        <div className="font-[family-name:var(--font-d)] font-bold text-sm mb-4">Top Agents by Closed Referrals</div>
+        <div className="font-bold text-sm mb-4">Top Agents by Closed Referrals</div>
         {topAgents.map(([name, data], i) => (
           <div key={name} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${i === 0 ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{i + 1}</div>
             <div className="flex-1"><div className="text-sm font-semibold">{name}</div><div className="text-[11px] text-muted-foreground">{agentAreas[name] || ''}</div></div>
-            <div className="font-[family-name:var(--font-d)] font-bold text-sm text-emerald-500">{formatCurrency(Math.round(data.fees))}</div>
+            <div className="font-bold text-sm text-emerald-500">{formatCurrency(Math.round(data.fees))}</div>
           </div>
         ))}
       </div>
