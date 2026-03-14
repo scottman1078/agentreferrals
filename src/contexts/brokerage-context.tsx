@@ -1,8 +1,9 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
 import { brokerages } from '@/data/brokerages'
-import type { Brokerage, BrokerageScope } from '@/types'
+import { agents } from '@/data/agents'
+import type { Agent, Brokerage, BrokerageScope } from '@/types'
 
 interface BrokerageContextType {
   currentBrokerage: Brokerage
@@ -10,6 +11,7 @@ interface BrokerageContextType {
   scope: BrokerageScope
   setScope: (scope: BrokerageScope) => void
   switchBrokerage: (id: string) => void
+  filteredAgents: Agent[]
 }
 
 const BrokerageContext = createContext<BrokerageContextType | null>(null)
@@ -20,6 +22,11 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
 
   const currentBrokerage = brokerages.find((b) => b.id === currentBrokerageId) || brokerages[0]
 
+  const filteredAgents = useMemo(() => {
+    if (scope === 'all-network') return agents
+    return agents.filter((a) => a.brokerageId === currentBrokerageId)
+  }, [scope, currentBrokerageId])
+
   return (
     <BrokerageContext.Provider
       value={{
@@ -28,6 +35,7 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
         scope,
         setScope,
         switchBrokerage: setCurrentBrokerageId,
+        filteredAgents,
       }}
     >
       {children}

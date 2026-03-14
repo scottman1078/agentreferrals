@@ -225,4 +225,142 @@ export const agents: Agent[] = [
     polygon: [[45.90, -123.40], [45.90, -122.00], [45.10, -122.00], [45.10, -123.40]],
     color: '#4ade80', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
+  // ══════════════════════════════════════
+  // ADDITIONAL AGENTS — fill out the network
+  // ══════════════════════════════════════
+  // eXp — more agents
+  {
+    id: 'tamara', name: 'Tamara Wilson', brokerage: 'eXp Realty — Tampa', brokerageId: 'exp',
+    area: 'Tampa / St. Pete, FL', tags: ['Relocation', 'Investment', 'First-Time Buyers'],
+    status: 'active', phone: '(813) 555-0891', email: 'twilson@exprealty.com',
+    dealsPerYear: 49, yearsLicensed: 8, avgSalePrice: 385000,
+    polygon: [[28.70, -83.00], [28.70, -81.80], [27.50, -81.80], [27.50, -83.00]],
+    color: '#3b82f6', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 6,
+  },
+  {
+    id: 'ryan_h', name: 'Ryan Harper', brokerage: 'eXp Realty — Raleigh', brokerageId: 'exp',
+    area: 'Raleigh / Durham, NC', tags: ['New Construction', 'Relocation'],
+    status: 'active', phone: '(919) 555-0342', email: 'rharper@exprealty.com',
+    dealsPerYear: 56, yearsLicensed: 10, avgSalePrice: 440000,
+    polygon: [[36.50, -79.20], [36.50, -77.80], [35.40, -77.80], [35.40, -79.20]],
+    color: '#60a5fa', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 9,
+  },
+  {
+    id: 'diana', name: 'Diana Patel', brokerage: 'eXp Realty — Houston', brokerageId: 'exp',
+    area: 'Houston Metro, TX', tags: ['Investment', 'New Construction', 'First-Time Buyers'],
+    status: 'active', phone: '(713) 555-0478', email: 'dpatel@exprealty.com',
+    dealsPerYear: 63, yearsLicensed: 9, avgSalePrice: 365000,
+    polygon: [[30.50, -96.20], [30.50, -94.50], [28.80, -94.50], [28.80, -96.20]],
+    color: '#2563eb', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 10,
+  },
+  // KW — more agents
+  {
+    id: 'steve', name: 'Steve Nakamura', brokerage: 'Keller Williams — San Diego', brokerageId: 'kw',
+    area: 'San Diego, CA', tags: ['Luxury', 'Investment', 'Relocation'],
+    status: 'active', phone: '(619) 555-0567', email: 'snakamura@kw.com',
+    dealsPerYear: 72, yearsLicensed: 14, avgSalePrice: 875000,
+    polygon: [[33.30, -117.60], [33.30, -116.80], [32.50, -116.80], [32.50, -117.60]],
+    color: '#ef4444', referNetScore: 91, responseTime: '< 30min', closedReferrals: 13,
+  },
+  {
+    id: 'nina', name: 'Nina Rodriguez', brokerage: 'Keller Williams — Austin', brokerageId: 'kw',
+    area: 'Austin / Travis County, TX', tags: ['First-Time Buyers', 'New Construction', 'Relocation'],
+    status: 'active', phone: '(512) 555-0789', email: 'nrodriguez@kw.com',
+    dealsPerYear: 58, yearsLicensed: 7, avgSalePrice: 480000,
+    polygon: [[30.80, -98.50], [30.80, -97.20], [29.60, -97.20], [29.60, -98.50]],
+    color: '#dc2626', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 7,
+  },
+  {
+    id: 'troy', name: 'Troy Jackson', brokerage: 'Keller Williams — Columbus', brokerageId: 'kw',
+    area: 'Columbus / Central OH', tags: ['First-Time Buyers', 'Investment'],
+    status: 'active', phone: '(614) 555-0234', email: 'tjackson@kw.com',
+    dealsPerYear: 41, yearsLicensed: 6, avgSalePrice: 295000,
+    polygon: [[40.20, -83.30], [40.20, -82.50], [39.60, -82.50], [39.60, -83.30]],
+    color: '#b91c1c', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 4,
+  },
+  // Compass — more agents
+  {
+    id: 'elena', name: 'Elena Vasquez', brokerage: 'Compass — Miami', brokerageId: 'compass',
+    area: 'Miami Beach / Coral Gables, FL', tags: ['Luxury', 'Investment', 'Relocation'],
+    status: 'active', phone: '(305) 555-0912', email: 'evasquez@compass.com',
+    dealsPerYear: 91, yearsLicensed: 15, avgSalePrice: 1350000,
+    polygon: [[25.90, -80.50], [25.90, -80.00], [25.40, -80.00], [25.40, -80.50]],
+    color: '#16a34a', referNetScore: 95, responseTime: '< 30min', closedReferrals: 19,
+  },
+  {
+    id: 'daniel_k', name: 'Daniel Kim', brokerage: 'Compass — Seattle', brokerageId: 'compass',
+    area: 'Bellevue / Eastside, WA', tags: ['Luxury', 'New Construction'],
+    status: 'active', phone: '(425) 555-0345', email: 'dkim@compass.com',
+    dealsPerYear: 67, yearsLicensed: 11, avgSalePrice: 1050000,
+    polygon: [[47.80, -122.40], [47.80, -122.00], [47.40, -122.00], [47.40, -122.40]],
+    color: '#15803d', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 8,
+  },
+  // BHHS — more agents
+  {
+    id: 'patricia', name: 'Patricia Owens', brokerage: 'BHHS — Scottsdale', brokerageId: 'bhhs',
+    area: 'Scottsdale / Paradise Valley, AZ', tags: ['Luxury', 'Land & Acreage'],
+    status: 'active', phone: '(480) 555-0678', email: 'powens@bhhs.com',
+    dealsPerYear: 54, yearsLicensed: 18, avgSalePrice: 1200000,
+    polygon: [[33.80, -112.10], [33.80, -111.60], [33.40, -111.60], [33.40, -112.10]],
+    color: '#7c3aed', referNetScore: 92, responseTime: '< 1hr', closedReferrals: 14,
+  },
+  {
+    id: 'george', name: 'George Palmer', brokerage: 'BHHS — Chicago', brokerageId: 'bhhs',
+    area: 'Chicago Gold Coast / Lincoln Park', tags: ['Luxury', 'Relocation'],
+    status: 'active', phone: '(312) 555-0456', email: 'gpalmer@bhhs.com',
+    dealsPerYear: 48, yearsLicensed: 12, avgSalePrice: 750000,
+    polygon: [[42.10, -87.90], [42.10, -87.50], [41.80, -87.50], [41.80, -87.90]],
+    color: '#9333ea', referNetScore: 86, responseTime: '< 2hr', closedReferrals: 7,
+  },
+  // RE/MAX — more agents
+  {
+    id: 'maria', name: 'Maria Santos', brokerage: 'RE/MAX — San Antonio', brokerageId: 'remax',
+    area: 'San Antonio / New Braunfels, TX', tags: ['First-Time Buyers', 'Homes for Heroes'],
+    status: 'active', phone: '(210) 555-0567', email: 'msantos@remax.com',
+    dealsPerYear: 44, yearsLicensed: 9, avgSalePrice: 310000,
+    polygon: [[29.80, -98.80], [29.80, -98.20], [29.20, -98.20], [29.20, -98.80]],
+    color: '#ea580c', referNetScore: 82, responseTime: '< 2hr', closedReferrals: 5,
+  },
+  {
+    id: 'kevin', name: 'Kevin OConnell', brokerage: 'RE/MAX — Denver', brokerageId: 'remax',
+    area: 'Boulder / Westminster, CO', tags: ['Land & Acreage', 'New Construction'],
+    status: 'active', phone: '(303) 555-0890', email: 'koconnell@remax.com',
+    dealsPerYear: 37, yearsLicensed: 11, avgSalePrice: 590000,
+    polygon: [[40.20, -105.80], [40.20, -105.00], [39.80, -105.00], [39.80, -105.80]],
+    color: '#c2410c', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 6,
+  },
+  // Sotheby's — more agents
+  {
+    id: 'victoria', name: 'Victoria Blake', brokerage: "Sotheby's — Aspen", brokerageId: 'sothebys',
+    area: 'Aspen / Snowmass, CO', tags: ['Luxury', 'Land & Acreage'],
+    status: 'active', phone: '(970) 555-0123', email: 'vblake@sothebys.com',
+    dealsPerYear: 28, yearsLicensed: 20, avgSalePrice: 4500000,
+    polygon: [[39.40, -107.20], [39.40, -106.60], [39.00, -106.60], [39.00, -107.20]],
+    color: '#0d9488', referNetScore: 98, responseTime: '< 1hr', closedReferrals: 24,
+  },
+  {
+    id: 'james_w', name: 'James Wellington', brokerage: "Sotheby's — Palm Beach", brokerageId: 'sothebys',
+    area: 'Palm Beach / Jupiter, FL', tags: ['Luxury', 'Investment'],
+    status: 'active', phone: '(561) 555-0456', email: 'jwellington@sothebys.com',
+    dealsPerYear: 42, yearsLicensed: 16, avgSalePrice: 2800000,
+    polygon: [[27.10, -80.40], [27.10, -79.90], [26.60, -79.90], [26.60, -80.40]],
+    color: '#0f766e', referNetScore: 96, responseTime: '< 30min', closedReferrals: 20,
+  },
+  // Coldwell Banker — more agents
+  {
+    id: 'sandra', name: 'Sandra Mitchell', brokerage: 'Coldwell Banker — Atlanta', brokerageId: 'coldwell',
+    area: 'Buckhead / Midtown, GA', tags: ['Luxury', 'Relocation'],
+    status: 'active', phone: '(404) 555-0789', email: 'smitchell@coldwellbanker.com',
+    dealsPerYear: 53, yearsLicensed: 10, avgSalePrice: 620000,
+    polygon: [[33.90, -84.60], [33.90, -84.20], [33.60, -84.20], [33.60, -84.60]],
+    color: '#4f46e5', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 8,
+  },
+  {
+    id: 'robert_l', name: 'Robert Lee', brokerage: 'Coldwell Banker — Salt Lake', brokerageId: 'coldwell',
+    area: 'Salt Lake City / Park City, UT', tags: ['Relocation', 'New Construction', 'Land & Acreage'],
+    status: 'active', phone: '(801) 555-0234', email: 'rlee@coldwellbanker.com',
+    dealsPerYear: 39, yearsLicensed: 8, avgSalePrice: 550000,
+    polygon: [[41.20, -112.20], [41.20, -111.40], [40.40, -111.40], [40.40, -112.20]],
+    color: '#6366f1', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+  },
 ]

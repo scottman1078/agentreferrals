@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTheme } from 'next-themes'
-import { agents } from '@/data/agents'
+import { useBrokerage } from '@/contexts/brokerage-context'
 import { voidZones } from '@/data/coverage-gaps'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
@@ -26,6 +26,7 @@ export default function AgentMap() {
   const [leafletLoaded, setLeafletLoaded] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { resolvedTheme } = useTheme()
+  const { filteredAgents } = useBrokerage()
 
   useEffect(() => setMounted(true), [])
 
@@ -68,7 +69,7 @@ export default function AgentMap() {
 
     tileLayerRef.current = tileLayer
     mapInstance.current = map
-    renderAgents(agents, map)
+    renderAgents(filteredAgents, map)
 
     return () => {
       map.remove()
@@ -85,13 +86,13 @@ export default function AgentMap() {
     tileLayerRef.current.setUrl(isDark ? DARK_TILES : LIGHT_TILES)
   }, [resolvedTheme, mounted])
 
-  // Filter agents by tag
+  // Filter agents by tag AND brokerage scope
   useEffect(() => {
     if (!mapInstance.current || !L) return
-    const filtered = activeTag === 'all' ? agents : agents.filter((a) => a.tags.includes(activeTag))
+    const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
     renderAgents(filtered, mapInstance.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag])
+  }, [activeTag, filteredAgents])
 
   // Toggle void zones
   useEffect(() => {
@@ -258,7 +259,7 @@ export default function AgentMap() {
 
       {/* Agent count badge */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-lg text-xs text-muted-foreground">
-        <span className="font-bold text-foreground">{activeTag === 'all' ? agents.length : agents.filter(a => a.tags.includes(activeTag)).length}</span> agents shown
+        <span className="font-bold text-foreground">{activeTag === 'all' ? filteredAgents.length : filteredAgents.filter(a => a.tags.includes(activeTag)).length}</span> agents shown
       </div>
 
       <div ref={mapRef} className="w-full h-full" />
