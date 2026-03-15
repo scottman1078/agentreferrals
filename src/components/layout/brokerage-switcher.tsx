@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
+import { getPartnerAgentIds } from '@/data/partnerships'
 import { ChevronDown, Check } from 'lucide-react'
 
 export default function BrokerageSwitcher() {
@@ -12,6 +13,8 @@ export default function BrokerageSwitcher() {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
 
+  const partnerIds = getPartnerAgentIds('jason')
+  const myNetworkCount = agents.filter((a) => partnerIds.includes(a.id)).length
   const myAgentCount = agents.filter((a) => a.brokerageId === currentBrokerage.id).length
   const allAgentCount = agents.length
 
@@ -30,6 +33,16 @@ export default function BrokerageSwitcher() {
       <div className="flex items-center gap-1.5">
         {/* Scope toggle */}
         <div className="flex rounded-lg border border-border bg-background p-0.5">
+          <button
+            onClick={() => setScope('my-network')}
+            className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${
+              scope === 'my-network'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            My Network ({myNetworkCount})
+          </button>
           <button
             onClick={() => setScope('my-brokerage')}
             className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
 import { useAppData } from '@/lib/data-provider'
+import { getPartnerAgentIds } from '@/data/partnerships'
 import type { Agent, Brokerage, BrokerageScope } from '@/types'
 
 interface BrokerageContextType {
@@ -22,10 +23,14 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
 
   const currentBrokerage = brokerages.find((b) => b.id === currentBrokerageId) || brokerages[0]
 
+  // Get partner IDs for "My Network" scope (Jason's partners)
+  const partnerIds = useMemo(() => getPartnerAgentIds('jason'), [])
+
   const filteredAgents = useMemo(() => {
     if (scope === 'all-network') return agents
+    if (scope === 'my-network') return agents.filter((a) => partnerIds.includes(a.id))
     return agents.filter((a) => a.brokerageId === currentBrokerageId)
-  }, [scope, currentBrokerageId, agents])
+  }, [scope, currentBrokerageId, agents, partnerIds])
 
   return (
     <BrokerageContext.Provider

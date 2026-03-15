@@ -96,7 +96,7 @@ export interface Candidate {
   color: string
 }
 
-export type BrokerageScope = 'my-brokerage' | 'all-network'
+export type BrokerageScope = 'my-network' | 'my-brokerage' | 'all-network'
 
 export interface NoraMessage {
   id: string

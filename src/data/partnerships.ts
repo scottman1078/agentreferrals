@@ -337,4 +337,66 @@ export const existingRequests: PartnershipRequest[] = [
     createdAt: '2026-01-28T09:00:00Z',
     updatedAt: '2026-02-01T14:00:00Z',
   },
+  {
+    id: 'pr-3',
+    requestingAgentId: 'carlos',
+    receivingAgentId: 'jason',
+    requestingMarket: 'Dallas / Fort Worth, TX',
+    receivingMarket: 'Plainwell / Allegan County, MI',
+    status: 'active',
+    acceptedAt: '2026-02-10T09:00:00Z',
+    createdAt: '2026-02-05T11:00:00Z',
+    updatedAt: '2026-02-10T09:00:00Z',
+  },
+  {
+    id: 'pr-4',
+    requestingAgentId: 'jason',
+    receivingAgentId: 'darius',
+    requestingMarket: 'Plainwell / Allegan County, MI',
+    receivingMarket: 'Phoenix / Scottsdale, AZ',
+    status: 'active',
+    acceptedAt: '2026-02-15T16:00:00Z',
+    createdAt: '2026-02-12T08:00:00Z',
+    updatedAt: '2026-02-15T16:00:00Z',
+  },
+  {
+    id: 'pr-5',
+    requestingAgentId: 'megan',
+    receivingAgentId: 'jason',
+    requestingMarket: 'Grand Rapids / Kent County, MI',
+    receivingMarket: 'Plainwell / Allegan County, MI',
+    status: 'active',
+    acceptedAt: '2025-12-20T10:00:00Z',
+    createdAt: '2025-12-15T14:00:00Z',
+    updatedAt: '2025-12-20T10:00:00Z',
+  },
+  {
+    id: 'pr-6',
+    requestingAgentId: 'jason',
+    receivingAgentId: 'rachel',
+    requestingMarket: 'Plainwell / Allegan County, MI',
+    receivingMarket: 'Los Angeles Metro, CA',
+    status: 'active',
+    acceptedAt: '2026-03-01T12:00:00Z',
+    createdAt: '2026-02-25T09:00:00Z',
+    updatedAt: '2026-03-01T12:00:00Z',
+  },
+  {
+    id: 'pr-7',
+    requestingAgentId: 'jason',
+    receivingAgentId: 'tanya',
+    requestingMarket: 'Plainwell / Allegan County, MI',
+    receivingMarket: 'Atlanta Metro, GA',
+    status: 'active',
+    acceptedAt: '2026-01-20T11:00:00Z',
+    createdAt: '2026-01-18T08:00:00Z',
+    updatedAt: '2026-01-20T11:00:00Z',
+  },
 ]
+
+// Helper: get partner agent IDs for a given agent
+export function getPartnerAgentIds(agentId: string): string[] {
+  return existingRequests
+    .filter((r) => r.status === 'active' && (r.requestingAgentId === agentId || r.receivingAgentId === agentId))
+    .map((r) => r.requestingAgentId === agentId ? r.receivingAgentId : r.requestingAgentId)
+}
