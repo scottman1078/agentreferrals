@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { CreditCard, ArrowRight, Loader2, Check } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 
 export default function SettingsPage() {
-  const { profile, isAuthenticated, refreshProfile } = useAuth()
+  const { profile, isAuthenticated, refreshProfile, signOut } = useAuth()
+  const router = useRouter()
 
   // Form state — controlled inputs
   const [fullName, setFullName] = useState('')
@@ -268,6 +270,20 @@ export default function SettingsPage() {
               </button>
             </div>
           ))}
+        </div>
+
+        {/* Logout */}
+        <div className="pt-4 mt-4 border-t border-border">
+          <button
+            onClick={async () => {
+              await signOut()
+              window.location.href = '/'
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
       </div>
 
