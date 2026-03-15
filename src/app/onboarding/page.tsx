@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createHubClient } from '@/lib/supabase/hub'
 import { createClient } from '@/lib/supabase/client'
 import { brokerages } from '@/data/brokerages'
 import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
@@ -37,6 +38,7 @@ const STEP_ICONS = [Building2, User, Sparkles, CheckCircle2]
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const hub = createHubClient()
   const supabase = createClient()
 
   const [step, setStep] = useState(1)
@@ -58,9 +60,9 @@ export default function OnboardingPage() {
     specializations: [],
   })
 
-  // Load user info on mount
+  // Load user info on mount — auth lives on the hub
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }: { data: { user: { id: string; email?: string | null; user_metadata?: Record<string, string> } | null } }) => {
+    hub.auth.getUser().then(({ data: { user } }: { data: { user: { id: string; email?: string | null; user_metadata?: Record<string, string> } | null } }) => {
       if (!user) {
         router.push('/')
         return
@@ -71,7 +73,7 @@ export default function OnboardingPage() {
       setUserName(name)
       setData((prev) => ({ ...prev, fullName: name }))
     })
-  }, [supabase, router])
+  }, [hub, router])
 
   const updateField = <K extends keyof OnboardingData>(
     key: K,
@@ -129,7 +131,9 @@ export default function OnboardingPage() {
       }
     }
 
-    const updatePayload = {
+    const upsertPayload = {
+      id: userId,
+      email: userEmail,
       full_name: data.fullName.trim(),
       phone: data.phone.trim() || null,
       brokerage_id: brokerageIdForDb,
@@ -142,10 +146,10 @@ export default function OnboardingPage() {
       updated_at: new Date().toISOString(),
     }
 
+    // Upsert: creates ar_profiles row for new hub users, updates for existing
     const { error } = await supabase
       .from('ar_profiles')
-      .update(updatePayload)
-      .eq('user_id', userId)
+      .upsert(upsertPayload, { onConflict: 'id' })
 
     if (error) {
       setSubmitError(error.message)

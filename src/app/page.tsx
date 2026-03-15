@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createHubClient } from '@/lib/supabase/hub'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
@@ -394,21 +394,59 @@ export default function LandingPage() {
               </div>
             )}
 
+            {/* Google OAuth */}
+            <button
+              type="button"
+              onClick={async () => {
+                setAuthLoading(true)
+                setAuthError(null)
+                const hub = createHubClient()
+                const isDev = window.location.hostname === 'localhost'
+                const redirectTo = isDev
+                  ? 'http://localhost:5500/auth/callback'
+                  : 'https://agentreferrals.ai/auth/callback'
+                const { error } = await hub.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: { redirectTo },
+                })
+                if (error) {
+                  setAuthError(error.message)
+                  setAuthLoading(false)
+                }
+              }}
+              disabled={authLoading}
+              className="w-full h-11 rounded-lg border border-border bg-card text-foreground font-semibold text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 mb-4 disabled:opacity-50"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                <path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground font-medium">or continue with email</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
             <form onSubmit={async (e) => {
               e.preventDefault()
               setAuthLoading(true)
               setAuthError(null)
-              const supabase = createClient()
+              const hub = createHubClient()
 
               if (authMode === 'signin') {
-                const { error } = await supabase.auth.signInWithPassword({ email, password })
+                const { error } = await hub.auth.signInWithPassword({ email, password })
                 if (error) {
                   setAuthError(error.message)
                   setAuthLoading(false)
                   return
                 }
               } else {
-                const { data: signUpData, error } = await supabase.auth.signUp({
+                const { data: signUpData, error } = await hub.auth.signUp({
                   email,
                   password,
                   options: { data: { full_name: fullName } },
@@ -525,8 +563,8 @@ export default function LandingPage() {
               setResetLoading(true)
               setResetError(null)
               setResetMessage(null)
-              const supabase = createClient()
-              const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+              const hub = createHubClient()
+              const { error } = await hub.auth.resetPasswordForEmail(resetEmail, {
                 redirectTo: 'https://agentreferrals.ai/reset-password',
               })
               setResetLoading(false)

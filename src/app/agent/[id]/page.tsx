@@ -20,7 +20,9 @@ import {
   MessageCircle,
   MapPin,
   Building2,
+  ArrowLeft,
 } from 'lucide-react'
+import Link from 'next/link'
 import { AgentProfileReviews } from './agent-profile-reviews'
 import { AgentProfileMap } from './agent-profile-map'
 
@@ -71,7 +73,15 @@ export default async function AgentProfilePage({ params }: PageProps) {
             background: `linear-gradient(135deg, ${agent.color} 0%, transparent 60%)`,
           }}
         />
-        <div className="relative max-w-4xl mx-auto px-6 pt-12 pb-10">
+        <div className="relative max-w-4xl mx-auto px-6 pt-6 pb-10">
+          {/* Back button */}
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             {/* Avatar */}
             <div

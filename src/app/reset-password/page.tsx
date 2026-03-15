@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createHubClient } from '@/lib/supabase/hub'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -27,8 +27,8 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
-    const { error: updateError } = await supabase.auth.updateUser({ password })
+    const hub = createHubClient()
+    const { error: updateError } = await hub.auth.updateUser({ password })
     setLoading(false)
 
     if (updateError) {
