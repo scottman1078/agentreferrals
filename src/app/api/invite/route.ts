@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       toEmail: inviteeEmail,
       toName: inviteeName || inviteeEmail.split('@')[0],
       inviterName: inviterName || 'An agent',
-      inviterBrokerage: inviterBrokerage || 'AgentReferrals.ai',
+      inviterBrokerage: inviterBrokerage || 'AgentReferrals',
       inviterArea: inviterArea || '',
       referralLink,
       personalMessage,

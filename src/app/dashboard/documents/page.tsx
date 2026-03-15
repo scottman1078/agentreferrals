@@ -76,7 +76,7 @@ export default function DocumentsPage() {
               )}
               <div className="p-6 rounded-xl border border-border bg-background mb-4">
                 <div className="font-extrabold text-base text-center uppercase tracking-wider text-primary mb-1.5">Referral Fee Agreement</div>
-                <div className="text-center text-xs text-muted-foreground mb-5 pb-4 border-b border-border">AgentReferrals.ai · Generated {selectedDoc.date}</div>
+                <div className="text-center text-xs text-muted-foreground mb-5 pb-4 border-b border-border">AgentReferrals · Generated {selectedDoc.date}</div>
                 {[
                   { label: 'Referring Agent', value: selectedDoc.parties.from },
                   { label: 'Receiving Agent', value: selectedDoc.parties.to },

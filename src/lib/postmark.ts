@@ -5,7 +5,7 @@ const client = process.env.POSTMARK_SERVER_TOKEN
   : null
 
 const FROM_EMAIL = 'info@agentreferrals.ai'
-const FROM_NAME = 'AgentReferrals.ai'
+const FROM_NAME = 'AgentReferrals'
 
 export interface InviteEmailData {
   toEmail: string
@@ -48,7 +48,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
 
     <!-- Card -->
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-      <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;">You've been invited to join AgentReferrals.ai</h1>
+      <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;">You've been invited to join AgentReferrals</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;">
         <strong style="color:#1a1a2e;">${data.inviterName}</strong> from ${data.inviterBrokerage} (${data.inviterArea}) wants to add you to their referral network.
       </p>
@@ -61,7 +61,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
       ` : ''}
 
       <div style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Why agents love AgentReferrals.ai:</h3>
+        <h3 style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Why agents love AgentReferrals:</h3>
         <div style="font-size:13px;color:#4b5563;line-height:1.8;">
           ✓ AI-powered agent matching (NORA finds the perfect referral partner)<br>
           ✓ Keep 100% of your referral fees — zero platform cuts<br>
@@ -82,7 +82,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
 
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
-      <p>AgentReferrals.ai — AI-powered referral network for real estate agents</p>
+      <p>AgentReferrals — AI-powered referral network for real estate agents</p>
       <p style="margin-top:4px;">This email was sent because ${data.inviterName} invited you. <a href="https://agentreferrals.ai" style="color:#f59e0b;">Learn more</a></p>
     </div>
   </div>
@@ -93,9 +93,9 @@ export async function sendInviteEmail(data: InviteEmailData) {
     const result = await client.sendEmail({
       From: `${FROM_NAME} <${FROM_EMAIL}>`,
       To: data.toEmail,
-      Subject: `${data.inviterName} invited you to their referral network on AgentReferrals.ai`,
+      Subject: `${data.inviterName} invited you to their referral network on AgentReferrals`,
       HtmlBody: htmlBody,
-      TextBody: `${data.inviterName} from ${data.inviterBrokerage} invited you to join their referral network on AgentReferrals.ai. Join here: ${data.referralLink}`,
+      TextBody: `${data.inviterName} from ${data.inviterBrokerage} invited you to join their referral network on AgentReferrals. Join here: ${data.referralLink}`,
       MessageStream: 'outbound',
     })
     return { success: true, messageId: result.MessageID }
@@ -129,7 +129,7 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
       </div>` : ''}
     </div>
     <div style="text-align:center;margin-top:20px;font-size:11px;color:#9ca3af;">
-      <p>AgentReferrals.ai · <a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Manage notifications</a></p>
+      <p>AgentReferrals · <a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Manage notifications</a></p>
     </div>
   </div>
 </body>
@@ -191,7 +191,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
         <div style="display:inline-block;width:64px;height:64px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;line-height:64px;text-align:center;font-size:28px;">&#127881;</div>
       </div>
 
-      <h1 style="font-size:24px;font-weight:800;color:#1a1a2e;margin:0 0 8px;text-align:center;">Welcome to AgentReferrals.ai, ${firstName}!</h1>
+      <h1 style="font-size:24px;font-weight:800;color:#1a1a2e;margin:0 0 8px;text-align:center;">Welcome to AgentReferrals, ${firstName}!</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 28px;text-align:center;">
         You just joined the AI-powered referral network trusted by thousands of agents across the country.
       </p>
@@ -270,7 +270,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
-      <p style="margin:0 0 4px;">AgentReferrals.ai — AI-powered referral network for real estate agents</p>
+      <p style="margin:0 0 4px;">AgentReferrals — AI-powered referral network for real estate agents</p>
       <p style="margin:0;">
         <a href="${dashboardUrl}" style="color:#f59e0b;">Dashboard</a> ·
         <a href="https://agentreferrals.ai/#pricing" style="color:#f59e0b;">Pricing</a> ·
@@ -286,9 +286,9 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     const result = await client.sendEmail({
       From: `${FROM_NAME} <${FROM_EMAIL}>`,
       To: data.toEmail,
-      Subject: `Welcome to AgentReferrals.ai, ${firstName}!`,
+      Subject: `Welcome to AgentReferrals, ${firstName}!`,
       HtmlBody: htmlBody,
-      TextBody: `Welcome to AgentReferrals.ai, ${firstName}!\n\nYou just joined the AI-powered referral network trusted by thousands of agents.\n\n1. Complete your profile: ${onboardingUrl}\n2. Explore the network — browse agents, find partners, connect with NORA AI\n3. Send your first referral — match, send agreement, track to close\n\nYour referral link: ${referralLink}\nReferral code: ${data.referralCode}\n\nFor every agent who joins with your link, you get 1 free month of Pro.\n\n— The AgentReferrals.ai Team`,
+      TextBody: `Welcome to AgentReferrals, ${firstName}!\n\nYou just joined the AI-powered referral network trusted by thousands of agents.\n\n1. Complete your profile: ${onboardingUrl}\n2. Explore the network — browse agents, find partners, connect with NORA AI\n3. Send your first referral — match, send agreement, track to close\n\nYour referral link: ${referralLink}\nReferral code: ${data.referralCode}\n\nFor every agent who joins with your link, you get 1 free month of Pro.\n\n— The AgentReferrals Team`,
       MessageStream: 'outbound',
     })
     return { success: true, messageId: result.MessageID }

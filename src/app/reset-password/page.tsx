@@ -51,7 +51,7 @@ export default function ResetPasswordPage() {
           </div>
           <span className="font-extrabold text-xl tracking-tight">
             Agent<span className="text-primary">Referrals</span>
-            <span className="text-muted-foreground text-xs font-medium">.ai</span>
+            
           </span>
         </div>
         <p className="text-sm text-muted-foreground mb-6">

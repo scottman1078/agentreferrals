@@ -21,7 +21,7 @@ function buildNoraResponses(agentList: Agent[]) {
     { patterns: ['dallas', 'fort worth', 'dfw', 'texas', 'tx'], response: "Carlos Vega at RE/MAX Dallas — 102 deals/year, 94 ReferNet Score, Luxury + New Construction + Investment.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('dallas')) },
     { patterns: ['first time', 'first-time', 'ftb', 'starter'], response: "Best first-time buyer specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('First-Time Buyers')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
     { patterns: ['investment', 'investor', 'rental', '1031'], response: "Investment property specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('Investment')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
-    { patterns: ['my brokerage', 'real broker', 'our network', 'internal'], response: "Real Broker agents on AgentReferrals.ai:", matchLogic: () => agentList.filter((a) => a.brokerageId === 'real').sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)) },
+    { patterns: ['my brokerage', 'real broker', 'our network', 'internal'], response: "Real Broker agents on AgentReferrals:", matchLogic: () => agentList.filter((a) => a.brokerageId === 'real').sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)) },
   ]
 }
 

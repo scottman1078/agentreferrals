@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${agent.name} — ${agent.area} | ${APP_DOMAIN}`,
-    description: `${agent.name} at ${agent.brokerage}. ${agent.dealsPerYear} deals/yr, ${agent.yearsLicensed} years licensed, ${formatCurrency(agent.avgSalePrice)} avg sale price.${ratingStr} Send a referral on AgentReferrals.ai.`,
+    description: `${agent.name} at ${agent.brokerage}. ${agent.dealsPerYear} deals/yr, ${agent.yearsLicensed} years licensed, ${formatCurrency(agent.avgSalePrice)} avg sale price.${ratingStr} Send a referral on AgentReferrals.`,
     openGraph: {
       title: `${agent.name} — ${agent.area}`,
       description: `${agent.brokerage} · ${agent.dealsPerYear} deals/yr · ${formatCurrency(agent.avgSalePrice)} avg${ratingStr}`,

@@ -23,7 +23,7 @@ export async function geocodeAddress(query: string): Promise<GeoResult[]> {
 
   const res = await fetch(`${NOMINATIM_BASE}?${params}`, {
     headers: {
-      'User-Agent': 'AgentReferrals.ai',
+      'User-Agent': 'AgentReferrals',
     },
   })
 

@@ -35,7 +35,7 @@ export default function LandingPage() {
               A
             </div>
             <span className="font-extrabold text-lg tracking-tight">
-              Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
+              Agent<span className="text-primary">Referrals</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">
@@ -80,7 +80,7 @@ export default function LandingPage() {
             Start closing referrals.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
-            AgentReferrals.ai replaces chaotic brokerage Facebook groups with an AI-powered platform that instantly matches your clients with verified agents — across any brokerage, any market.
+            AgentReferrals replaces chaotic brokerage Facebook groups with an AI-powered platform that instantly matches your clients with verified agents — across any brokerage, any market.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
@@ -223,7 +223,7 @@ export default function LandingPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Multi-Brokerage</span>
           <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-12">
-            Every brokerage gets their own private space. Search within your brokerage first — when you need to go outside, expand to the full AgentReferrals.ai network with one click.
+            Every brokerage gets their own private space. Search within your brokerage first — when you need to go outside, expand to the full AgentReferrals network with one click.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
@@ -340,14 +340,14 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">A</div>
-            <span className="font-bold text-sm">Agent<span className="text-primary">Referrals</span>.ai</span>
+            <span className="font-bold text-sm">Agent<span className="text-primary">Referrals</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
             <a href="#" className="hover:text-foreground transition-colors">Terms</a>
             <a href="#" className="hover:text-foreground transition-colors">Contact</a>
           </div>
-          <p className="text-xs text-muted-foreground">© 2025 AgentReferrals.ai. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© 2025 AgentReferrals. All rights reserved.</p>
         </div>
       </footer>
 
@@ -361,7 +361,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
               <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
+                Agent<span className="text-primary">Referrals</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
@@ -501,7 +501,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
               <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
+                Agent<span className="text-primary">Referrals</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">

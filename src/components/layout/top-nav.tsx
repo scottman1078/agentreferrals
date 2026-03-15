@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import BrokerageSwitcher from './brokerage-switcher'
 import SearchModal from '@/components/search/search-modal'
 import { Map, BarChart3, Search, FileText, TrendingUp, Settings, Plus, UserPlus, Handshake, CreditCard, MessageSquare, Command } from 'lucide-react'
+import { AppLogo } from '@/components/ui/app-logo'
 import { getUnreadCount } from '@/data/messages'
 
 const navItems = [
@@ -44,14 +45,12 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
     <>
     <nav className="h-14 min-h-14 flex items-center px-4 gap-1 relative z-[1100] border-b border-border bg-card">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mr-4 shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">
-          A
-        </div>
-        <span className="font-extrabold text-[15px] tracking-tight hidden sm:block">
-          Agent<span className="text-primary">Referrals</span>
-        </span>
-      </Link>
+      <div className="mr-4 shrink-0 hidden sm:block">
+        <AppLogo size="sm" href="/" />
+      </div>
+      <div className="mr-4 shrink-0 sm:hidden">
+        <AppLogo size="sm" href="/" showWordmark={false} />
+      </div>
 
       {/* Nav links */}
       <div className="hidden lg:flex items-center gap-0.5 flex-1">

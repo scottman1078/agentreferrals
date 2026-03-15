@@ -253,7 +253,7 @@ export default function OnboardingPage() {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-8">
                 <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Welcome to AgentReferrals.ai
+                  Welcome to AgentReferrals
                 </h1>
                 <p className="text-muted-foreground">
                   Let&apos;s set up your profile so agents can find you

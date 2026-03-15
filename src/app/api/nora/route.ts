@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       )
       .join('\n')
 
-    const systemPrompt = `You are NORA, the AI referral assistant for AgentReferrals.ai. You help real estate agents find the perfect referral partners across the country.
+    const systemPrompt = `You are NORA, the AI referral assistant for AgentReferrals. You help real estate agents find the perfect referral partners across the country.
 
 You have access to the following agents in the network:
 ${agentSummary}
@@ -65,7 +65,7 @@ Only include agent IDs that you specifically recommended. If you didn't recommen
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://agentreferrals.ai',
-        'X-Title': 'AgentReferrals.ai NORA',
+        'X-Title': 'AgentReferrals NORA',
       },
       body: JSON.stringify({
         model: 'anthropic/claude-sonnet-4',

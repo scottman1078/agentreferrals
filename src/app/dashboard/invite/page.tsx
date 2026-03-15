@@ -183,7 +183,7 @@ export default function InvitePage() {
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="font-bold text-2xl mb-1">Grow Your Network</h1>
-            <p className="text-sm text-muted-foreground">Invite agents from any brokerage to join AgentReferrals.ai</p>
+            <p className="text-sm text-muted-foreground">Invite agents from any brokerage to join AgentReferrals</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -343,7 +343,7 @@ export default function InvitePage() {
               <button onClick={() => setShowSingleInvite(false)} className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-5 space-y-4">
-              <p className="text-sm text-muted-foreground">They&apos;ll receive an email with your personal invite to join AgentReferrals.ai. When they sign up, they&apos;ll be automatically connected to your network.</p>
+              <p className="text-sm text-muted-foreground">They&apos;ll receive an email with your personal invite to join AgentReferrals. When they sign up, they&apos;ll be automatically connected to your network.</p>
               {inviteError && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
                   {inviteError}
