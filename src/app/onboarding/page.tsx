@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { brokerages } from '@/data/brokerages'
 import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import {
   ArrowRight,
   ArrowLeft,
@@ -381,19 +382,13 @@ export default function OnboardingPage() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Primary Service Area *
                   </label>
-                  <input
-                    type="text"
+                  <LocationAutocomplete
                     value={data.primaryArea}
-                    onChange={(e) =>
-                      updateField('primaryArea', e.target.value)
-                    }
+                    onChange={(val) => updateField('primaryArea', val)}
                     placeholder="e.g. Kalamazoo, MI"
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    helpText="City and state where you primarily work"
                     required
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    City and state where you primarily work
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { CreditCard, ArrowRight, Loader2, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { createClient } from '@/lib/supabase/client'
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 
 export default function SettingsPage() {
   const { profile, isAuthenticated, refreshProfile } = useAuth()
@@ -138,10 +139,10 @@ export default function SettingsPage() {
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Service Area
               </label>
-              <input
+              <LocationAutocomplete
                 value={serviceArea}
-                onChange={(e) => setServiceArea(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                onChange={setServiceArea}
+                placeholder="City, State"
               />
             </div>
             <div className="text-right">
