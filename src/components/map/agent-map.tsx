@@ -131,6 +131,9 @@ export default function AgentMap() {
     layersRef.current = []
 
     agentList.forEach((agent) => {
+      // Skip agents with no/invalid polygon data
+      if (!agent.polygon || !Array.isArray(agent.polygon) || agent.polygon.length < 3) return
+
       const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
         color: agent.color,
         weight: agent.isPrimary ? 3 : 1.5,

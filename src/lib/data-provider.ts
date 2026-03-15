@@ -190,7 +190,9 @@ export function useAppData(): AppData {
     profile,
     userId,
 
-    agents: hasSupaAgents ? mappedAgents : mockAgents,
+    // Always use mock agents for now — Supabase profiles lack polygon/territory data
+    // TODO: Switch to Supabase when ar_agent_profiles has polygon data populated
+    agents: mockAgents,
     referrals: hasSupaReferrals ? mappedReferrals : mockReferrals,
     brokerages: mockBrokerages, // No mapping needed yet — mock brokerages used everywhere
     documents: mockDocuments, // No Supabase table for documents yet
