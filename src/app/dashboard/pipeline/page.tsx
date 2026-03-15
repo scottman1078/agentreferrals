@@ -5,9 +5,10 @@ import { useAppData } from '@/lib/data-provider'
 import { PIPELINE_STAGES, STAGE_COLORS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
+import AgreementBuilder from '@/components/agreements/agreement-builder'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Plus, GitPullRequestArrow } from 'lucide-react'
+import { Plus, GitPullRequestArrow, FileSignature } from 'lucide-react'
 import type { PipelineStage, Referral } from '@/types'
 
 function PipelineSkeleton() {
@@ -48,6 +49,7 @@ export default function PipelinePage() {
   }, [referrals])
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [agreementReferral, setAgreementReferral] = useState<Referral | null>(null)
 
   const stageReferrals = (stage: PipelineStage) => referralList.filter((r) => r.stage === stage)
   const totalValue = referralList.reduce((s, r) => s + r.estimatedPrice, 0)
@@ -147,7 +149,7 @@ export default function PipelinePage() {
                     key={ref.id}
                     draggable
                     onDragStart={() => setDraggedId(ref.id)}
-                    className="p-3 rounded-lg mb-2 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 border border-border bg-card hover:shadow-md"
+                    className="p-3 rounded-lg mb-2 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 border border-border bg-card hover:shadow-md group"
                     style={{ borderLeftWidth: '3px', borderLeftColor: stageColor, opacity: draggedId === ref.id ? 0.25 : 1 }}
                   >
                     <div className="font-semibold text-[13px] mb-1.5">{ref.clientName}</div>
@@ -156,6 +158,13 @@ export default function PipelinePage() {
                     <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">
                       {ref.feePercent}% · {formatCurrency(ref.estimatedPrice)}
                     </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setAgreementReferral(ref) }}
+                      className="flex items-center gap-1 mt-2 w-full h-7 rounded-md text-[10px] font-semibold border border-border text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <FileSignature className="w-3 h-3 ml-2" />
+                      Send Agreement
+                    </button>
                   </div>
                 ))}
               </div>
@@ -168,6 +177,19 @@ export default function PipelinePage() {
         <CreateReferralModal
           onClose={() => setShowCreateModal(false)}
           onCreated={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {agreementReferral && (
+        <AgreementBuilder
+          onClose={() => setAgreementReferral(null)}
+          prefill={{
+            receivingAgentName: agreementReferral.toAgent,
+            clientName: agreementReferral.clientName,
+            market: agreementReferral.market,
+            estimatedPrice: agreementReferral.estimatedPrice,
+            feePercent: agreementReferral.feePercent,
+          }}
         />
       )}
     </div>

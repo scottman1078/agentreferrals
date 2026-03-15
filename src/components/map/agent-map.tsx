@@ -58,10 +58,16 @@ export default function AgentMap() {
 
     const isDark = resolvedTheme === 'dark'
 
+    // Bounds: US + Canada (lat 24-72, lng -170 to -50)
+    const usBounds = L.latLngBounds([24, -170], [72, -50])
+
     const map = L.map(mapRef.current, {
       center: [39.5, -96.5],
       zoom: 4,
       zoomControl: false,
+      maxBounds: usBounds,
+      maxBoundsViscosity: 1.0,
+      minZoom: 3,
     })
 
     // Add zoom control to bottom-left
