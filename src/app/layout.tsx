@@ -13,6 +13,12 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: 'AgentReferrals — AI-Powered Referral Network',
   description: 'AI-powered referral network for real estate agents. Find, match, and manage referrals across brokerages.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-touch-icon.svg',
+  },
 }
 
 export default function RootLayout({
