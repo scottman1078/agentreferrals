@@ -15,6 +15,7 @@ import {
   UserPlus,
   CreditCard,
   Settings,
+  MapPinned,
 } from 'lucide-react'
 import { getUnreadCount } from '@/data/messages'
 
@@ -27,6 +28,7 @@ const pillItems = [
 ]
 
 const moreItems = [
+  { href: '/dashboard/markets', icon: MapPinned, label: 'Markets' },
   { href: '/dashboard/recruiting', icon: Search, label: 'Recruiting' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documents' },
   { href: '/dashboard/invite', icon: UserPlus, label: 'Invite' },
