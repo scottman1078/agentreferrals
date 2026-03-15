@@ -168,8 +168,8 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
-      <div className="h-14 min-h-14 flex items-center px-6 border-b border-border bg-card">
-        <div className="flex items-center gap-2.5">
+      <div className="h-14 min-h-14 flex items-center justify-between px-6 border-b border-border bg-card">
+        <a href="/dashboard" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">
             A
           </div>
@@ -179,7 +179,13 @@ export default function OnboardingPage() {
               .ai
             </span>
           </span>
-        </div>
+        </a>
+        <a
+          href="/dashboard"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Skip for now →
+        </a>
       </div>
 
       {/* Progress bar */}

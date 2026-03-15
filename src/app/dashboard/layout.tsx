@@ -16,13 +16,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   // Redirect to onboarding if profile is incomplete (no primary_area set)
+  // Only redirect if we're sure the profile loaded AND it's missing data
   useEffect(() => {
     if (isLoading) return
-    if (
-      isAuthenticated &&
-      profile &&
-      (!profile.primary_area)
-    ) {
+    if (!isAuthenticated) return
+    // Give profile a moment to load — don't redirect on null (could be loading)
+    if (profile && !profile.primary_area) {
       router.push('/onboarding')
     }
   }, [isLoading, isAuthenticated, profile, router])
