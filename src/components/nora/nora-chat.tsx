@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
-import { X, Send, Sparkles, Star, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { X, Send, Sparkles, Star, Loader2, MessageSquare } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import type { Agent, NoraMessage } from '@/types'
 
@@ -181,9 +182,17 @@ export default function NoraChat() {
                             ))}
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
                           <div className="text-[10px] font-bold text-emerald-500">{agent.closedReferrals} closed</div>
                           <div className="text-[9px] text-muted-foreground">{agent.responseTime}</div>
+                          <Link
+                            href={`/dashboard/messages?agent=${agent.id}`}
+                            className="flex items-center gap-0.5 text-[9px] font-semibold text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MessageSquare className="w-2.5 h-2.5" />
+                            Message
+                          </Link>
                         </div>
                       </div>
                     ))}

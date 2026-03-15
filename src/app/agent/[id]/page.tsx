@@ -264,7 +264,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
               Request Partnership
             </a>
             <a
-              href="/login"
+              href={`/dashboard/messages?agent=${agent.id}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
             >
               <MessageCircle className="w-4 h-4" />

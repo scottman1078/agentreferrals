@@ -7,6 +7,7 @@ import { TAG_COLORS } from '@/lib/constants'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import Link from 'next/link'
 import {
   Handshake,
   AlertTriangle,
@@ -21,6 +22,7 @@ import {
   Search,
   ArrowRight,
   UserSearch,
+  MessageSquare,
 } from 'lucide-react'
 
 type Tab = 'need-you' | 'your-gaps'
@@ -304,6 +306,13 @@ export default function PartnershipsPage() {
                           </>
                         )}
                       </button>
+                      <Link
+                        href={`/dashboard/messages?agent=${agent.id}`}
+                        className="h-9 w-9 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+                        title={`Message ${agent.name}`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </Link>
                       {isOffered && (
                         <button
                           onClick={() => setReferralAgentId(agent.id)}

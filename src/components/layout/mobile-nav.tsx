@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Map, BarChart3, Handshake, UserPlus, MoreHorizontal, TrendingUp, CreditCard, FileText, Search, Settings } from 'lucide-react'
+import { Map, BarChart3, Handshake, UserPlus, MoreHorizontal, TrendingUp, CreditCard, FileText, Search, Settings, MessageSquare } from 'lucide-react'
 
 const primaryItems = [
   { href: '/dashboard', label: 'Map', icon: Map },
@@ -13,6 +13,7 @@ const primaryItems = [
 ]
 
 const moreItems = [
+  { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/roi', label: 'ROI', icon: TrendingUp },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/documents', label: 'Documents', icon: FileText },

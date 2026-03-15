@@ -7,6 +7,7 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
+import PartnerSearch from '@/components/search/partner-search'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -20,6 +21,7 @@ export default function AgentMap() {
   const tileLayerRef = useRef<L.TileLayer | null>(null)
   const layersRef = useRef<L.Layer[]>([])
   const voidLayersRef = useRef<L.Layer[]>([])
+  const searchLayersRef = useRef<L.Layer[]>([])
   const [activeTag, setActiveTag] = useState('all')
   const [showVoids, setShowVoids] = useState(false)
   const [showMigration, setShowMigration] = useState(false)
@@ -187,6 +189,49 @@ export default function AgentMap() {
     })
   }, [])
 
+  // Handle search result — fly to location, add marker, highlight matching polygons
+  const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
+    if (!mapInstance.current || !L) return
+
+    // Clear previous search layers
+    searchLayersRef.current.forEach((l) => mapInstance.current?.removeLayer(l))
+    searchLayersRef.current = []
+
+    // Add a pin marker at the searched location
+    const pinIcon = L.divIcon({
+      className: 'search-pin',
+      html: `<div style="
+        width:28px;height:28px;border-radius:50%;
+        background:#ef4444;
+        border:3px solid white;
+        box-shadow:0 2px 12px rgba(239,68,68,0.5);
+        display:flex;align-items:center;justify-content:center;
+      "><div style="width:8px;height:8px;border-radius:50%;background:white;"></div></div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    })
+
+    const searchMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(mapInstance.current)
+    searchLayersRef.current.push(searchMarker)
+
+    // Highlight matching agent polygons with a glow effect
+    matchedAgents.forEach((agent) => {
+      if (!agent.polygon || agent.polygon.length < 3) return
+      const glowPoly = L!.polygon(agent.polygon as L.LatLngExpression[], {
+        color: agent.color,
+        weight: 4,
+        fillColor: agent.color,
+        fillOpacity: 0.35,
+        smoothFactor: 1.5,
+      }).addTo(mapInstance.current!)
+      searchLayersRef.current.push(glowPoly)
+    })
+
+    // Fly to the searched location
+    const zoom = matchedAgents.length > 0 ? 9 : 10
+    mapInstance.current.flyTo([lat, lng], zoom, { duration: 1.2 })
+  }, [])
+
   const tagChips = [
     { key: 'all', label: 'All', color: 'hsl(43 96% 50%)' },
     { key: 'Homes for Heroes', label: 'HFH', color: TAG_COLORS['Homes for Heroes'] },
@@ -200,8 +245,13 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
+      {/* Search bar */}
+      <div className="absolute top-3 left-3 right-3 z-[1001]">
+        <PartnerSearch onResultSelect={handleSearchResult} />
+      </div>
+
       {/* Controls bar */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center gap-2 flex-wrap">
+      <div className="absolute top-16 left-3 right-3 z-[1000] flex items-center gap-2 flex-wrap">
         {/* Tag filter pills */}
         <div className="flex items-center gap-1 px-1.5 py-1 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
           <span className="text-[10px] font-semibold uppercase tracking-wider px-2 text-muted-foreground">Filter</span>
