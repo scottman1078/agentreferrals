@@ -7,7 +7,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
   ArrowRight, Star, ChevronRight, Sparkles, Globe, Building2,
-  MessageSquare, BarChart3, Search
+  MessageSquare, BarChart3, Search, Eye, EyeOff
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -19,6 +19,7 @@ export default function LandingPage() {
   const [fullName, setFullName] = useState('')
   const [authError, setAuthError] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
@@ -495,13 +496,24 @@ export default function LandingPage() {
                 required
               />
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <div className="mb-2" />
               {authMode === 'signin' && (
                 <div className="text-right mb-4">
                   <button

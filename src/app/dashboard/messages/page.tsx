@@ -23,6 +23,9 @@ import {
   ArrowLeft,
   ExternalLink,
 } from 'lucide-react'
+import SuggestedOutreach from '@/components/nudges/suggested-outreach'
+import { nudges as initialNudges } from '@/data/nudges'
+import type { Nudge } from '@/data/nudges'
 
 // ─── New Message Modal ───
 
@@ -245,7 +248,69 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [newMessage, setNewMessage] = useState('')
   const [showMobileChat, setShowMobileChat] = useState(!!preselectedAgent)
+  const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Listen for nudge messages from the banner
+  useEffect(() => {
+    function handleNudgeMessage(e: Event) {
+      const { agentId, message } = (e as CustomEvent).detail
+      sendMessageToAgent(agentId, message)
+    }
+    window.addEventListener('nudge-message-sent', handleNudgeMessage)
+    return () => window.removeEventListener('nudge-message-sent', handleNudgeMessage)
+  }, [conversationList])
+
+  function sendMessageToAgent(agentId: string, content: string) {
+    // Ensure conversation exists
+    let convExists = conversationList.find((c) => c.agentId === agentId)
+    if (!convExists) {
+      const agent = agents.find((a) => a.id === agentId)
+      if (!agent) return
+      const newConv: Conversation = {
+        agentId: agent.id,
+        agentName: agent.name,
+        brokerage: agent.brokerage,
+        color: agent.color,
+        messages: [],
+      }
+      setConversationList((prev) => [newConv, ...prev])
+      convExists = newConv
+    }
+
+    const msg: Message = {
+      id: `m-nudge-${Date.now()}`,
+      fromUserId: 'jason',
+      toUserId: agentId,
+      content,
+      read: true,
+      createdAt: new Date().toISOString(),
+    }
+
+    setConversationList((prev) =>
+      prev.map((c) =>
+        c.agentId === agentId
+          ? { ...c, messages: [...c.messages, msg] }
+          : c
+      )
+    )
+    setActiveConvId(agentId)
+    setShowMobileChat(true)
+  }
+
+  function handleDismissNudge(nudgeId: string) {
+    setNudgeList((prev) => prev.map((n) => n.id === nudgeId ? { ...n, dismissed: true } : n))
+  }
+
+  function handleNudgeSendMessage(agentId: string, message: string) {
+    sendMessageToAgent(agentId, message)
+  }
+
+  function handleNudgeCustomize(agentId: string, prefillMessage: string) {
+    // Navigate to the conversation and pre-fill the input
+    handleSelectAgent(agentId)
+    setNewMessage(prefillMessage)
+  }
 
   const activeConversation = conversationList.find(
     (c) => c.agentId === activeConvId
@@ -381,6 +446,14 @@ export default function MessagesPage() {
           />
         </div>
       </div>
+
+      {/* Suggested Outreach from NORA */}
+      <SuggestedOutreach
+        nudges={nudgeList}
+        onDismiss={handleDismissNudge}
+        onSendMessage={handleNudgeSendMessage}
+        onCustomize={handleNudgeCustomize}
+      />
 
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">

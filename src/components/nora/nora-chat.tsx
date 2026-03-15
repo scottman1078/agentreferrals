@@ -7,11 +7,20 @@ import { getInitials } from '@/lib/utils'
 import Link from 'next/link'
 import { X, Send, Sparkles, Star, Loader2, MessageSquare } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
+import { nudges, getActiveNudges } from '@/data/nudges'
 import type { Agent, NoraMessage } from '@/types'
 
 // ── Pattern-matching fallback (used when no API key) ──────────────────
 function buildNoraResponses(agentList: Agent[]) {
+  const activeNudges = getActiveNudges(nudges)
+  const inactivePartnerNudges = activeNudges.filter((n) => n.type === 'inactive_partner')
+
   return [
+    // Nudge-related patterns
+    { patterns: ['remind', 'check in with partners', 'follow up'], response: inactivePartnerNudges.length > 0 ? `You have ${inactivePartnerNudges.length} partner${inactivePartnerNudges.length > 1 ? 's' : ''} you haven't contacted recently:\n\n${inactivePartnerNudges.map((n) => `\u2022 ${n.agentName} — ${n.daysInactive} days inactive`).join('\n')}\n\nWant me to draft check-in messages for any of them?` : "All your partners are up to date! No inactive connections right now.", matchLogic: undefined },
+    { patterns: ['draft a message to ashley', 'message ashley', 'write to ashley'], response: "Here's a personalized check-in for Ashley Monroe:\n\n\"Hey Ashley, just checking in! The Nashville market looks hot right now. Have any clients considering Michigan? I'd love to help. Also congrats on the Martinez closing!\"\n\nWant me to adjust the tone or focus?", matchLogic: () => agentList.filter((a) => a.name.toLowerCase().includes('ashley')) },
+    { patterns: ['who should i reach out to', 'who to contact', 'who to message', 'reach out'], response: activeNudges.length > 0 ? `Based on your activity, I'd prioritize these partners:\n\n${activeNudges.slice(0, 5).map((n, i) => `${i + 1}. ${n.agentName} — ${n.title}`).join('\n')}\n\nWant me to draft messages for any of them?` : "You're all caught up! All your partners have been contacted recently.", matchLogic: undefined },
+    // Original patterns
     { patterns: ['nashville', 'tennessee', 'tn'], response: "I found agents covering Nashville. Ashley Monroe at Real Broker is your top match — 95 ReferNet Score, Relocation & Luxury specialist, responds in < 30 min.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('nashville')) },
     { patterns: ['chicago', 'illinois', 'il'], response: "Marcus Reid at Compass Chicago — 94 ReferNet Score, 88 deals/year, Luxury + Investment + Relocation. Responds within 30 minutes.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('chicago')) },
     { patterns: ['luxury', 'high end', 'million'], response: "Top luxury specialists across your network:", matchLogic: () => agentList.filter((a) => a.tags.includes('Luxury')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
@@ -39,11 +48,22 @@ function findResponse(query: string, agentList: Agent[]): { text: string; agents
   }
 }
 
-export default function NoraChat() {
+interface NoraChatProps {
+  nudgeCount?: number
+}
+
+export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const { agents, getAgentReviewStats } = useAppData()
   const [isOpen, setIsOpen] = useState(false)
+
+  const inactiveCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
+
+  const welcomeMessage = inactiveCount > 0
+    ? `Hi Jason! You have ${inactiveCount} partner${inactiveCount > 1 ? 's' : ''} you haven't contacted in 30+ days. Want me to draft some check-in messages? Or ask me anything about finding referral partners.`
+    : "Hi! I'm NORA, your AI referral assistant. Tell me about your client and I'll find the perfect agent match."
+
   const [messages, setMessages] = useState<NoraMessage[]>([
-    { id: 'welcome', role: 'assistant', content: "Hi! I'm NORA, your AI referral assistant. Tell me about your client and I'll find the perfect agent match.", timestamp: new Date() },
+    { id: 'welcome', role: 'assistant', content: welcomeMessage, timestamp: new Date() },
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
