@@ -75,9 +75,9 @@ export default function LandingPage() {
             Powered by NORA AI
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
-            Save time and make<br />
-            <span className="text-primary">more money.</span><br />
-            Start closing referrals.
+            Save Time. Make<br />
+            <span className="text-primary">More Money.</span><br />
+            Close More Referrals.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
             AgentReferrals replaces chaotic brokerage Facebook groups with an AI-powered platform that instantly matches your clients with verified agents — across any brokerage, any market.
