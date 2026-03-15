@@ -126,12 +126,12 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto overflow-y-hidden px-3 sm:px-5 py-3 sm:py-4 flex-1 items-start snap-x snap-mandatory sm:snap-none">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 flex-1 items-start">
         {PIPELINE_STAGES.map((stage) => {
           const stageColor = STAGE_COLORS[stage]
           const cards = stageReferrals(stage)
           return (
-            <div key={stage} className="min-w-[200px] sm:min-w-[220px] max-w-[220px] flex flex-col gap-2 snap-start">
+            <div key={stage} className="min-w-0 flex flex-col gap-2">
               <div className="flex items-center justify-between px-3 py-2 rounded-lg mb-1" style={{ background: `${stageColor}12` }}>
                 <div className="font-bold text-[11px] font-bold uppercase tracking-wider" style={{ color: stageColor }}>{stage}</div>
                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold bg-secondary text-secondary-foreground">{cards.length}</div>
