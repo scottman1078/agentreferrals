@@ -429,12 +429,11 @@ export default function LandingPage() {
                 }).catch(() => {}) // fire-and-forget
               }
 
-              setAuthLoading(false)
               const params = new URLSearchParams(window.location.search)
-              // New signups go to onboarding; returning users go to dashboard
               const defaultRedirect = authMode === 'signup' ? '/onboarding' : '/dashboard'
               const redirect = params.get('redirect') || defaultRedirect
-              router.push(redirect)
+              // Use window.location for full page load so middleware picks up the auth cookie
+              window.location.href = redirect
             }}>
               {authMode === 'signup' && (
                 <>
