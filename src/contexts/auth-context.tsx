@@ -13,21 +13,25 @@ import type { User, Session } from '@supabase/supabase-js'
 
 export interface ArProfile {
   id: string
-  user_id: string
   full_name: string
   email: string
   phone: string | null
   brokerage_id: string | null
-  role: string | null
+  primary_area: string | null
+  bio: string | null
   avatar_url: string | null
   referral_code: string | null
   refernet_score: number | null
+  response_time_minutes: number | null
+  closed_referrals: number | null
   deals_per_year: number | null
   years_licensed: number | null
   avg_sale_price: number | null
-  markets_served: string[] | null
   tags: string[] | null
   status: string | null
+  subscription_tier: string | null
+  polygon: unknown | null
+  color: string | null
   created_at: string
   updated_at: string
   // Joined brokerage
@@ -80,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           brokerage:ar_brokerages(*)
         `
         )
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single()
 
       if (error) {

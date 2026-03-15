@@ -15,13 +15,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isLoading, profile, isAuthenticated } = useAuth()
   const router = useRouter()
 
-  // Redirect to onboarding if profile is incomplete (no markets_served set)
+  // Redirect to onboarding if profile is incomplete (no primary_area set)
   useEffect(() => {
     if (isLoading) return
     if (
       isAuthenticated &&
       profile &&
-      (!profile.markets_served || profile.markets_served.length === 0)
+      (!profile.primary_area)
     ) {
       router.push('/onboarding')
     }

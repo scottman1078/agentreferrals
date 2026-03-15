@@ -92,7 +92,7 @@ export default function InvitePage() {
         inviterId: user?.id,
         inviterName: profile?.full_name,
         inviterBrokerage: profile?.brokerage?.name,
-        inviterArea: profile?.markets_served?.join(', '),
+        inviterArea: profile?.primary_area,
         referralCode: profile?.referral_code || REFERRAL_CODE,
       }),
     })

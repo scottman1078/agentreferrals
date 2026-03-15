@@ -34,7 +34,7 @@ export default function SettingsPage() {
       setFullName(profile.full_name || '')
       setEmail(profile.email || '')
       setPhone(profile.phone || '')
-      setServiceArea(profile.markets_served?.join(', ') || '')
+      setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
     } else if (!isAuthenticated) {
       // Demo defaults
@@ -64,7 +64,7 @@ export default function SettingsPage() {
       .update({
         full_name: fullName.trim(),
         phone: phone.trim() || null,
-        markets_served: marketsArray.length > 0 ? marketsArray : null,
+        primary_area: serviceArea.trim() || null,
       })
       .eq('id', profile.id)
 

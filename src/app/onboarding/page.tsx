@@ -132,7 +132,7 @@ export default function OnboardingPage() {
       full_name: data.fullName.trim(),
       phone: data.phone.trim() || null,
       brokerage_id: brokerageIdForDb,
-      markets_served: [data.primaryArea.trim()],
+      primary_area: data.primaryArea.trim(),
       years_licensed: data.yearsLicensed,
       deals_per_year: data.dealsPerYear,
       avg_sale_price: data.avgSalePrice,

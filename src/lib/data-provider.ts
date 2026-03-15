@@ -47,7 +47,7 @@ function mapProfileToAgent(profile: ArProfile): Agent {
     name: profile.full_name,
     brokerage: profile.brokerage?.name || 'Unknown',
     brokerageId: profile.brokerage_id || '',
-    area: profile.markets_served?.join(', ') || '',
+    area: profile.primary_area || '',
     tags: profile.tags || [],
     status: (profile.status as 'active' | 'invited') || 'active',
     phone: '',
