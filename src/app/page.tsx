@@ -75,8 +75,8 @@ export default function LandingPage() {
             Powered by NORA AI
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
-            Save Time. Make<br />
-            <span className="text-primary">More Money.</span><br />
+            Save Time.<br />
+            <span className="text-primary">Make More Money.</span><br />
             Close More Referrals.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
