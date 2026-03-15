@@ -269,12 +269,15 @@ export default function OnboardingPage() {
                           : 'border-border bg-card hover:border-primary/30'
                       }`}
                     >
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs text-white mb-2"
-                        style={{ background: b.color }}
-                      >
-                        {b.logo}
-                      </div>
+                      {b.logoUrl ? (
+                        <div className="w-12 h-12 rounded-xl bg-white border border-border flex items-center justify-center p-1.5 overflow-hidden mb-2">
+                          <img src={b.logoUrl} alt={b.name} className="w-12 h-12 object-contain" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs text-white mb-2" style={{ background: b.color }}>
+                          {b.logo}
+                        </div>
+                      )}
                       <div className="font-bold text-sm">{b.name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {b.memberCount.toLocaleString()} agents

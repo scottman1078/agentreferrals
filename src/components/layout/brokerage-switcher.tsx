@@ -58,9 +58,15 @@ export default function BrokerageSwitcher() {
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white" style={{ background: currentBrokerage.color }}>
-            {currentBrokerage.logo.charAt(0)}
-          </div>
+          {currentBrokerage.logoUrl ? (
+            <div className="w-5 h-5 rounded bg-white border border-border flex items-center justify-center overflow-hidden">
+              <img src={currentBrokerage.logoUrl} alt="" className="w-5 h-5 object-contain" />
+            </div>
+          ) : (
+            <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white" style={{ background: currentBrokerage.color }}>
+              {currentBrokerage.logo.charAt(0)}
+            </div>
+          )}
           <span className="hidden xl:inline max-w-[100px] truncate">{currentBrokerage.name}</span>
           <ChevronDown className="w-3 h-3" />
         </button>
@@ -89,9 +95,15 @@ export default function BrokerageSwitcher() {
                       isActive ? 'bg-primary/10' : 'hover:bg-accent'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: b.color }}>
-                      {b.logo}
-                    </div>
+                    {b.logoUrl ? (
+                      <div className="w-8 h-8 rounded-lg bg-white border border-border flex items-center justify-center p-1 overflow-hidden shrink-0">
+                        <img src={b.logoUrl} alt={b.name} className="w-8 h-8 object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: b.color }}>
+                        {b.logo}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold flex items-center gap-2">
                         {b.name}

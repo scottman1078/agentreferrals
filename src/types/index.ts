@@ -1,7 +1,8 @@
 export interface Brokerage {
   id: string
   name: string
-  logo: string // emoji or initial
+  logo: string // fallback initial
+  logoUrl?: string // real logo image URL
   color: string
   memberCount: number
   marketsServed: number
