@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useAppData } from '@/lib/data-provider'
+import { useAuth } from '@/contexts/auth-context'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import type { Invite } from '@/data/invites'
 import {
   Copy, Check, Send, Link2, Mail, MessageSquare, UserPlus,
   Users, Gift, TrendingUp, Clock, Eye, UserCheck, Sparkles,
-  Plus, X, Share2
+  X, Share2, Loader2, MailPlus
 } from 'lucide-react'
 
 const STATUS_CONFIG: Record<Invite['status'], { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -16,8 +19,37 @@ const STATUS_CONFIG: Record<Invite['status'], { label: string; color: string; bg
   active: { label: 'Active', color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: UserCheck },
 }
 
+function InviteSkeleton() {
+  return (
+    <div className="overflow-y-auto h-full p-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <Skeleton className="h-8 w-52 mb-2" />
+            <Skeleton className="h-4 w-80" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-32 rounded-lg" />
+            <Skeleton className="h-9 w-32 rounded-lg" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-[100px] rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-[140px] rounded-xl mb-8" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[60px] rounded-lg mb-2" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function InvitePage() {
-  const { invites: initialInvites, referralCode: REFERRAL_CODE, referralLink: REFERRAL_LINK } = useAppData()
+  const { invites: initialInvites, referralCode: REFERRAL_CODE, referralLink: REFERRAL_LINK, invitesLoading } = useAppData()
+  const { profile, user } = useAuth()
   const [inviteList, setInviteList] = useState<Invite[]>(initialInvites)
 
   // Sync when data source changes
@@ -30,6 +62,9 @@ export default function InvitePage() {
   const [singleForm, setSingleForm] = useState({ name: '', email: '', brokerage: '', market: '' })
   const [bulkEmails, setBulkEmails] = useState('')
   const [sentToast, setSentToast] = useState('')
+  const [sendingInvite, setSendingInvite] = useState(false)
+  const [sendingBulk, setSendingBulk] = useState(false)
+  const [inviteError, setInviteError] = useState('')
 
   const stats = {
     totalSent: inviteList.length,
@@ -45,29 +80,78 @@ export default function InvitePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function sendSingleInvite() {
-    if (!singleForm.email) return
-    const newInvite: Invite = {
-      id: `inv-${Date.now()}`,
-      name: singleForm.name || singleForm.email.split('@')[0],
-      email: singleForm.email,
-      brokerage: singleForm.brokerage || 'Unknown',
-      market: singleForm.market || 'TBD',
-      status: 'pending',
-      sentDate: 'Just now',
-      method: 'email',
-    }
-    setInviteList((prev) => [newInvite, ...prev])
-    setSingleForm({ name: '', email: '', brokerage: '', market: '' })
-    setShowSingleInvite(false)
-    setSentToast(`Invite sent to ${newInvite.name}`)
-    setTimeout(() => setSentToast(''), 3000)
+  async function callInviteApi(inviteeEmail: string, inviteeName: string, inviteeBrokerage: string, inviteeMarket: string) {
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inviteeEmail,
+        inviteeName: inviteeName || inviteeEmail.split('@')[0],
+        inviteeBrokerage: inviteeBrokerage || undefined,
+        inviteeMarket: inviteeMarket || undefined,
+        inviterId: user?.id,
+        inviterName: profile?.full_name,
+        inviterBrokerage: profile?.brokerage?.name,
+        inviterArea: profile?.markets_served?.join(', '),
+        referralCode: profile?.referral_code || REFERRAL_CODE,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to send invite')
+    return data
   }
 
-  function sendBulkInvite() {
+  async function sendSingleInvite() {
+    if (!singleForm.email) return
+    setSendingInvite(true)
+    setInviteError('')
+
+    try {
+      await callInviteApi(singleForm.email, singleForm.name, singleForm.brokerage, singleForm.market)
+
+      // Add to local list optimistically
+      const newInvite: Invite = {
+        id: `inv-${Date.now()}`,
+        name: singleForm.name || singleForm.email.split('@')[0],
+        email: singleForm.email,
+        brokerage: singleForm.brokerage || 'Pending',
+        market: singleForm.market || 'TBD',
+        status: 'pending',
+        sentDate: 'Just now',
+        method: 'email',
+      }
+      setInviteList((prev) => [newInvite, ...prev])
+      setSingleForm({ name: '', email: '', brokerage: '', market: '' })
+      setShowSingleInvite(false)
+      setSentToast(`Invite sent to ${newInvite.name}`)
+      setTimeout(() => setSentToast(''), 3000)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to send invite')
+    } finally {
+      setSendingInvite(false)
+    }
+  }
+
+  async function sendBulkInvite() {
     const emails = bulkEmails.split(/[\n,;]+/).map((e) => e.trim()).filter(Boolean)
     if (emails.length === 0) return
-    const newInvites: Invite[] = emails.map((email, i) => ({
+    setSendingBulk(true)
+    setInviteError('')
+
+    let successCount = 0
+    let failCount = 0
+
+    for (const email of emails) {
+      try {
+        await callInviteApi(email, email.split('@')[0], '', '')
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    // Add successful ones to local list
+    const newInvites: Invite[] = emails.slice(0, successCount).map((email, i) => ({
       id: `inv-bulk-${Date.now()}-${i}`,
       name: email.split('@')[0],
       email,
@@ -80,9 +164,17 @@ export default function InvitePage() {
     setInviteList((prev) => [...newInvites, ...prev])
     setBulkEmails('')
     setShowBulkInvite(false)
-    setSentToast(`${emails.length} invites sent`)
+    setSendingBulk(false)
+
+    if (failCount > 0) {
+      setSentToast(`${successCount} sent, ${failCount} failed`)
+    } else {
+      setSentToast(`${successCount} invites sent`)
+    }
     setTimeout(() => setSentToast(''), 3000)
   }
+
+  if (invitesLoading) return <InviteSkeleton />
 
   return (
     <div className="overflow-y-auto h-full p-6">
@@ -205,6 +297,14 @@ export default function InvitePage() {
             <span className="text-xs text-muted-foreground">{inviteList.length} invites</span>
           </div>
           <div className="divide-y divide-border">
+            {inviteList.length === 0 && (
+              <EmptyState
+                icon={MailPlus}
+                title="No invites sent yet"
+                description="Invite agents to grow your network. When they sign up, they will be connected to you automatically."
+                className="py-12"
+              />
+            )}
             {inviteList.map((invite) => {
               const status = STATUS_CONFIG[invite.status]
               const StatusIcon = status.icon
@@ -244,6 +344,11 @@ export default function InvitePage() {
             </div>
             <div className="px-6 py-5 space-y-4">
               <p className="text-sm text-muted-foreground">They&apos;ll receive an email with your personal invite to join AgentReferrals.ai. When they sign up, they&apos;ll be automatically connected to your network.</p>
+              {inviteError && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                  {inviteError}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Full Name</label>
@@ -269,8 +374,13 @@ export default function InvitePage() {
             </div>
             <div className="flex gap-2 justify-end px-6 py-4 border-t border-border">
               <button onClick={() => setShowSingleInvite(false)} className="h-10 px-5 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors">Cancel</button>
-              <button onClick={sendSingleInvite} className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5">
-                <Send className="w-4 h-4" /> Send Invite
+              <button
+                onClick={sendSingleInvite}
+                disabled={sendingInvite || !singleForm.email}
+                className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {sendingInvite ? 'Sending...' : 'Send Invite'}
               </button>
             </div>
           </div>
@@ -287,6 +397,11 @@ export default function InvitePage() {
             </div>
             <div className="px-6 py-5 space-y-4">
               <p className="text-sm text-muted-foreground">Paste email addresses below — one per line, or separated by commas. Each agent will receive a personalized invite to join your network.</p>
+              {inviteError && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                  {inviteError}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email Addresses</label>
                 <textarea
@@ -303,8 +418,13 @@ export default function InvitePage() {
             </div>
             <div className="flex gap-2 justify-end px-6 py-4 border-t border-border">
               <button onClick={() => setShowBulkInvite(false)} className="h-10 px-5 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors">Cancel</button>
-              <button onClick={sendBulkInvite} className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5">
-                <Send className="w-4 h-4" /> Send All Invites
+              <button
+                onClick={sendBulkInvite}
+                disabled={sendingBulk || bulkEmails.split(/[\n,;]+/).filter((e) => e.trim()).length === 0}
+                className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {sendingBulk ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {sendingBulk ? 'Sending...' : 'Send All Invites'}
               </button>
             </div>
           </div>

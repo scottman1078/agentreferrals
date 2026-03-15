@@ -3,10 +3,33 @@
 import { useEffect, useRef } from 'react'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, formatFullCurrency } from '@/lib/utils'
-import { DollarSign, BarChart3, Handshake, Target } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { DollarSign, BarChart3, Handshake, Target, PieChart } from 'lucide-react'
+
+function ROISkeleton() {
+  return (
+    <div className="overflow-y-auto h-full p-6">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-4 w-44" />
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[120px] rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+        <Skeleton className="h-[200px] rounded-xl" />
+        <Skeleton className="h-[200px] rounded-xl" />
+      </div>
+      <Skeleton className="h-[200px] rounded-xl" />
+    </div>
+  )
+}
 
 export default function ROIPage() {
-  const { referrals, agents } = useAppData()
+  const { referrals, agents, referralsLoading } = useAppData()
   const chartRef = useRef<HTMLCanvasElement>(null)
 
   const closedRefs = referrals.filter((r) => r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')
@@ -65,6 +88,23 @@ export default function ROIPage() {
     })
     return () => { inst?.destroy() }
   }, [])
+
+  if (referralsLoading) return <ROISkeleton />
+
+  if (referrals.length === 0) {
+    return (
+      <div className="overflow-y-auto h-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-bold text-xl">ROI Dashboard</h1>
+        </div>
+        <EmptyState
+          icon={PieChart}
+          title="No data yet"
+          description="Your ROI dashboard will populate as referrals close. Start sending referrals to track your return on investment."
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="overflow-y-auto h-full p-6">

@@ -60,7 +60,9 @@ export default function TopNav({ onInvite }: { onInvite: () => void }) {
 
       {/* Right section */}
       <div className="flex items-center gap-2 ml-auto">
-        <BrokerageSwitcher />
+        <div className="hidden lg:block">
+          <BrokerageSwitcher />
+        </div>
         <ThemeToggle />
         <Link
           href="/dashboard/invite"

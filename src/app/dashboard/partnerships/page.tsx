@@ -5,6 +5,8 @@ import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Handshake,
   AlertTriangle,
@@ -18,6 +20,7 @@ import {
   ChevronUp,
   Search,
   ArrowRight,
+  UserSearch,
 } from 'lucide-react'
 
 type Tab = 'need-you' | 'your-gaps'
@@ -28,8 +31,32 @@ const TREND_COLORS: Record<string, string> = {
   Low: '#94a3b8',
 }
 
+function PartnershipsSkeleton() {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="shrink-0 border-b border-border px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <Skeleton className="w-9 h-9 rounded-xl" />
+          <div>
+            <Skeleton className="h-6 w-52 mb-1" />
+            <Skeleton className="h-3 w-72" />
+          </div>
+        </div>
+      </div>
+      <div className="p-4 sm:p-6">
+        <Skeleton className="h-9 w-full max-w-md mb-5" />
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[280px] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PartnershipsPage() {
-  const { agentsNeedingPartner, coverageGapOpportunities } = useAppData()
+  const { agentsNeedingPartner, coverageGapOpportunities, agentsLoading } = useAppData()
   const [activeTab, setActiveTab] = useState<Tab>('need-you')
   const [offeredIds, setOfferedIds] = useState<Set<string>>(new Set())
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set())
@@ -71,66 +98,72 @@ export default function PartnershipsPage() {
   // Stats
   const totalOpportunities = agentsNeedingPartner.length
   const totalGaps = coverageGapOpportunities.length
-  const avgScore = Math.round(agentsNeedingPartner.reduce((s, a) => s + a.referNetScore, 0) / agentsNeedingPartner.length)
+  const avgScore = agentsNeedingPartner.length > 0
+    ? Math.round(agentsNeedingPartner.reduce((s, a) => s + a.referNetScore, 0) / agentsNeedingPartner.length)
+    : 0
+
+  if (agentsLoading) return <PartnershipsSkeleton />
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="shrink-0 border-b border-border">
-        <div className="flex items-center gap-5 px-6 pt-5 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Handshake className="w-5 h-5 text-primary" />
+        <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
+          <div className="flex items-center gap-2.5 mb-3 sm:mb-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <div>
-              <h1 className="font-bold text-xl">Partnership Opportunities</h1>
-              <p className="text-xs text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <h1 className="font-bold text-lg sm:text-xl">Partnership Opportunities</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Connect with agents who need a partner in your market
               </p>
             </div>
           </div>
-          <div className="flex gap-5 ml-auto">
-            <div className="text-right">
-              <div className="font-bold text-lg">{totalOpportunities}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Need You</div>
+          <div className="flex gap-4 sm:gap-5 sm:justify-end">
+            <div className="sm:text-right">
+              <div className="font-bold text-base sm:text-lg">{totalOpportunities}</div>
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground">Need You</div>
             </div>
-            <div className="text-right">
-              <div className="font-bold text-lg">{totalGaps}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Your Gaps</div>
+            <div className="sm:text-right">
+              <div className="font-bold text-base sm:text-lg">{totalGaps}</div>
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground">Your Gaps</div>
             </div>
-            <div className="text-right">
-              <div className="font-bold text-lg text-primary">{avgScore}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Avg Score</div>
+            <div className="sm:text-right">
+              <div className="font-bold text-base sm:text-lg text-primary">{avgScore}</div>
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground">Avg Score</div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex px-6 gap-1">
+        <div className="flex px-4 sm:px-6 gap-1 overflow-x-auto">
           <button
             onClick={() => setActiveTab('need-you')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'need-you'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" />
-            Agents Who Need You
+            <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Agents Who Need You</span>
+            <span className="sm:hidden">Need You</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
               {totalOpportunities}
             </span>
           </button>
           <button
             onClick={() => setActiveTab('your-gaps')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'your-gaps'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <MapPin className="w-3.5 h-3.5" />
-            Your Coverage Gaps
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Your Coverage Gaps</span>
+            <span className="sm:hidden">Your Gaps</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
               {totalGaps}
             </span>
@@ -141,7 +174,7 @@ export default function PartnershipsPage() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'need-you' && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Search */}
             <div className="flex items-center gap-3 mb-5">
               <div className="relative flex-1 max-w-md">
@@ -168,6 +201,13 @@ export default function PartnershipsPage() {
             </div>
 
             {/* Agent cards grid */}
+            {sortedAgents.length === 0 && agentsNeedingPartner.length === 0 && (
+              <EmptyState
+                icon={UserSearch}
+                title="Complete your profile to see matches"
+                description="Complete your profile to see agents who need a partner in your market. Add your markets served so we can find opportunities for you."
+              />
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
               {sortedAgents.map((agent) => {
                 const isOffered = offeredIds.has(agent.id)
@@ -282,7 +322,7 @@ export default function PartnershipsPage() {
         )}
 
         {activeTab === 'your-gaps' && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Info banner */}
             <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5 mb-5">
               <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />

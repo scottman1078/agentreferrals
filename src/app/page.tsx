@@ -19,12 +19,17 @@ export default function LandingPage() {
   const [fullName, setFullName] = useState('')
   const [authError, setAuthError] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMessage, setResetMessage] = useState<string | null>(null)
+  const [resetError, setResetError] = useState<string | null>(null)
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ═══ NAV ═══ */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">
               A
@@ -43,7 +48,7 @@ export default function LandingPage() {
             <ThemeToggle />
             <button
               onClick={() => setShowLogin(true)}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Sign In
             </button>
@@ -58,7 +63,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="relative pt-32 pb-20 px-6">
+      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6">
         {/* Gradient bg */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
@@ -69,12 +74,12 @@ export default function LandingPage() {
             <Sparkles className="w-3.5 h-3.5" />
             Powered by NORA AI
           </div>
-          <h1 className="font-extrabold text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
+          <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             Stop posting in<br />
             <span className="text-primary">Facebook groups.</span><br />
             Start closing referrals.
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
             AgentReferrals.ai replaces chaotic brokerage Facebook groups with an AI-powered platform that instantly matches your clients with verified agents — across any brokerage, any market.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -88,7 +93,7 @@ export default function LandingPage() {
               Watch Demo <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex items-center justify-center gap-6 mt-10 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero platform fees</span>
             <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> 17,000+ agents</span>
             <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-primary" /> Keep 100% of your fees</span>
@@ -97,10 +102,10 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ SOCIAL PROOF ═══ */}
-      <section className="py-12 border-y border-border bg-card/50">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-8 sm:py-12 border-y border-border bg-card/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <p className="text-center text-sm text-muted-foreground mb-8 font-medium">Trusted by agents at leading brokerages</p>
-          <div className="flex items-center justify-center gap-10 flex-wrap opacity-60">
+          <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap opacity-60">
             {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker', 'Berkshire Hathaway'].map((b) => (
               <span key={b} className="font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
             ))}
@@ -114,7 +119,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-destructive">The Problem</span>
-              <h2 className="font-extrabold text-3xl mt-3 mb-4">3,000 agents. One Facebook group. Zero structure.</h2>
+              <h2 className="font-extrabold text-2xl sm:text-3xl mt-3 mb-4">3,000 agents. One Facebook group. Zero structure.</h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Every day, agents post &quot;Looking for someone in [city]!&quot; into brokerage Facebook groups. Replies get buried. There&apos;s no vetting, no tracking, no accountability. Referral fees get lost. Clients fall through the cracks.
               </p>
@@ -134,7 +139,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-primary">The Solution</span>
-              <h2 className="font-extrabold text-3xl mt-3 mb-4">AI-matched referrals in seconds. Not hours.</h2>
+              <h2 className="font-extrabold text-2xl sm:text-3xl mt-3 mb-4">AI-matched referrals in seconds. Not hours.</h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Tell NORA your client&apos;s needs. She instantly surfaces verified agents matched by market, price point, specialization, and track record — with one-click referral agreements.
               </p>
@@ -161,9 +166,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Features</span>
-            <h2 className="font-extrabold text-4xl mt-3">Everything you need to refer with confidence</h2>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Everything you need to refer with confidence</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
               { icon: Sparkles, title: 'NORA AI Assistant', desc: 'Describe your client\'s needs in natural language. NORA finds the perfect agent match across your entire network.', color: 'text-primary' },
               { icon: MapPin, title: 'Network Map', desc: 'Visualize agent territories, identify coverage gaps, and spot market opportunities with an interactive map.', color: 'text-blue-500' },
@@ -190,7 +195,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">How It Works</span>
-            <h2 className="font-extrabold text-4xl mt-3">Three steps. One closed referral.</h2>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Three steps. One closed referral.</h2>
           </div>
           <div className="space-y-12">
             {[
@@ -216,7 +221,7 @@ export default function LandingPage() {
       <section id="brokerages" className="py-24 px-6 bg-card/50 border-y border-border">
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Multi-Brokerage</span>
-          <h2 className="font-extrabold text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
+          <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-12">
             Every brokerage gets their own private space. Search within your brokerage first — when you need to go outside, expand to the full AgentReferrals.ai network with one click.
           </p>
@@ -248,10 +253,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Pricing</span>
-            <h2 className="font-extrabold text-4xl mt-3 mb-4">Keep 100% of your referral fees.</h2>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3 mb-4">Keep 100% of your referral fees.</h2>
             <p className="text-muted-foreground">No platform fees. No percentage cuts. Just a simple monthly subscription.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {[
               {
                 name: 'Starter', price: '$0', period: '/forever', desc: 'Try the network risk-free',
@@ -285,7 +290,7 @@ export default function LandingPage() {
                 )}
                 <div className="text-sm font-semibold text-muted-foreground mb-2">{plan.name}</div>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="font-extrabold text-4xl">{plan.price}</span>
+                  <span className="font-extrabold text-3xl sm:text-4xl">{plan.price}</span>
                   <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
@@ -319,7 +324,7 @@ export default function LandingPage() {
       {/* ═══ CTA ═══ */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-extrabold text-4xl mb-4">Ready to modernize your referral network?</h2>
+          <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mb-4">Ready to modernize your referral network?</h2>
           <p className="text-muted-foreground text-lg mb-8">Join 17,000+ agents who&apos;ve upgraded from Facebook groups to AI-powered referrals.</p>
           <button
             onClick={() => setShowLogin(true)}
@@ -457,9 +462,21 @@ export default function LandingPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 required
               />
+              {authMode === 'signin' && (
+                <div className="text-right mb-4">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email); setResetMessage(null); setResetError(null) }}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+              {authMode === 'signup' && <div className="mb-4" />}
               <button
                 type="submit"
                 disabled={authLoading}
@@ -471,6 +488,77 @@ export default function LandingPage() {
             <p className="text-center text-xs text-muted-foreground mt-5">
               Demo credentials pre-filled — <span className="text-primary font-medium cursor-pointer">click Sign In</span>
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ FORGOT PASSWORD MODAL ═══ */}
+      {showForgotPassword && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowForgotPassword(false) }}
+        >
+          <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
+              <span className="font-extrabold text-xl tracking-tight">
+                Agent<span className="text-primary">Referrals</span><span className="text-muted-foreground text-xs font-medium">.ai</span>
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Enter your email and we&apos;ll send you a link to reset your password.
+            </p>
+
+            {resetMessage && (
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-4">
+                {resetMessage}
+              </div>
+            )}
+
+            {resetError && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium mb-4">
+                {resetError}
+              </div>
+            )}
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              setResetLoading(true)
+              setResetError(null)
+              setResetMessage(null)
+              const supabase = createClient()
+              const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                redirectTo: 'https://agentreferrals.ai/reset-password',
+              })
+              setResetLoading(false)
+              if (error) {
+                setResetError(error.message)
+                return
+              }
+              setResetMessage('Check your email for a reset link')
+            }}>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                required
+              />
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="w-full mt-3 text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Back to Sign In
+            </button>
           </div>
         </div>
       )}

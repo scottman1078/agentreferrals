@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAppData } from '@/lib/data-provider'
 import { formatFullCurrency } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/empty-state'
 import { X, Check, Clock, FileText } from 'lucide-react'
 import type { Document } from '@/types'
 
@@ -23,6 +24,14 @@ export default function DocumentsPage() {
         <h1 className="font-bold text-xl">Referral Agreements</h1>
         <span className="px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground">{documents.length} documents</span>
       </div>
+
+      {documents.length === 0 && (
+        <EmptyState
+          icon={FileText}
+          title="No agreements yet"
+          description="Agreements are created when you send a referral. Once a referral is in progress, the agreement will appear here."
+        />
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {documents.map((doc) => {

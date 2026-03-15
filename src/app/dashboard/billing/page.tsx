@@ -36,7 +36,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="overflow-y-auto h-full p-6">
+    <div className="overflow-y-auto h-full p-4 sm:p-6">
       <div className="max-w-[1100px] mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -50,22 +50,22 @@ export default function BillingPage() {
         </div>
 
         {/* Current Plan Card */}
-        <div className="p-6 rounded-xl border border-border bg-card mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl ${tierColors[currentTier].bg} flex items-center justify-center`}>
+        <div className="p-4 sm:p-6 rounded-xl border border-border bg-card mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${tierColors[currentTier].bg} flex items-center justify-center shrink-0`}>
                 {(() => { const Icon = tierIcons[currentTier]; return <Icon className={`w-5 h-5 ${tierColors[currentTier].text}`} /> })()}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-base">
+                  <span className="font-bold text-sm sm:text-base">
                     {currentPlan.name} Plan
                   </span>
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${tierColors[currentTier].badge}`}>
                     Current
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                   {currentTier === 'starter'
                     ? "You're on the free plan. Upgrade to unlock more features."
                     : `${currentPlan.priceLabel} — Next billing date: April 14, 2026`}
@@ -75,7 +75,7 @@ export default function BillingPage() {
             {currentTier !== 'starter' && (
               <button
                 onClick={handleManage}
-                className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+                className="h-9 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors w-full sm:w-auto"
               >
                 Manage Subscription
               </button>
