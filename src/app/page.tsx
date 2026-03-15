@@ -14,7 +14,7 @@ export default function LandingPage() {
   const router = useRouter()
   const [showLogin, setShowLogin] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
-  const [email, setEmail] = useState('jason@jobrienhomes.com')
+  const [email, setEmail] = useState('demo@agentreferrals.ai')
   const [password, setPassword] = useState('demo1234')
   const [fullName, setFullName] = useState('')
   const [authError, setAuthError] = useState<string | null>(null)
