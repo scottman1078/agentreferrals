@@ -4,7 +4,7 @@ const client = process.env.POSTMARK_SERVER_TOKEN
   ? new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN)
   : null
 
-const FROM_EMAIL = 'noreply@agentreferrals.ai'
+const FROM_EMAIL = 'info@agentreferrals.ai'
 const FROM_NAME = 'AgentReferrals.ai'
 
 export interface InviteEmailData {
