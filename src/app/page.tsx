@@ -75,8 +75,8 @@ export default function LandingPage() {
             Powered by NORA AI
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
-            Stop posting in<br />
-            <span className="text-primary">Facebook groups.</span><br />
+            Save time and make<br />
+            <span className="text-primary">more money.</span><br />
             Start closing referrals.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
