@@ -117,13 +117,13 @@ export default function NoraChat() {
       {/* FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[900] w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
+        className="fixed bottom-[88px] right-6 sm:bottom-[88px] sm:right-6 z-[900] w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
       >
         {isOpen ? <X className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
       </button>
 
       {isOpen && (
-        <div className="fixed inset-x-0 bottom-14 sm:bottom-auto sm:inset-x-auto sm:bottom-22 sm:right-6 z-[900] sm:w-[380px] h-[calc(100vh-8rem)] sm:h-[520px] flex flex-col sm:rounded-2xl border-t sm:border border-border bg-card shadow-2xl overflow-hidden">
+        <div className="fixed inset-x-0 bottom-[88px] sm:bottom-auto sm:inset-x-auto sm:bottom-[104px] sm:right-6 z-[900] sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] flex flex-col sm:rounded-2xl border-t sm:border border-border bg-card shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">

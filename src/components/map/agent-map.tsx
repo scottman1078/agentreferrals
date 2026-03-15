@@ -7,7 +7,7 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
-import PartnerSearch from '@/components/search/partner-search'
+import AgentPeekCard from '@/components/map/agent-peek-card'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -27,9 +27,10 @@ export default function AgentMap() {
   const [showMigration, setShowMigration] = useState(false)
   const [leafletLoaded, setLeafletLoaded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const { resolvedTheme } = useTheme()
   const { filteredAgents } = useBrokerage()
-  const { voidZones, getAgentReviewStats } = useAppData()
+  const { voidZones } = useAppData()
 
   useEffect(() => setMounted(true), [])
 
@@ -73,6 +74,11 @@ export default function AgentMap() {
     tileLayerRef.current = tileLayer
     mapInstance.current = map
     renderAgents(filteredAgents, map)
+
+    // Clicking the map background dismisses the peek card
+    map.on('click', () => {
+      setSelectedAgent(null)
+    })
 
     return () => {
       map.remove()
@@ -125,7 +131,6 @@ export default function AgentMap() {
     layersRef.current = []
 
     agentList.forEach((agent) => {
-      // Filled polygon with rounded corners feel
       const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
         color: agent.color,
         weight: agent.isPrimary ? 3 : 1.5,
@@ -147,6 +152,7 @@ export default function AgentMap() {
           display:flex;align-items:center;justify-content:center;
           font-size:11px;font-weight:700;color:white;
           font-family:var(--font-dm-sans),system-ui,sans-serif;
+          cursor:pointer;
         ">${initials}</div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
@@ -154,37 +160,19 @@ export default function AgentMap() {
 
       const marker = L!.marker(center, { icon: markerIcon }).addTo(map)
 
-      const reviewStats = getAgentReviewStats(agent.id)
-      const starsHtml = reviewStats ? `
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
-            ${'★'.repeat(Math.round(reviewStats.avgRating)).split('').map(() => '<span style="color:#fbbf24;font-size:13px;">★</span>').join('')}${'★'.repeat(5 - Math.round(reviewStats.avgRating)).split('').map(() => '<span style="color:rgba(128,128,128,0.3);font-size:13px;">★</span>').join('')}
-            <span style="font-weight:700;font-size:12px;margin-left:2px;">${reviewStats.avgRating}</span>
-            <span style="font-size:11px;opacity:0.5;">(${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''})</span>
-          </div>` : ''
+      // Click handler — show peek card instead of popup
+      const handleAgentClick = () => {
+        setSelectedAgent(agent)
+      }
+      poly.on('click', (e) => {
+        L!.DomEvent.stopPropagation(e)
+        handleAgentClick()
+      })
+      marker.on('click', (e) => {
+        L!.DomEvent.stopPropagation(e)
+        handleAgentClick()
+      })
 
-      const popupContent = `
-        <div style="min-width:220px;font-family:var(--font-dm-sans),system-ui,sans-serif;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            <div style="width:40px;height:40px;border-radius:50%;background:${agent.color};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;flex-shrink:0;">${initials}</div>
-            <div>
-              <div style="font-weight:700;font-size:14px;line-height:1.3;">${agent.name}</div>
-              <div style="font-size:11px;opacity:0.6;">${agent.brokerage}</div>
-            </div>
-          </div>
-          ${starsHtml}
-          <div style="font-size:12px;margin-bottom:8px;opacity:0.8;">${agent.area}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
-            ${agent.tags.map((t) => `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${TAG_COLORS[t]};color:white;">${TAG_EMOJIS[t] || ''} ${t}</span>`).join('')}
-          </div>
-          <div style="display:flex;gap:12px;font-size:11px;opacity:0.7;padding-top:8px;border-top:1px solid rgba(128,128,128,0.2);">
-            <span><b>${agent.dealsPerYear}</b> deals/yr</span>
-            <span><b>${formatCurrency(agent.avgSalePrice)}</b> avg</span>
-            ${agent.referNetScore ? `<span style="color:${agent.referNetScore >= 90 ? '#22c55e' : '#f59e0b'};font-weight:600;">Score: ${agent.referNetScore}</span>` : ''}
-          </div>
-        </div>
-      `
-      poly.bindPopup(popupContent)
-      marker.bindPopup(popupContent)
       layersRef.current.push(poly, marker)
     })
   }, [])
@@ -245,15 +233,9 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Search bar */}
-      <div className="absolute top-3 left-3 right-3 z-[1001]">
-        <PartnerSearch onResultSelect={handleSearchResult} />
-      </div>
-
-      {/* Controls bar */}
-      <div className="absolute top-16 left-3 right-3 z-[1000] flex items-center gap-2 flex-wrap">
-        {/* Tag filter pills */}
-        <div className="flex items-center gap-1 px-1.5 py-1 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
+      {/* Floating filter chips — below the floating top bar */}
+      <div className="fixed top-[76px] left-4 z-[400] flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1 px-1.5 py-1 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
           <span className="text-[10px] font-semibold uppercase tracking-wider px-2 text-muted-foreground">Filter</span>
           {tagChips.map((chip) => {
             const isActive = activeTag === chip.key
@@ -261,7 +243,7 @@ export default function AgentMap() {
               <button
                 key={chip.key}
                 onClick={() => setActiveTag(chip.key)}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
                 style={{
                   background: isActive ? chip.color : 'transparent',
                   color: isActive ? 'white' : undefined,
@@ -277,7 +259,7 @@ export default function AgentMap() {
         {/* Toggle buttons */}
         <button
           onClick={() => setShowVoids(!showVoids)}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold border transition-all backdrop-blur-md shadow-lg ${
+          className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all backdrop-blur-md shadow-md ${
             showVoids
               ? 'bg-destructive/10 border-destructive/30 text-destructive'
               : 'bg-card/90 border-border text-muted-foreground hover:text-foreground'
@@ -289,7 +271,7 @@ export default function AgentMap() {
 
         <button
           onClick={() => setShowMigration(!showMigration)}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold border transition-all backdrop-blur-md shadow-lg ${
+          className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all backdrop-blur-md shadow-md ${
             showMigration
               ? 'bg-primary/10 border-primary/30 text-primary'
               : 'bg-card/90 border-border text-muted-foreground hover:text-foreground'
@@ -302,7 +284,7 @@ export default function AgentMap() {
 
       {/* Migration legend */}
       {showMigration && (
-        <div className="absolute bottom-8 left-3 z-[1000] p-3 px-4 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
+        <div className="fixed bottom-[88px] left-4 z-[400] p-3 px-4 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
           <div className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted-foreground">Migration Flow</div>
           {[
             { color: '#f97316', label: 'Inflow Market (high demand)' },
@@ -317,12 +299,21 @@ export default function AgentMap() {
         </div>
       )}
 
-      {/* Agent count badge */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-lg text-xs text-muted-foreground">
+      {/* Agent count badge — above the pill nav */}
+      <div className="fixed bottom-[76px] left-1/2 -translate-x-1/2 z-[400] px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-lg text-xs text-muted-foreground">
         <span className="font-bold text-foreground">{activeTag === 'all' ? filteredAgents.length : filteredAgents.filter(a => a.tags.includes(activeTag)).length}</span> agents shown
       </div>
 
+      {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* Bottom peek card — shown when an agent is selected */}
+      {selectedAgent && (
+        <AgentPeekCard
+          agent={selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+        />
+      )}
     </div>
   )
 }
