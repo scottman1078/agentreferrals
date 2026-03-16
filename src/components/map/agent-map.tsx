@@ -364,6 +364,19 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
+      {/* Map key legend */}
+      <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3.5 h-3.5 rounded-full bg-primary border border-white shadow-sm" />
+          <span className="text-[10px] font-semibold text-muted-foreground">Partner</span>
+        </div>
+        <div className="w-px h-3 bg-border" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3.5 h-3.5 rounded-full bg-white border-2 border-primary" />
+          <span className="text-[10px] font-semibold text-muted-foreground">Not Connected</span>
+        </div>
+      </div>
+
       {/* Floating filter chips */}
       <div className="fixed top-[76px] left-4 z-[400] flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1 px-1.5 py-1 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
