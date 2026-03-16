@@ -90,8 +90,11 @@ export default function AgentMap() {
     L.control.zoom({ position: 'bottomleft' }).addTo(map)
 
     const tileLayer = L.tileLayer(isDark ? DARK_TILES : LIGHT_TILES, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      attribution: '',
     }).addTo(map)
+
+    // Hide Leaflet attribution control
+    map.attributionControl.setPrefix('')
 
     tileLayerRef.current = tileLayer
     mapInstance.current = map

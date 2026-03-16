@@ -6,7 +6,7 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
 import Link from 'next/link'
-import { X, Send, Sparkles, Star, Loader2, MessageSquare } from 'lucide-react'
+import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2 } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { nudges, getActiveNudges } from '@/data/nudges'
 import type { Agent, NoraMessage } from '@/types'
@@ -57,6 +57,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const { agents, getAgentReviewStats } = useAppData()
   const { profile } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [isFullScreen, setIsFullScreen] = useState(false)
   const hasAutoOpened = useRef(false)
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
@@ -260,7 +261,11 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-x-0 bottom-[88px] sm:inset-x-auto sm:bottom-[152px] sm:right-6 z-[900] sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] flex flex-col sm:rounded-2xl border-t sm:border border-border bg-card shadow-2xl overflow-hidden">
+        <div className={`fixed z-[900] flex flex-col border-t sm:border border-border bg-card shadow-2xl overflow-hidden transition-all duration-300 ${
+          isFullScreen
+            ? 'inset-4 sm:inset-6 rounded-2xl'
+            : 'inset-x-0 bottom-[88px] sm:inset-x-auto sm:bottom-[152px] sm:right-6 sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] sm:rounded-2xl'
+        }`}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
@@ -274,6 +279,13 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-[10px] font-semibold text-emerald-500">Online</span>
             </div>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title={isFullScreen ? 'Minimize' : 'Full screen'}
+            >
+              {isFullScreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
           </div>
 
           {/* Messages */}
