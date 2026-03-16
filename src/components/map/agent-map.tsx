@@ -7,6 +7,7 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
+import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
 import type { Agent } from '@/types'
 
@@ -28,8 +29,9 @@ export default function AgentMap() {
   const [leafletLoaded, setLeafletLoaded] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
+  const [hoveredAgent, setHoveredAgent] = useState<{ agent: Agent; position: { x: number; y: number } } | null>(null)
   const { resolvedTheme } = useTheme()
-  const { filteredAgents } = useBrokerage()
+  const { filteredAgents, scope } = useBrokerage()
   const { voidZones } = useAppData()
 
   useEffect(() => setMounted(true), [])
@@ -58,7 +60,7 @@ export default function AgentMap() {
 
     const isDark = resolvedTheme === 'dark'
 
-    // Bounds: US + Canada with padding (prevents zooming out to world view)
+    // Bounds: US + Canada with padding
     const usBounds = L.latLngBounds([15, -175], [75, -45])
 
     const map = L.map(mapRef.current, {
@@ -81,10 +83,19 @@ export default function AgentMap() {
     mapInstance.current = map
     renderAgents(filteredAgents, map, true)
 
-    // Clicking the map background dismisses the peek card
-    map.on('click', () => {
+    // Click empty area → zoom in 2 levels
+    map.on('click', (e) => {
       setSelectedAgent(null)
+      setHoveredAgent(null)
+      const currentZoom = map.getZoom()
+      if (currentZoom < 12) {
+        map.flyTo(e.latlng, currentZoom + 2, { duration: 0.8 })
+      }
     })
+
+    // Clear hover on zoom/move
+    map.on('zoomstart', () => setHoveredAgent(null))
+    map.on('movestart', () => setHoveredAgent(null))
 
     return () => {
       map.remove()
@@ -139,7 +150,6 @@ export default function AgentMap() {
     const allBounds: L.LatLngBounds[] = []
 
     agentList.forEach((agent) => {
-      // Skip agents with no/invalid polygon data
       if (!agent.polygon || !Array.isArray(agent.polygon) || agent.polygon.length < 3) return
 
       const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
@@ -152,7 +162,6 @@ export default function AgentMap() {
 
       allBounds.push(poly.getBounds())
 
-      // Add a center marker with agent initials
       const center = poly.getBounds().getCenter()
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
       const markerIcon = L!.divIcon({
@@ -173,23 +182,43 @@ export default function AgentMap() {
 
       const marker = L!.marker(center, { icon: markerIcon }).addTo(map)
 
-      // Click handler — show peek card instead of popup
-      const handleAgentClick = () => {
-        setSelectedAgent(agent)
+      // ── Hover → show lightweight preview ──
+      const showHover = (e: L.LeafletMouseEvent) => {
+        if (selectedAgent) return // don't show hover if full card is open
+        const containerPoint = map.latLngToContainerPoint(e.latlng)
+        const mapEl = map.getContainer().getBoundingClientRect()
+        setHoveredAgent({
+          agent,
+          position: { x: mapEl.left + containerPoint.x, y: mapEl.top + containerPoint.y },
+        })
       }
-      poly.on('click', (e) => {
+      const hideHover = () => {
+        setHoveredAgent((prev) => (prev?.agent.id === agent.id ? null : prev))
+      }
+
+      poly.on('mouseover', showHover)
+      poly.on('mouseout', hideHover)
+      marker.on('mouseover', showHover)
+      marker.on('mouseout', hideHover)
+
+      // ── Click → fly to territory + show full card ──
+      const handleAgentClick = (e: L.LeafletMouseEvent) => {
         L!.DomEvent.stopPropagation(e)
-        handleAgentClick()
-      })
-      marker.on('click', (e) => {
-        L!.DomEvent.stopPropagation(e)
-        handleAgentClick()
-      })
+        setHoveredAgent(null)
+        setSelectedAgent(agent)
+
+        // Fly to the agent's territory
+        const agentBounds = poly.getBounds()
+        map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 10, duration: 0.8 })
+      }
+
+      poly.on('click', handleAgentClick)
+      marker.on('click', handleAgentClick)
 
       layersRef.current.push(poly, marker)
     })
 
-    // Fit map to actual agent locations
+    // Fit map to actual agent locations on initial load
     if (fitBounds && allBounds.length > 0) {
       let combined = allBounds[0]
       for (let i = 1; i < allBounds.length; i++) {
@@ -197,17 +226,15 @@ export default function AgentMap() {
       }
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
-  }, [])
+  }, [selectedAgent])
 
-  // Handle search result — fly to location, add marker, highlight matching polygons
+  // Handle search result
   const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
     if (!mapInstance.current || !L) return
 
-    // Clear previous search layers
     searchLayersRef.current.forEach((l) => mapInstance.current?.removeLayer(l))
     searchLayersRef.current = []
 
-    // Add a pin marker at the searched location
     const pinIcon = L.divIcon({
       className: 'search-pin',
       html: `<div style="
@@ -224,7 +251,6 @@ export default function AgentMap() {
     const searchMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(mapInstance.current)
     searchLayersRef.current.push(searchMarker)
 
-    // Highlight matching agent polygons with a glow effect
     matchedAgents.forEach((agent) => {
       if (!agent.polygon || agent.polygon.length < 3) return
       const glowPoly = L!.polygon(agent.polygon as L.LatLngExpression[], {
@@ -237,7 +263,6 @@ export default function AgentMap() {
       searchLayersRef.current.push(glowPoly)
     })
 
-    // Fly to the searched location
     const zoom = matchedAgents.length > 0 ? 9 : 10
     mapInstance.current.flyTo([lat, lng], zoom, { duration: 1.2 })
   }, [])
@@ -255,7 +280,7 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Floating filter chips — below the floating top bar */}
+      {/* Floating filter chips */}
       <div className="fixed top-[76px] left-4 z-[400] flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1 px-1.5 py-1 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
           <span className="text-[10px] font-semibold uppercase tracking-wider px-2 text-muted-foreground">Filter</span>
@@ -278,7 +303,6 @@ export default function AgentMap() {
           })}
         </div>
 
-        {/* Toggle buttons */}
         <button
           onClick={() => setShowVoids(!showVoids)}
           className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all backdrop-blur-md shadow-md ${
@@ -321,15 +345,25 @@ export default function AgentMap() {
         </div>
       )}
 
-      {/* Agent count badge — above the pill nav */}
+      {/* Scope hint */}
       <div className="fixed bottom-[76px] left-1/2 -translate-x-1/2 z-[400] px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-lg text-xs text-muted-foreground">
-        <span className="font-bold text-foreground">{activeTag === 'all' ? filteredAgents.length : filteredAgents.filter(a => a.tags.includes(activeTag)).length}</span> agents shown
+        <span className="font-bold text-foreground">
+          {activeTag === 'all' ? filteredAgents.length : filteredAgents.filter(a => a.tags.includes(activeTag)).length}
+        </span>
+        {' '}agents shown
+        {scope === 'my-network' && ' · Coverage view'}
+        {scope === 'my-brokerage' && ' · Brokerage view'}
       </div>
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
 
-      {/* Bottom peek card — shown when an agent is selected */}
+      {/* Hover preview card */}
+      {hoveredAgent && !selectedAgent && (
+        <AgentHoverCard agent={hoveredAgent.agent} position={hoveredAgent.position} />
+      )}
+
+      {/* Full peek card on click */}
       {selectedAgent && (
         <AgentPeekCard
           agent={selectedAgent}

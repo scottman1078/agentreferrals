@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     // ── Build context blocks for the system prompt ──
     const agentSummary = (agents || [])
       .map((a) => {
-        const brokerageName = (a.brokerage as { name: string } | null)?.name || 'Independent'
+        const brokerageName = (a.brokerage as unknown as { name: string } | null)?.name || 'Independent'
         return `- ${a.full_name} (id: "${a.id}") | ${brokerageName} | ${a.primary_area || 'N/A'} | Tags: ${(a.tags || []).join(', ')} | ${a.deals_per_year || 0} deals/yr | ${a.years_licensed || 0} yrs | Avg: $${(a.avg_sale_price || 0).toLocaleString()} | Score: ${a.refernet_score ?? 'N/A'} | Response: ${a.response_time_minutes ? `${a.response_time_minutes} min` : 'N/A'} | Closed: ${a.closed_referrals || 0}`
       })
       .join('\n')
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       ? `\n\nNEW AGENTS (joined last 14 days):\n` +
         recentAgents!
           .map((a) => {
-            const bName = (a.brokerage as { name: string } | null)?.name || 'Independent'
+            const bName = (a.brokerage as unknown as { name: string } | null)?.name || 'Independent'
             return `- ${a.full_name} | ${bName} | ${a.primary_area || 'N/A'} | Tags: ${(a.tags || []).join(', ')}`
           })
           .join('\n')
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       : ''
 
     const userContext = userProfile
-      ? `\n\nCURRENT USER: ${userProfile.full_name} | ${(userProfile.brokerage as { name: string } | null)?.name || 'Independent'} | ${userProfile.primary_area || 'N/A'} | Specializations: ${(userProfile.tags || []).join(', ')}`
+      ? `\n\nCURRENT USER: ${userProfile.full_name} | ${(userProfile.brokerage as unknown as { name: string } | null)?.name || 'Independent'} | ${userProfile.primary_area || 'N/A'} | Specializations: ${(userProfile.tags || []).join(', ')}`
       : ''
 
     const systemPrompt = `You are NORA, the AI referral assistant for AgentReferrals — a platform where real estate agents find and manage referral partners across the US and Canada.
