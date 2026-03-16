@@ -3,20 +3,67 @@
 import { useState, useRef, useEffect } from 'react'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
-import { getPartnerAgentIds } from '@/data/partnerships'
-import { ChevronDown, Check } from 'lucide-react'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { getPartnerAgentIds, get1DegreeAgentIds, get2DegreeAgentIds } from '@/data/partnerships'
+import { ChevronDown, Check, Lock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import type { BrokerageScope } from '@/types'
+
+interface ScopeTab {
+  id: BrokerageScope
+  label: string
+  count: number
+  locked: boolean
+  requiredTier?: string
+}
 
 export default function BrokerageSwitcher() {
   const { currentBrokerage, allBrokerages, scope, setScope, switchBrokerage } = useBrokerage()
   const { agents } = useAppData()
+  const { hasFeature, requiredTier } = useFeatureGate()
+  const router = useRouter()
   const [showDropdown, setShowDropdown] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
 
   const partnerIds = getPartnerAgentIds('jason')
-  const myNetworkCount = agents.filter((a) => partnerIds.includes(a.id)).length
-  const myAgentCount = agents.filter((a) => a.brokerageId === currentBrokerage.id).length
-  const allAgentCount = agents.length
+  const oneDegreeIds = get1DegreeAgentIds('jason')
+  const twoDegreeIds = get2DegreeAgentIds('jason')
+
+  const tabs: ScopeTab[] = [
+    {
+      id: 'my-network',
+      label: 'My Network',
+      count: agents.filter((a) => partnerIds.includes(a.id)).length,
+      locked: false,
+    },
+    {
+      id: '1-degree',
+      label: '1 Degree',
+      count: oneDegreeIds.length,
+      locked: !hasFeature('networkDegree1'),
+      requiredTier: requiredTier('networkDegree1') ?? undefined,
+    },
+    {
+      id: '2-degree',
+      label: '2 Degrees',
+      count: twoDegreeIds.length,
+      locked: !hasFeature('networkDegree2'),
+      requiredTier: requiredTier('networkDegree2') ?? undefined,
+    },
+    {
+      id: 'my-brokerage',
+      label: currentBrokerage.name,
+      count: agents.filter((a) => a.brokerageId === currentBrokerage.id).length,
+      locked: false,
+    },
+    {
+      id: 'all-network',
+      label: 'All',
+      count: agents.length,
+      locked: false,
+    },
+  ]
 
   useEffect(() => {
     if (showDropdown && buttonRef.current) {
@@ -28,41 +75,38 @@ export default function BrokerageSwitcher() {
     }
   }, [showDropdown])
 
+  const handleTabClick = (tab: ScopeTab) => {
+    if (tab.locked) {
+      router.push('/dashboard/billing')
+      return
+    }
+    setScope(tab.id)
+  }
+
   return (
     <div className="relative">
       <div className="flex items-center gap-1.5">
-        {/* Scope toggle */}
+        {/* Scope tabs */}
         <div className="flex rounded-lg border border-border bg-background p-0.5">
-          <button
-            onClick={() => setScope('my-network')}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${
-              scope === 'my-network'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            My Network ({myNetworkCount})
-          </button>
-          <button
-            onClick={() => setScope('my-brokerage')}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${
-              scope === 'my-brokerage'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {currentBrokerage.name} ({myAgentCount})
-          </button>
-          <button
-            onClick={() => setScope('all-network')}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${
-              scope === 'all-network'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            All ({allAgentCount})
-          </button>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab)}
+              className={`relative px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all flex items-center gap-1 ${
+                scope === tab.id
+                  ? 'bg-primary text-primary-foreground'
+                  : tab.locked
+                    ? 'text-muted-foreground/50 cursor-pointer hover:text-muted-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={tab.locked ? `Requires ${tab.requiredTier} plan` : undefined}
+            >
+              {tab.locked && <Lock className="w-2.5 h-2.5" />}
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.id === 'my-network' ? 'Net' : tab.id === '1-degree' ? '1°' : tab.id === '2-degree' ? '2°' : tab.id === 'my-brokerage' ? 'Brk' : 'All'}</span>
+              {' '}({tab.count})
+            </button>
+          ))}
         </div>
 
         {/* Brokerage button */}

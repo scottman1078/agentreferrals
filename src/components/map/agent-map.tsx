@@ -40,7 +40,7 @@ export default function AgentMap() {
   const [referralAgent, setReferralAgent] = useState<Agent | null>(null)
   const router = useRouter()
   const { resolvedTheme } = useTheme()
-  const { filteredAgents, scope, partnerIds } = useBrokerage()
+  const { filteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())

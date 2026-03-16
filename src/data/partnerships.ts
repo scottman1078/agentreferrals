@@ -421,6 +421,118 @@ export const existingRequests: PartnershipRequest[] = [
     createdAt: '2026-01-18T08:00:00Z',
     updatedAt: '2026-01-20T11:00:00Z',
   },
+  // ── Cross-partnerships (partners of Jason's partners — creates 1-degree network) ──
+  {
+    id: 'pr-x1',
+    requestingAgentId: 'ashley',
+    receivingAgentId: 'marcus',
+    requestingMarket: 'Nashville Metro, TN',
+    receivingMarket: 'Chicago Metro, IL',
+    status: 'active',
+    acceptedAt: '2026-01-22T10:00:00Z',
+    createdAt: '2026-01-20T08:00:00Z',
+    updatedAt: '2026-01-22T10:00:00Z',
+  },
+  {
+    id: 'pr-x2',
+    requestingAgentId: 'carlos',
+    receivingAgentId: 'steve',
+    requestingMarket: 'Dallas / Fort Worth, TX',
+    receivingMarket: 'San Diego, CA',
+    status: 'active',
+    acceptedAt: '2026-02-12T14:00:00Z',
+    createdAt: '2026-02-10T11:00:00Z',
+    updatedAt: '2026-02-12T14:00:00Z',
+  },
+  {
+    id: 'pr-x3',
+    requestingAgentId: 'rachel',
+    receivingAgentId: 'elena',
+    requestingMarket: 'Los Angeles Metro, CA',
+    receivingMarket: 'Miami Metro, FL',
+    status: 'active',
+    acceptedAt: '2026-03-02T16:00:00Z',
+    createdAt: '2026-02-28T09:00:00Z',
+    updatedAt: '2026-03-02T16:00:00Z',
+  },
+  {
+    id: 'pr-x4',
+    requestingAgentId: 'tanya',
+    receivingAgentId: 'faith',
+    requestingMarket: 'Atlanta Metro, GA',
+    receivingMarket: 'Philadelphia, PA',
+    status: 'active',
+    acceptedAt: '2026-02-05T12:00:00Z',
+    createdAt: '2026-02-03T10:00:00Z',
+    updatedAt: '2026-02-05T12:00:00Z',
+  },
+  {
+    id: 'pr-x5',
+    requestingAgentId: 'darius',
+    receivingAgentId: 'nina',
+    requestingMarket: 'Phoenix / Scottsdale, AZ',
+    receivingMarket: 'Austin, TX',
+    status: 'active',
+    acceptedAt: '2026-02-20T09:00:00Z',
+    createdAt: '2026-02-18T14:00:00Z',
+    updatedAt: '2026-02-20T09:00:00Z',
+  },
+  {
+    id: 'pr-x6',
+    requestingAgentId: 'lily',
+    receivingAgentId: 'kevin',
+    requestingMarket: 'Denver Metro, CO',
+    receivingMarket: 'Boulder, CO',
+    status: 'active',
+    acceptedAt: '2026-01-30T11:00:00Z',
+    createdAt: '2026-01-28T08:00:00Z',
+    updatedAt: '2026-01-30T11:00:00Z',
+  },
+  {
+    id: 'pr-x7',
+    requestingAgentId: 'megan',
+    receivingAgentId: 'priya',
+    requestingMarket: 'Grand Rapids, MI',
+    receivingMarket: 'Kalamazoo, MI',
+    status: 'active',
+    acceptedAt: '2025-12-22T10:00:00Z',
+    createdAt: '2025-12-20T14:00:00Z',
+    updatedAt: '2025-12-22T10:00:00Z',
+  },
+  // 2nd-degree: partners of 1-degree agents
+  {
+    id: 'pr-x8',
+    requestingAgentId: 'marcus',
+    receivingAgentId: 'george',
+    requestingMarket: 'Chicago Metro, IL',
+    receivingMarket: 'Chicago / Lincoln Park, IL',
+    status: 'active',
+    acceptedAt: '2026-02-08T10:00:00Z',
+    createdAt: '2026-02-06T14:00:00Z',
+    updatedAt: '2026-02-08T10:00:00Z',
+  },
+  {
+    id: 'pr-x9',
+    requestingAgentId: 'elena',
+    receivingAgentId: 'james_w',
+    requestingMarket: 'Miami Metro, FL',
+    receivingMarket: 'Palm Beach, FL',
+    status: 'active',
+    acceptedAt: '2026-03-05T09:00:00Z',
+    createdAt: '2026-03-03T11:00:00Z',
+    updatedAt: '2026-03-05T09:00:00Z',
+  },
+  {
+    id: 'pr-x10',
+    requestingAgentId: 'steve',
+    receivingAgentId: 'victoria',
+    requestingMarket: 'San Diego, CA',
+    receivingMarket: 'Aspen, CO',
+    status: 'active',
+    acceptedAt: '2026-02-15T16:00:00Z',
+    createdAt: '2026-02-13T08:00:00Z',
+    updatedAt: '2026-02-15T16:00:00Z',
+  },
   // ── Canadian partnerships ──
   {
     id: 'pr-8',
@@ -453,4 +565,71 @@ export function getPartnerAgentIds(agentId: string): string[] {
   return existingRequests
     .filter((r) => r.status === 'active' && (r.requestingAgentId === agentId || r.receivingAgentId === agentId))
     .map((r) => r.requestingAgentId === agentId ? r.receivingAgentId : r.requestingAgentId)
+}
+
+// 1-degree: partners of my partners (excluding me and my direct partners)
+export function get1DegreeAgentIds(agentId: string): string[] {
+  const directPartners = getPartnerAgentIds(agentId)
+  const oneDegreeSet = new Set<string>()
+
+  for (const partnerId of directPartners) {
+    const theirPartners = getPartnerAgentIds(partnerId)
+    for (const id of theirPartners) {
+      if (id !== agentId && !directPartners.includes(id)) {
+        oneDegreeSet.add(id)
+      }
+    }
+  }
+
+  return Array.from(oneDegreeSet)
+}
+
+// 2-degree: partners of 1-degree agents (excluding me, direct, and 1-degree)
+export function get2DegreeAgentIds(agentId: string): string[] {
+  const directPartners = getPartnerAgentIds(agentId)
+  const oneDegree = get1DegreeAgentIds(agentId)
+  const excludeSet = new Set([agentId, ...directPartners, ...oneDegree])
+  const twoDegreeSet = new Set<string>()
+
+  for (const id1 of oneDegree) {
+    const theirPartners = getPartnerAgentIds(id1)
+    for (const id of theirPartners) {
+      if (!excludeSet.has(id)) {
+        twoDegreeSet.add(id)
+      }
+    }
+  }
+
+  return Array.from(twoDegreeSet)
+}
+
+/** Get the connection path from agentId to targetId through the network */
+export function getConnectionPath(agentId: string, targetId: string): string[] | null {
+  // Direct partner?
+  const direct = getPartnerAgentIds(agentId)
+  if (direct.includes(targetId)) return [agentId, targetId]
+
+  // 1-degree: find the mutual connection
+  for (const partnerId of direct) {
+    const theirPartners = getPartnerAgentIds(partnerId)
+    if (theirPartners.includes(targetId)) {
+      return [agentId, partnerId, targetId]
+    }
+  }
+
+  // 2-degree: find the two-hop path
+  const oneDegree = get1DegreeAgentIds(agentId)
+  for (const id1 of oneDegree) {
+    const theirPartners = getPartnerAgentIds(id1)
+    if (theirPartners.includes(targetId)) {
+      // Find who connects agentId → id1
+      for (const partnerId of direct) {
+        if (getPartnerAgentIds(partnerId).includes(id1)) {
+          return [agentId, partnerId, id1, targetId]
+        }
+      }
+    }
+  }
+
+  return null
 }

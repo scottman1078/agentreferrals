@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
 import { useAppData } from '@/lib/data-provider'
-import { getPartnerAgentIds } from '@/data/partnerships'
+import { getPartnerAgentIds, get1DegreeAgentIds, get2DegreeAgentIds } from '@/data/partnerships'
 import type { Agent, Brokerage, BrokerageScope } from '@/types'
 
 interface BrokerageContextType {
@@ -13,6 +13,8 @@ interface BrokerageContextType {
   switchBrokerage: (id: string) => void
   filteredAgents: Agent[]
   partnerIds: string[]
+  oneDegreeIds: string[]
+  twoDegreeIds: string[]
 }
 
 const BrokerageContext = createContext<BrokerageContextType | null>(null)
@@ -26,12 +28,17 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
 
   // Get partner IDs for "My Network" scope (Jason's partners)
   const partnerIds = useMemo(() => getPartnerAgentIds('jason'), [])
+  const oneDegreeIds = useMemo(() => get1DegreeAgentIds('jason'), [])
+  const twoDegreeIds = useMemo(() => get2DegreeAgentIds('jason'), [])
 
   const filteredAgents = useMemo(() => {
     if (scope === 'all-network') return agents
     if (scope === 'my-network') return agents.filter((a) => partnerIds.includes(a.id))
-    return agents.filter((a) => a.brokerageId === currentBrokerageId)
-  }, [scope, currentBrokerageId, agents, partnerIds])
+    if (scope === '1-degree') return agents.filter((a) => partnerIds.includes(a.id) || oneDegreeIds.includes(a.id))
+    if (scope === '2-degree') return agents.filter((a) => partnerIds.includes(a.id) || oneDegreeIds.includes(a.id) || twoDegreeIds.includes(a.id))
+    if (scope === 'my-brokerage') return agents.filter((a) => a.brokerageId === currentBrokerageId)
+    return agents
+  }, [scope, currentBrokerageId, agents, partnerIds, oneDegreeIds, twoDegreeIds])
 
   return (
     <BrokerageContext.Provider
@@ -43,6 +50,8 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
         switchBrokerage: setCurrentBrokerageId,
         filteredAgents,
         partnerIds,
+        oneDegreeIds,
+        twoDegreeIds,
       }}
     >
       {children}

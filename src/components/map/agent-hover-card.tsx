@@ -2,6 +2,10 @@
 
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
+import { getConnectionPath } from '@/data/partnerships'
+import { useBrokerage } from '@/contexts/brokerage-context'
+import { useAppData } from '@/lib/data-provider'
+import { ArrowRight } from 'lucide-react'
 import type { Agent } from '@/types'
 
 interface AgentHoverCardProps {
@@ -14,6 +18,17 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const score = agent.referNetScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
+
+  // Connection path for degree-of-separation agents
+  const { scope, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { agents } = useAppData()
+  const isDegreeView = scope === '1-degree' || scope === '2-degree'
+  const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
+  const connectionPath = isDegreeView && isDegreeAgent ? getConnectionPath('jason', agent.id) : null
+  const pathNames = connectionPath?.slice(1, -1).map((id) => {
+    const a = agents.find((ag) => ag.id === id)
+    return a?.name ?? id
+  }) ?? []
 
   // Position card above the cursor, centered horizontally
   const style: React.CSSProperties = {
@@ -60,6 +75,18 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
             </span>
           ))}
         </div>
+
+        {pathNames.length > 0 && (
+          <div className="flex items-center gap-1 mt-2 px-1.5 py-1 rounded-md bg-primary/5 border border-primary/10">
+            <span className="text-[9px] font-semibold text-primary">via</span>
+            {pathNames.map((name, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {i > 0 && <ArrowRight className="w-2 h-2 text-primary/50" />}
+                <span className="text-[9px] font-semibold text-primary">{name}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         <p className="text-[10px] text-muted-foreground mt-1.5">Click to view details</p>
       </div>
