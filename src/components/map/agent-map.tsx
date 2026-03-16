@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
+import { preloadAgentCounties } from '@/lib/county-boundaries'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -33,8 +34,18 @@ export default function AgentMap() {
   const { resolvedTheme } = useTheme()
   const { filteredAgents, scope, partnerIds } = useBrokerage()
   const { voidZones } = useAppData()
+  const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
+  const [countiesLoaded, setCountiesLoaded] = useState(false)
 
   useEffect(() => setMounted(true), [])
+
+  // Preload real county boundaries for all agents
+  useEffect(() => {
+    preloadAgentCounties(filteredAgents).then((map) => {
+      countyPolygonsRef.current = map
+      setCountiesLoaded(true)
+    })
+  }, [filteredAgents])
 
   useEffect(() => {
     import('leaflet').then((leaflet) => {
@@ -128,7 +139,7 @@ export default function AgentMap() {
       setHoveredAgent(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag, filteredAgents, scope])
+  }, [activeTag, filteredAgents, scope, countiesLoaded])
 
   // Toggle void zones
   useEffect(() => {
@@ -165,9 +176,13 @@ export default function AgentMap() {
       const isPartner = partnerIds.includes(agent.id) || agent.isPrimary
       const showPolygon = scope === 'my-network' || isPartner
 
+      // Use real county polygon if available, fall back to demo rectangle
+      const realPolygons = countyPolygonsRef.current.get(agent.id)
+      const polygonCoords = realPolygons || [agent.polygon as [number, number][]]
+
       // Partners get full polygon territory; non-partners just get a marker
       if (showPolygon) {
-        const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
+        const poly = L!.polygon(polygonCoords as L.LatLngExpression[][], {
           color: agent.color,
           weight: isPartner ? 2.5 : 1.5,
           fillColor: agent.color,
@@ -199,8 +214,8 @@ export default function AgentMap() {
         layersRef.current.push(poly)
       }
 
-      // Center point for the marker
-      const polyTemp = L!.polygon(agent.polygon as L.LatLngExpression[])
+      // Center point for the marker — use real county polygon if available
+      const polyTemp = L!.polygon(polygonCoords as L.LatLngExpression[][])
       const center = polyTemp.getBounds().getCenter()
       if (!showPolygon) {
         allBounds.push(L!.latLngBounds(center, center))
@@ -256,7 +271,7 @@ export default function AgentMap() {
         L!.DomEvent.stopPropagation(e)
         setHoveredAgent(null)
         setSelectedAgent(agent)
-        const agentBounds = L!.polygon(agent.polygon as L.LatLngExpression[]).getBounds()
+        const agentBounds = L!.polygon(polygonCoords as L.LatLngExpression[][]).getBounds()
         map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 10, duration: 0.8 })
       })
 
@@ -271,7 +286,8 @@ export default function AgentMap() {
       }
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
-  }, [selectedAgent, partnerIds, scope])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgent, partnerIds, scope, countiesLoaded])
 
   // Handle search result
   const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
