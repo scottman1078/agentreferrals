@@ -67,14 +67,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Bottom pill nav — always visible */}
         <PillNav />
 
-        {/* Nudge banner — only visible on map page */}
-        {isMapPage && (
-          <NudgeBanner
-            nudges={nudgeList}
-            onDismiss={handleDismissNudge}
-            onMessageSent={handleNudgeMessageSent}
-          />
-        )}
+        {/* Nudge banner removed — check-ins now handled by NORA + map badge */}
 
         {/* NORA FAB — positioned above the pill nav */}
         <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />

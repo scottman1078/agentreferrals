@@ -99,6 +99,15 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
       return () => clearTimeout(timer)
     }
   }, [profile])
+
+  // Listen for open-nora events (e.g., from check-in badge)
+  useEffect(() => {
+    function handleOpenNora() {
+      setIsOpen(true)
+    }
+    window.addEventListener('open-nora', handleOpenNora)
+    return () => window.removeEventListener('open-nora', handleOpenNora)
+  }, [])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)

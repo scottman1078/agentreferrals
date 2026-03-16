@@ -6,10 +6,11 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { Eye, EyeOff, ArrowRightLeft } from 'lucide-react'
+import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Flame } from 'lucide-react'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
 import { preloadAgentCounties } from '@/lib/county-boundaries'
+import { nudges, getActiveNudges } from '@/data/nudges'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -354,81 +355,96 @@ export default function AgentMap() {
     { key: 'New Construction', label: 'New Con', color: TAG_COLORS['New Construction'] },
   ]
 
+  const [showFilters, setShowFilters] = useState(false)
+
   return (
     <div className="relative w-full h-full">
-      {/* Floating filter chips */}
-      <div className="fixed top-[76px] left-4 z-[400] flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-1 px-1.5 py-1 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
-          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 text-muted-foreground">Filter</span>
-          {tagChips.map((chip) => {
-            const isActive = activeTag === chip.key
-            return (
+      {/* Collapsible filter panel — slides down from top */}
+      {showFilters && (
+        <>
+          <div className="fixed inset-0 z-[399]" onClick={() => setShowFilters(false)} />
+          <div className="fixed top-[68px] left-3 right-3 sm:left-auto sm:right-auto sm:left-4 z-[400] animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="inline-flex flex-wrap items-center gap-2 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+              {tagChips.map((chip) => {
+                const isActive = activeTag === chip.key
+                return (
+                  <button
+                    key={chip.key}
+                    onClick={() => { setActiveTag(chip.key); setShowFilters(false) }}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                    style={{
+                      background: isActive ? chip.color : 'transparent',
+                      color: isActive ? 'white' : undefined,
+                      border: isActive ? 'none' : '1px solid var(--border)',
+                    }}
+                  >
+                    {chip.label}
+                  </button>
+                )
+              })}
+              <div className="w-px h-5 bg-border mx-1" />
               <button
-                key={chip.key}
-                onClick={() => setActiveTag(chip.key)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
-                style={{
-                  background: isActive ? chip.color : 'transparent',
-                  color: isActive ? 'white' : undefined,
-                }}
+                onClick={() => setShowVoids(!showVoids)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  showVoids
+                    ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                    : 'border border-border text-muted-foreground hover:text-foreground'
+                }`}
               >
-                {!isActive && <span className="text-muted-foreground">{chip.label}</span>}
-                {isActive && chip.label}
+                {showVoids ? <EyeOff className="w-3 h-3 inline mr-1" /> : <Eye className="w-3 h-3 inline mr-1" />}
+                Voids
               </button>
-            )
-          })}
-        </div>
+              <button
+                onClick={() => setShowMigration(!showMigration)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  showMigration
+                    ? 'bg-primary/10 text-primary border border-primary/30'
+                    : 'border border-border text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <ArrowRightLeft className="w-3 h-3 inline mr-1" />
+                Migration
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
+      {/* Compact action bar — top left */}
+      <div className="fixed top-[68px] left-4 z-[398] flex items-center gap-1.5">
+        {/* Filters button */}
         <button
-          onClick={() => setShowVoids(!showVoids)}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all backdrop-blur-md shadow-md ${
-            showVoids
-              ? 'bg-destructive/10 border-destructive/30 text-destructive'
-              : 'bg-card/90 border-border text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {showVoids ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          Voids
-        </button>
-
-        <button
-          onClick={() => setShowMigration(!showMigration)}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all backdrop-blur-md shadow-md ${
-            showMigration
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border backdrop-blur-md shadow-md transition-all ${
+            showFilters || activeTag !== 'all'
               ? 'bg-primary/10 border-primary/30 text-primary'
               : 'bg-card/90 border-border text-muted-foreground hover:text-foreground'
           }`}
         >
-          <ArrowRightLeft className="w-3.5 h-3.5" />
-          Migration
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          Filters
+          {activeTag !== 'all' && (
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">1</span>
+          )}
         </button>
-      </div>
 
-      {/* Migration legend */}
-      {showMigration && (
-        <div className="fixed bottom-[88px] left-4 z-[400] p-3 px-4 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
-          <div className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted-foreground">Migration Flow</div>
-          {[
-            { color: '#f97316', label: 'Inflow Market (high demand)' },
-            { color: '#3b82f6', label: 'Outflow Market (departures)' },
-            { color: '#9ca3af', label: 'Net Neutral' },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2 text-xs text-muted-foreground mb-1 last:mb-0">
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-              {item.label}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Scope hint */}
-      <div className="fixed bottom-[76px] left-1/2 -translate-x-1/2 z-[400] px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-lg text-xs text-muted-foreground">
-        <span className="font-bold text-foreground">
-          {activeTag === 'all' ? filteredAgents.length : filteredAgents.filter(a => a.tags.includes(activeTag)).length}
-        </span>
-        {' '}agents shown
-        {scope === 'my-network' && ' · Coverage view'}
-        {scope === 'my-brokerage' && ' · Brokerage view'}
+        {/* Check-ins badge — opens NORA */}
+        {(() => {
+          const checkInCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
+          if (checkInCount === 0) return null
+          return (
+            <button
+              onClick={() => {
+                // Dispatch event to open NORA
+                window.dispatchEvent(new CustomEvent('open-nora', { detail: { context: 'checkins' } }))
+              }}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-amber-500/30 bg-amber-500/10 text-amber-600 backdrop-blur-md shadow-md hover:bg-amber-500/20 transition-all"
+            >
+              <Flame className="w-3.5 h-3.5" />
+              {checkInCount} Check-ins
+            </button>
+          )
+        })()}
       </div>
 
       {/* Map container */}
