@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { geocodeAddress, type GeoResult } from '@/lib/geocode'
+import { geocodeCounty, type GeoResult } from '@/lib/geocode'
 import { MapPin, Loader2 } from 'lucide-react'
 
 interface LocationAutocompleteProps {
@@ -39,19 +39,25 @@ export function LocationAutocomplete({ value, onChange, placeholder = 'City, Sta
     if (q.length < 2) { setResults([]); setIsOpen(false); return }
     setIsLoading(true)
     try {
-      const data = await geocodeAddress(q)
-      // Simplify display names — extract city, county, state
+      const data = await geocodeCounty(q)
+      // Simplify display names — extract County, State or City, State
       const simplified = data.map((r) => {
         const parts = r.display_name.split(', ')
-        // Try to get "City, State" or "City, County, State"
         let short = r.display_name
-        if (parts.length >= 3) {
-          // Find the state (usually 2nd to last or has a state abbreviation)
+
+        // Find county and state from the parts
+        const county = parts.find((p) => p.includes('County') || p.includes('Parish') || p.includes('Borough'))
+        const stateAbbr = parts.find((p) => /^[A-Z]{2}$/.test(p.trim()))
+        const stateFull = parts.find((p) => ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','Ontario','British Columbia','Alberta','Quebec','Manitoba','Saskatchewan'].includes(p.trim()))
+        const state = stateAbbr || stateFull || ''
+
+        if (county && state) {
+          short = `${county}, ${state}`
+        } else if (parts.length >= 2) {
           const city = parts[0]
-          const state = parts.find((p) => /^[A-Z]{2}$/.test(p.trim())) || parts[parts.length - 3] || parts[parts.length - 2]
-          const county = parts.find((p) => p.includes('County'))
-          short = county ? `${city}, ${county}, ${state}` : `${city}, ${state}`
+          short = state ? `${city}, ${state}` : `${city}, ${parts[1]}`
         }
+
         return { ...r, short }
       })
       setResults(simplified as (GeoResult & { short: string })[])
