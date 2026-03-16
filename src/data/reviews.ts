@@ -54,6 +54,12 @@ export const reviews: AgentReview[] = [
 
   // Priya Nair reviews (Kalamazoo)
   { id: 'rev18', reviewerName: "Jason O'Brien", reviewerBrokerage: 'Real Broker LLC', reviewerArea: 'Plainwell, MI', reviewerColor: '#f0a500', agentId: 'priya', rating: 4, communicationRating: 4, professionalismRating: 4, clientCareRating: 5, comment: 'Priya is wonderful with first-time buyers. Patient, thorough, and really cares about her clients. The Chen-Williams couple loved her.', referralMarket: 'Kalamazoo, MI', date: 'Feb 25, 2025' },
+
+  // Canadian agent reviews
+  { id: 'rev19', reviewerName: "Jason O'Brien", reviewerBrokerage: 'Real Broker LLC', reviewerArea: 'Plainwell, MI', reviewerColor: '#f0a500', agentId: 'sarah_t', rating: 5, communicationRating: 5, professionalismRating: 5, clientCareRating: 5, comment: 'Sarah handled our client\'s Toronto relocation perfectly. The GTA market is complex and she navigated it like a pro. Cross-border paperwork was seamless.', referralMarket: 'Toronto, ON', date: 'Mar 8, 2025' },
+  { id: 'rev20', reviewerName: 'David Wong', reviewerBrokerage: 'Sutton Group', reviewerArea: 'Vancouver, BC', reviewerColor: '#003366', agentId: 'sarah_t', rating: 5, communicationRating: 5, professionalismRating: 5, clientCareRating: 4, comment: 'Sarah is the top Royal LePage agent in the GTA for a reason. My Vancouver clients relocating to Toronto were in great hands. Closed a $1.2M condo in Yorkville.', referralMarket: 'Toronto, ON', date: 'Feb 20, 2025' },
+  { id: 'rev21', reviewerName: "Jason O'Brien", reviewerBrokerage: 'Real Broker LLC', reviewerArea: 'Plainwell, MI', reviewerColor: '#f0a500', agentId: 'david_w', rating: 5, communicationRating: 5, professionalismRating: 5, clientCareRating: 5, comment: 'David was phenomenal with a cross-border relocation. My Michigan clients moved to Vancouver and David made the transition seamless. His knowledge of the Lower Mainland is outstanding.', referralMarket: 'Vancouver, BC', date: 'Mar 1, 2025' },
+  { id: 'rev22', reviewerName: 'Sofia Chen', reviewerBrokerage: 'RE/MAX Seattle', reviewerArea: 'Seattle, WA', reviewerColor: '#14b8a6', agentId: 'david_w', rating: 4, communicationRating: 4, professionalismRating: 5, clientCareRating: 5, comment: 'Great partner for west coast cross-border referrals. David understands both the Canadian and US buyer mindset. My Seattle tech clients loved their new place in Kitsilano.', referralMarket: 'Vancouver, BC', date: 'Feb 12, 2025' },
 ]
 
 // Helper to get reviews for an agent

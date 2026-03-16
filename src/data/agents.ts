@@ -363,4 +363,110 @@ export const agents: Agent[] = [
     polygon: [[41.20, -112.20], [41.20, -111.40], [40.40, -111.40], [40.40, -112.20]],
     color: '#6366f1', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
   },
+  // ══════════════════════════════════════
+  // CANADA
+  // ══════════════════════════════════════
+  // ROYAL LePAGE agents
+  {
+    id: 'sarah_t', name: 'Sarah Thompson', brokerage: 'Royal LePage — Toronto', brokerageId: 'royallepage',
+    area: 'Toronto / GTA, ON', tags: ['Luxury', 'Investment', 'Relocation'],
+    status: 'active', phone: '(416) 555-0123', email: 'sthompson@royallepage.ca',
+    dealsPerYear: 68, yearsLicensed: 12, avgSalePrice: 1150000,
+    polygon: [[43.90, -79.80], [43.90, -79.00], [43.50, -79.00], [43.50, -79.80]],
+    color: '#dc2626', referNetScore: 93, responseTime: '< 1hr', closedReferrals: 15,
+  },
+  {
+    id: 'jean_p', name: 'Jean-Philippe Bouchard', brokerage: 'Royal LePage — Montreal', brokerageId: 'royallepage',
+    area: 'Montreal Metro, QC', tags: ['First-Time Buyers', 'Relocation'],
+    status: 'active', phone: '(514) 555-0234', email: 'jpbouchard@royallepage.ca',
+    dealsPerYear: 52, yearsLicensed: 10, avgSalePrice: 520000,
+    polygon: [[45.65, -73.90], [45.65, -73.40], [45.35, -73.40], [45.35, -73.90]],
+    color: '#c41230', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8,
+  },
+  {
+    id: 'heather_m', name: 'Heather MacLeod', brokerage: 'Royal LePage — Winnipeg', brokerageId: 'royallepage',
+    area: 'Winnipeg, MB', tags: ['First-Time Buyers'],
+    status: 'active', phone: '(204) 555-0345', email: 'hmacleod@royallepage.ca',
+    dealsPerYear: 34, yearsLicensed: 7, avgSalePrice: 370000,
+    polygon: [[49.98, -97.30], [49.98, -96.95], [49.75, -96.95], [49.75, -97.30]],
+    color: '#e11d48', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+  },
+  // SUTTON GROUP agents
+  {
+    id: 'david_w', name: 'David Wong', brokerage: 'Sutton Group — Vancouver', brokerageId: 'sutton',
+    area: 'Vancouver / Lower Mainland, BC', tags: ['Luxury', 'Relocation'],
+    status: 'active', phone: '(604) 555-0456', email: 'dwong@sutton.com',
+    dealsPerYear: 73, yearsLicensed: 14, avgSalePrice: 1300000,
+    polygon: [[49.40, -123.30], [49.40, -122.70], [49.05, -122.70], [49.05, -123.30]],
+    color: '#003366', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+  },
+  {
+    id: 'claire_h', name: 'Claire Henderson', brokerage: 'Sutton Group — Victoria', brokerageId: 'sutton',
+    area: 'Victoria, BC', tags: ['Luxury', 'Relocation'],
+    status: 'active', phone: '(250) 555-0567', email: 'chenderson@sutton.com',
+    dealsPerYear: 41, yearsLicensed: 11, avgSalePrice: 890000,
+    polygon: [[48.60, -123.55], [48.60, -123.20], [48.35, -123.20], [48.35, -123.55]],
+    color: '#1e3a5f', referNetScore: 85, responseTime: '< 2hr', closedReferrals: 6,
+  },
+  {
+    id: 'ryan_k', name: 'Ryan Kirkpatrick', brokerage: 'Sutton Group — Kelowna', brokerageId: 'sutton',
+    area: 'Kelowna, BC', tags: ['Land & Acreage', 'Luxury'],
+    status: 'active', phone: '(250) 555-0678', email: 'rkirkpatrick@sutton.com',
+    dealsPerYear: 36, yearsLicensed: 9, avgSalePrice: 780000,
+    polygon: [[50.05, -119.65], [50.05, -119.30], [49.80, -119.30], [49.80, -119.65]],
+    color: '#1a4d80', referNetScore: 82, responseTime: '< 2hr', closedReferrals: 5,
+  },
+  // RE/MAX CANADA agents
+  {
+    id: 'tyler_b', name: 'Tyler Braun', brokerage: 'RE/MAX Canada — Calgary', brokerageId: 'remax',
+    area: 'Calgary, AB', tags: ['New Construction', 'Investment'],
+    status: 'active', phone: '(403) 555-0789', email: 'tbraun@remax.ca',
+    dealsPerYear: 57, yearsLicensed: 10, avgSalePrice: 550000,
+    polygon: [[51.20, -114.30], [51.20, -113.85], [50.85, -113.85], [50.85, -114.30]],
+    color: '#003DA5', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+  },
+  {
+    id: 'lisa_g', name: 'Lisa Greco', brokerage: 'RE/MAX Canada — Hamilton', brokerageId: 'remax',
+    area: 'Hamilton / Burlington, ON', tags: ['First-Time Buyers', 'Investment'],
+    status: 'active', phone: '(905) 555-0890', email: 'lgreco@remax.ca',
+    dealsPerYear: 44, yearsLicensed: 8, avgSalePrice: 720000,
+    polygon: [[43.35, -80.00], [43.35, -79.70], [43.15, -79.70], [43.15, -80.00]],
+    color: '#1e40af', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 7,
+  },
+  // KELLER WILLIAMS CANADA agent
+  {
+    id: 'anika_r', name: 'Anika Roy', brokerage: 'Keller Williams Canada — Ottawa', brokerageId: 'kw',
+    area: 'Ottawa, ON', tags: ['Relocation', 'First-Time Buyers'],
+    status: 'active', phone: '(613) 555-0901', email: 'aroy@kwcanada.com',
+    dealsPerYear: 46, yearsLicensed: 9, avgSalePrice: 610000,
+    polygon: [[45.55, -75.90], [45.55, -75.50], [45.25, -75.50], [45.25, -75.90]],
+    color: '#B5000C', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 7,
+  },
+  // CENTURY 21 CANADA agent
+  {
+    id: 'mark_n', name: 'Mark Nilsson', brokerage: 'Century 21 Canada — Edmonton', brokerageId: 'century21ca',
+    area: 'Edmonton, AB', tags: ['Investment', 'Land & Acreage'],
+    status: 'active', phone: '(780) 555-0112', email: 'mnilsson@century21.ca',
+    dealsPerYear: 39, yearsLicensed: 11, avgSalePrice: 430000,
+    polygon: [[53.70, -113.70], [53.70, -113.30], [53.38, -113.30], [53.38, -113.70]],
+    color: '#b8860b', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+  },
+  // EXIT REALTY agent
+  {
+    id: 'connor_d', name: 'Connor Deveau', brokerage: 'EXIT Realty — Halifax', brokerageId: 'exp',
+    area: 'Halifax, NS', tags: ['Relocation', 'First-Time Buyers'],
+    status: 'active', phone: '(902) 555-0223', email: 'cdeveau@exitrealty.ca',
+    dealsPerYear: 31, yearsLicensed: 6, avgSalePrice: 480000,
+    polygon: [[44.80, -63.70], [44.80, -63.45], [44.55, -63.45], [44.55, -63.70]],
+    color: '#0891b2', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 3,
+  },
+  // RIGHT AT HOME agent
+  {
+    id: 'preet_s', name: 'Preet Singh', brokerage: 'Right at Home — Mississauga', brokerageId: 'rightathome',
+    area: 'Mississauga, ON', tags: ['Investment', 'New Construction'],
+    status: 'active', phone: '(905) 555-0334', email: 'psingh@rightathome.com',
+    dealsPerYear: 51, yearsLicensed: 8, avgSalePrice: 950000,
+    polygon: [[43.65, -79.75], [43.65, -79.50], [43.50, -79.50], [43.50, -79.75]],
+    color: '#1a5276', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 8,
+  },
 ]

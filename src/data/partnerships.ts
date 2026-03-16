@@ -307,6 +307,35 @@ export const coverageGapOpportunities: CoverageGapOpportunity[] = [
       },
     ],
   },
+  // ── Canadian coverage gaps ──
+  {
+    id: 'gap-11',
+    market: 'Calgary',
+    state: 'AB',
+    migrationTrend: 'Medium',
+    suggestedAgents: [
+      {
+        id: 'sa-16', name: 'Tyler Braun', brokerage: 'RE/MAX Canada — Calgary', brokerageId: 'remax',
+        area: 'Calgary, AB', dealsPerYear: 57, avgSalePrice: 550000,
+        referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9, color: '#003DA5',
+        tags: ['New Construction', 'Investment'],
+      },
+    ],
+  },
+  {
+    id: 'gap-12',
+    market: 'Montreal Metro',
+    state: 'QC',
+    migrationTrend: 'Medium',
+    suggestedAgents: [
+      {
+        id: 'sa-17', name: 'Jean-Philippe Bouchard', brokerage: 'Royal LePage — Montreal', brokerageId: 'royallepage',
+        area: 'Montreal Metro, QC', dealsPerYear: 52, avgSalePrice: 520000,
+        referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8, color: '#c41230',
+        tags: ['First-Time Buyers', 'Relocation'],
+      },
+    ],
+  },
 ]
 
 // ══════════════════════════════════════
@@ -391,6 +420,31 @@ export const existingRequests: PartnershipRequest[] = [
     acceptedAt: '2026-01-20T11:00:00Z',
     createdAt: '2026-01-18T08:00:00Z',
     updatedAt: '2026-01-20T11:00:00Z',
+  },
+  // ── Canadian partnerships ──
+  {
+    id: 'pr-8',
+    requestingAgentId: 'jason',
+    receivingAgentId: 'sarah_t',
+    requestingMarket: 'Plainwell / Allegan County, MI',
+    receivingMarket: 'Toronto / GTA, ON',
+    status: 'active',
+    message: 'Cross-border relocation referrals — Michigan to Toronto corridor',
+    acceptedAt: '2026-03-05T10:00:00Z',
+    createdAt: '2026-03-01T09:00:00Z',
+    updatedAt: '2026-03-05T10:00:00Z',
+  },
+  {
+    id: 'pr-9',
+    requestingAgentId: 'jason',
+    receivingAgentId: 'david_w',
+    requestingMarket: 'Plainwell / Allegan County, MI',
+    receivingMarket: 'Vancouver / Lower Mainland, BC',
+    status: 'active',
+    message: 'West coast relocation partner — US to Canada',
+    acceptedAt: '2026-03-08T14:00:00Z',
+    createdAt: '2026-03-04T11:00:00Z',
+    updatedAt: '2026-03-08T14:00:00Z',
   },
 ]
 

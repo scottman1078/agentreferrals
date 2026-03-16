@@ -107,7 +107,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <p className="text-center text-sm text-muted-foreground mb-8 font-medium">Trusted by agents at leading brokerages</p>
           <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap opacity-60">
-            {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker', 'Berkshire Hathaway'].map((b) => (
+            {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker', 'Berkshire Hathaway', 'Royal LePage'].map((b) => (
               <span key={b} className="font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
             ))}
           </div>
