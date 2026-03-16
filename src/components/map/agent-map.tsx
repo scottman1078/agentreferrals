@@ -112,13 +112,23 @@ export default function AgentMap() {
     tileLayerRef.current.setUrl(isDark ? DARK_TILES : LIGHT_TILES)
   }, [resolvedTheme, mounted])
 
-  // Filter agents by tag AND brokerage scope
+  // Filter agents by tag AND brokerage scope — refit bounds on scope/filter change
+  const prevScopeRef = useRef(scope)
+  const prevTagRef = useRef(activeTag)
   useEffect(() => {
     if (!mapInstance.current || !L) return
     const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
-    renderAgents(filtered, mapInstance.current)
+    const scopeChanged = prevScopeRef.current !== scope
+    const tagChanged = prevTagRef.current !== activeTag
+    prevScopeRef.current = scope
+    prevTagRef.current = activeTag
+    renderAgents(filtered, mapInstance.current, scopeChanged || tagChanged)
+    if (scopeChanged || tagChanged) {
+      setSelectedAgent(null)
+      setHoveredAgent(null)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag, filteredAgents])
+  }, [activeTag, filteredAgents, scope])
 
   // Toggle void zones
   useEffect(() => {
