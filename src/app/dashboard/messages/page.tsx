@@ -22,23 +22,29 @@ import {
   Plus,
   ArrowLeft,
   ExternalLink,
+  Check,
+  Users,
 } from 'lucide-react'
 import SuggestedOutreach from '@/components/nudges/suggested-outreach'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
 
-// ─── New Message Modal ───
+// ─── New Message Modal (supports single + group) ───
 
 function NewMessageModal({
   onClose,
   onSelect,
+  onCreateGroup,
   existingConversationIds,
 }: {
   onClose: () => void
   onSelect: (agentId: string) => void
+  onCreateGroup: (agentIds: string[]) => void
   existingConversationIds: Set<string>
 }) {
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [groupName, setGroupName] = useState('')
 
   const filteredAgents = useMemo(() => {
     if (!search) return agents.filter((a) => a.id !== 'jason').slice(0, 10)
@@ -53,6 +59,26 @@ function NewMessageModal({
       )
       .slice(0, 10)
   }, [search])
+
+  function toggleAgent(agentId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(agentId)) next.delete(agentId)
+      else next.add(agentId)
+      return next
+    })
+  }
+
+  function handleStart() {
+    if (selectedIds.size === 1) {
+      onSelect([...selectedIds][0])
+    } else if (selectedIds.size > 1) {
+      onCreateGroup([...selectedIds])
+    }
+  }
+
+  const selectedAgents = agents.filter((a) => selectedIds.has(a.id))
+  const isGroupMode = selectedIds.size > 1
 
   return (
     <div
@@ -72,6 +98,45 @@ function NewMessageModal({
           </button>
         </div>
         <div className="px-6 py-4">
+          {/* Selected agents chips */}
+          {selectedIds.size > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {selectedAgents.map((agent) => (
+                <span
+                  key={agent.id}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                >
+                  <span
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0"
+                    style={{ background: agent.color }}
+                  >
+                    {getInitials(agent.name)}
+                  </span>
+                  {agent.name.split(' ')[0]}
+                  <button
+                    onClick={() => toggleAgent(agent.id)}
+                    className="ml-0.5 hover:text-destructive transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Group name input (when 2+ selected) */}
+          {isGroupMode && (
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder="Group name (optional)"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground"
+              />
+            </div>
+          )}
+
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -83,7 +148,7 @@ function NewMessageModal({
               className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground"
             />
           </div>
-          <div className="max-h-[320px] overflow-y-auto -mx-2">
+          <div className="max-h-[280px] overflow-y-auto -mx-2">
             {filteredAgents.length === 0 && (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 No agents found
@@ -91,17 +156,27 @@ function NewMessageModal({
             )}
             {filteredAgents.map((agent) => {
               const hasConversation = existingConversationIds.has(agent.id)
+              const isSelected = selectedIds.has(agent.id)
               return (
                 <button
                   key={agent.id}
-                  onClick={() => onSelect(agent.id)}
-                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-accent transition-colors text-left"
+                  onClick={() => toggleAgent(agent.id)}
+                  className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors text-left ${
+                    isSelected ? 'bg-primary/5' : 'hover:bg-accent'
+                  }`}
                 >
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0"
-                    style={{ background: agent.color }}
-                  >
-                    {getInitials(agent.name)}
+                  <div className="relative shrink-0">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white"
+                      style={{ background: agent.color }}
+                    >
+                      {getInitials(agent.name)}
+                    </div>
+                    {isSelected && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold">{agent.name}</div>
@@ -109,7 +184,7 @@ function NewMessageModal({
                       {agent.brokerage} &middot; {agent.area}
                     </div>
                   </div>
-                  {hasConversation && (
+                  {hasConversation && !isSelected && (
                     <span className="text-[10px] font-semibold text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">
                       Existing
                     </span>
@@ -118,6 +193,19 @@ function NewMessageModal({
               )
             })}
           </div>
+
+          {/* Start conversation button */}
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleStart}
+              className="w-full mt-4 flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {isGroupMode
+                ? `Start Group Chat (${selectedIds.size} agents)`
+                : 'Start Conversation'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -193,12 +281,18 @@ function ConversationItem({
       }`}
     >
       <div className="relative shrink-0">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[11px] text-white"
-          style={{ background: conversation.color }}
-        >
-          {getInitials(conversation.agentName)}
-        </div>
+        {conversation.isGroup ? (
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+            <Users className="w-4.5 h-4.5 text-muted-foreground" />
+          </div>
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[11px] text-white"
+            style={{ background: conversation.color }}
+          >
+            {getInitials(conversation.agentName)}
+          </div>
+        )}
         {unreadCount > 0 && (
           <div className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] rounded-full bg-primary flex items-center justify-center">
             <span className="text-[9px] font-bold text-primary-foreground">
@@ -389,6 +483,32 @@ export default function MessagesPage() {
     setShowMobileChat(true)
   }
 
+  function handleCreateGroup(agentIds: string[]) {
+    const groupAgents = agentIds.map((id) => agents.find((a) => a.id === id)).filter(Boolean) as typeof agents
+    if (groupAgents.length < 2) return
+
+    const groupId = `group-${Date.now()}`
+    const names = groupAgents.map((a) => a.name.split(' ')[0])
+    const defaultName = names.join(', ')
+
+    const newConv: Conversation = {
+      agentId: groupId,
+      agentName: defaultName,
+      brokerage: `${groupAgents.length} agents`,
+      color: groupAgents[0].color,
+      messages: [],
+      isGroup: true,
+      groupName: defaultName,
+      participantIds: agentIds,
+      participantNames: groupAgents.map((a) => a.name),
+      participantColors: groupAgents.map((a) => a.color),
+    }
+    setConversationList((prev) => [newConv, ...prev])
+    setActiveConvId(groupId)
+    setShowNewMessage(false)
+    setShowMobileChat(true)
+  }
+
   function handleSend() {
     if (!newMessage.trim() || !activeConvId) return
 
@@ -491,27 +611,37 @@ export default function MessagesPage() {
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0"
-          style={{ background: activeConversation.color }}
-        >
-          {getInitials(activeConversation.agentName)}
-        </div>
+        {activeConversation.isGroup ? (
+          <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 text-muted-foreground" />
+          </div>
+        ) : (
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0"
+            style={{ background: activeConversation.color }}
+          >
+            {getInitials(activeConversation.agentName)}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm">
-            {activeConversation.agentName}
+            {activeConversation.groupName || activeConversation.agentName}
           </div>
           <div className="text-[11px] text-muted-foreground truncate">
-            {activeConversation.brokerage}
+            {activeConversation.isGroup
+              ? activeConversation.participantNames?.join(', ')
+              : activeConversation.brokerage}
           </div>
         </div>
-        <Link
-          href={`/agent/${activeConversation.agentId}`}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border hover:bg-accent transition-colors"
-        >
-          <ExternalLink className="w-3 h-3" />
-          <span className="hidden sm:inline">View Profile</span>
-        </Link>
+        {!activeConversation.isGroup && (
+          <Link
+            href={`/agent/${activeConversation.agentId}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border hover:bg-accent transition-colors"
+          >
+            <ExternalLink className="w-3 h-3" />
+            <span className="hidden sm:inline">View Profile</span>
+          </Link>
+        )}
       </div>
 
       {/* Messages area */}
@@ -622,6 +752,7 @@ export default function MessagesPage() {
         <NewMessageModal
           onClose={() => setShowNewMessage(false)}
           onSelect={handleSelectAgent}
+          onCreateGroup={handleCreateGroup}
           existingConversationIds={existingConversationIds}
         />
       )}

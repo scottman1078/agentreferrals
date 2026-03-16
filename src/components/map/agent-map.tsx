@@ -7,8 +7,10 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
+import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { preloadAgentCounties } from '@/lib/county-boundaries'
 import type { Agent } from '@/types'
 
@@ -33,6 +35,8 @@ export default function AgentMap() {
   const [mounted, setMounted] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [hoveredAgent, setHoveredAgent] = useState<{ agent: Agent; position: { x: number; y: number } } | null>(null)
+  const [referralAgent, setReferralAgent] = useState<Agent | null>(null)
+  const router = useRouter()
   const { resolvedTheme } = useTheme()
   const { filteredAgents, scope, partnerIds } = useBrokerage()
   const { voidZones } = useAppData()
@@ -363,7 +367,13 @@ export default function AgentMap() {
     <div className="relative w-full h-full">
       {/* Collapsible filter panel — vertical, stays open */}
       {showFilters && (
-        <div style={{ position: 'fixed', top: 112, left: 16, zIndex: 9001 }} className="animate-in fade-in slide-in-from-top-2 duration-200">
+        <div
+          style={{ position: 'fixed', top: 112, left: 16, zIndex: 9001 }}
+          className="animate-in fade-in slide-in-from-top-2 duration-200"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <div className="flex flex-col gap-1 p-2 w-[190px] rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Specialization</div>
             {tagChips.map((chip) => {
@@ -411,7 +421,13 @@ export default function AgentMap() {
       )}
 
       {/* Compact action bar — top left, below floating nav */}
-      <div style={{ position: 'fixed', top: 76, left: 16, zIndex: 9000 }} className="flex items-center gap-1.5">
+      <div
+        style={{ position: 'fixed', top: 76, left: 16, zIndex: 9000 }}
+        className="flex items-center gap-1.5"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         {/* Filters button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -453,6 +469,22 @@ export default function AgentMap() {
         <AgentPeekCard
           agent={selectedAgent}
           onClose={() => setSelectedAgent(null)}
+          onSendReferral={(agent) => {
+            setReferralAgent(agent)
+            setSelectedAgent(null)
+          }}
+          onMessage={() => {
+            router.push('/dashboard/messages')
+          }}
+        />
+      )}
+
+      {/* Create Referral Modal */}
+      {referralAgent && (
+        <CreateReferralModal
+          onClose={() => setReferralAgent(null)}
+          preselectedAgentId={referralAgent.id}
+          onCreated={() => setReferralAgent(null)}
         />
       )}
     </div>

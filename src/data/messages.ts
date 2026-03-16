@@ -15,6 +15,12 @@ export interface Conversation {
   brokerage: string
   color: string
   messages: Message[]
+  /** Group conversations have multiple participants */
+  isGroup?: boolean
+  groupName?: string
+  participantIds?: string[]
+  participantNames?: string[]
+  participantColors?: string[]
 }
 
 // Current user is always Jason O'Brien (id: 'jason')

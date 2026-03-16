@@ -1,6 +1,7 @@
 'use client'
 
-import { X, Send, MessageSquare, Star, Clock, GripHorizontal } from 'lucide-react'
+import { X, Send, MessageSquare, Star, Clock, GripHorizontal, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
@@ -9,9 +10,12 @@ import type { Agent } from '@/types'
 interface AgentPeekCardProps {
   agent: Agent
   onClose: () => void
+  onSendReferral?: (agent: Agent) => void
+  onMessage?: (agent: Agent) => void
 }
 
-export default function AgentPeekCard({ agent, onClose }: AgentPeekCardProps) {
+export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessage }: AgentPeekCardProps) {
+  const router = useRouter()
   const { getAgentReviewStats } = useAppData()
   const initials = getInitials(agent.name)
   const reviewStats = getAgentReviewStats(agent.id)
@@ -118,13 +122,26 @@ export default function AgentPeekCard({ agent, onClose }: AgentPeekCardProps) {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-3">
-            <button className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+            <button
+              onClick={() => onSendReferral?.(agent)}
+              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
               <Send className="w-3.5 h-3.5" />
               Send Referral
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors">
+            <button
+              onClick={() => onMessage?.(agent)}
+              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
+            >
               <MessageSquare className="w-3.5 h-3.5" />
               Message
+            </button>
+            <button
+              onClick={() => router.push(`/agent/${agent.id}`)}
+              className="h-9 px-3 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors shrink-0"
+              title="View Full Profile"
+            >
+              <User className="w-4 h-4" />
             </button>
           </div>
         </div>
