@@ -87,6 +87,20 @@ const AREA_TO_FIPS: Record<string, string[]> = {
   'austin, tx': ['48453'],                                // Travis County
   'austin county, texas': ['48453'],                      // Travis County
   'travis county, texas': ['48453'],                      // Travis County
+
+  // Additional areas from agent data
+  'san antonio / new braunfels, tx': ['48029'],           // Bexar County
+  'austin / travis county, tx': ['48453'],                // Travis County
+  'columbus / central oh': ['39049'],                     // Franklin County
+  'miami beach / coral gables, fl': ['12086'],            // Miami-Dade County
+  'bellevue / eastside, wa': ['53033'],                   // King County
+  'scottsdale / paradise valley, az': ['04013'],          // Maricopa County
+  'chicago gold coast / lincoln park': ['17031'],         // Cook County
+  'boulder / westminster, co': ['08013'],                 // Boulder County
+  'aspen / snowmass, co': ['08097'],                      // Pitkin County
+  'palm beach / jupiter, fl': ['12099'],                  // Palm Beach County
+  'buckhead / midtown, ga': ['13121'],                    // Fulton County
+  'salt lake city / park city, ut': ['49035'],            // Salt Lake County
 }
 
 /** Load the US counties TopoJSON from CDN */
