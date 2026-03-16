@@ -13,6 +13,6 @@ export function createClient() {
     return null as unknown as ReturnType<typeof createBrowserClient>
   }
 
-  client = createBrowserClient(url, key)
+  client = createBrowserClient(url, key, { isSingleton: false })
   return client
 }
