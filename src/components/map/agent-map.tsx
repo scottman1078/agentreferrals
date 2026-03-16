@@ -359,55 +359,53 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Collapsible filter panel — slides down from top */}
+      {/* Collapsible filter panel — vertical, stays open */}
       {showFilters && (
-        <>
-          <div className="fixed inset-0 z-[499]" onClick={() => setShowFilters(false)} />
-          <div className="fixed top-[112px] left-4 z-[500] animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="inline-flex flex-wrap items-center gap-2 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
-              {tagChips.map((chip) => {
-                const isActive = activeTag === chip.key
-                return (
-                  <button
-                    key={chip.key}
-                    onClick={() => { setActiveTag(chip.key); setShowFilters(false) }}
-                    className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                    style={{
-                      background: isActive ? chip.color : 'transparent',
-                      color: isActive ? 'white' : undefined,
-                      border: isActive ? 'none' : '1px solid var(--border)',
-                    }}
-                  >
-                    {chip.label}
-                  </button>
-                )
-              })}
-              <div className="w-px h-5 bg-border mx-1" />
-              <button
-                onClick={() => setShowVoids(!showVoids)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  showVoids
-                    ? 'bg-destructive/10 text-destructive border border-destructive/30'
-                    : 'border border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {showVoids ? <EyeOff className="w-3 h-3 inline mr-1" /> : <Eye className="w-3 h-3 inline mr-1" />}
-                Voids
-              </button>
-              <button
-                onClick={() => setShowMigration(!showMigration)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  showMigration
-                    ? 'bg-primary/10 text-primary border border-primary/30'
-                    : 'border border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <ArrowRightLeft className="w-3 h-3 inline mr-1" />
-                Migration
-              </button>
-            </div>
+        <div style={{ position: 'fixed', top: 112, left: 16, zIndex: 9001 }} className="animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-col gap-1 p-2 w-[160px] rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Specialization</div>
+            {tagChips.map((chip) => {
+              const isActive = activeTag === chip.key
+              return (
+                <button
+                  key={chip.key}
+                  onClick={() => setActiveTag(isActive && chip.key !== 'all' ? 'all' : chip.key)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-left"
+                  style={{
+                    background: isActive ? `${chip.color}15` : 'transparent',
+                    color: isActive ? chip.color : undefined,
+                  }}
+                >
+                  <div
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ background: chip.color, opacity: isActive ? 1 : 0.4 }}
+                  />
+                  {chip.label}
+                </button>
+              )
+            })}
+            <div className="h-px bg-border my-1" />
+            <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Overlays</div>
+            <button
+              onClick={() => setShowVoids(!showVoids)}
+              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-left ${
+                showVoids ? 'bg-destructive/10 text-destructive' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {showVoids ? <EyeOff className="w-3 h-3 shrink-0" /> : <Eye className="w-3 h-3 shrink-0" />}
+              Voids
+            </button>
+            <button
+              onClick={() => setShowMigration(!showMigration)}
+              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-left ${
+                showMigration ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <ArrowRightLeft className="w-3 h-3 shrink-0" />
+              Migration
+            </button>
           </div>
-        </>
+        </div>
       )}
 
       {/* Compact action bar — top left, below floating nav */}
