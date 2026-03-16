@@ -362,8 +362,8 @@ export default function AgentMap() {
       {/* Collapsible filter panel — slides down from top */}
       {showFilters && (
         <>
-          <div className="absolute inset-0 z-[400]" onClick={() => setShowFilters(false)} />
-          <div className="absolute top-14 left-4 z-[401] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="fixed inset-0 z-[499]" onClick={() => setShowFilters(false)} />
+          <div className="fixed top-[112px] left-4 z-[500] animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="inline-flex flex-wrap items-center gap-2 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
               {tagChips.map((chip) => {
                 const isActive = activeTag === chip.key
@@ -411,7 +411,7 @@ export default function AgentMap() {
       )}
 
       {/* Compact action bar — top left, below floating nav */}
-      <div className="absolute top-4 left-4 z-[400] flex items-center gap-1.5">
+      <div className="fixed top-[76px] left-4 z-[500] flex items-center gap-1.5">
         {/* Filters button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
