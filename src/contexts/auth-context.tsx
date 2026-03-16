@@ -45,6 +45,7 @@ export interface ArProfile {
   status: string | null
   subscription_tier: string | null
   polygon: unknown | null
+  territory_zips: string[] | null
   color: string | null
   created_at: string
   updated_at: string
@@ -136,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             status: null,
             subscription_tier: null,
             polygon: null,
+            territory_zips: null,
             color: null,
             created_at: '',
             updated_at: '',

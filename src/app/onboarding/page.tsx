@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { createClient } from '@/lib/supabase/client'
 import { brokerages } from '@/data/brokerages'
-import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
+import { ALL_TAGS, TAG_COLORS, US_STATES } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import TerritorySelector, { type TerritoryData } from '@/components/onboarding/territory-selector'
@@ -19,6 +19,7 @@ import {
   Sparkles,
   CheckCircle2,
   Loader2,
+  ShieldCheck,
 } from 'lucide-react'
 
 const TOTAL_STEPS = 5
@@ -28,6 +29,8 @@ interface OnboardingData {
   customBrokerage: string
   fullName: string
   phone: string
+  licenseNumber: string
+  licenseState: string
   primaryArea: string
   yearsLicensed: number | null
   dealsPerYear: number | null
@@ -63,6 +66,7 @@ export default function OnboardingPage() {
     territory: {
       mode: 'zip',
       selectedCounties: [],
+      selectedZips: [],
       drawnPolygon: [],
       polygon: [],
     },
@@ -166,6 +170,7 @@ export default function OnboardingPage() {
       avg_sale_price: data.avgSalePrice,
       tags: data.specializations,
       polygon: data.territory.polygon,
+      territory_zips: data.territory.selectedZips.length > 0 ? data.territory.selectedZips : null,
       status: 'active',
       updated_at: new Date().toISOString(),
     }
@@ -689,7 +694,10 @@ export default function OnboardingPage() {
                       {data.territory.mode === 'draw' && data.territory.drawnPolygon.length >= 3 && (
                         <span>Custom boundary drawn ({data.territory.drawnPolygon.length} points)</span>
                       )}
-                      {(data.territory.mode === 'zip' || data.territory.mode === 'county') && data.territory.selectedCounties.length > 0 && (
+                      {data.territory.mode === 'zip' && data.territory.selectedZips.length > 0 && (
+                        <span>{data.territory.selectedZips.length} zip {data.territory.selectedZips.length === 1 ? 'code' : 'codes'} selected ({data.territory.selectedZips.join(', ')})</span>
+                      )}
+                      {data.territory.mode === 'county' && data.territory.selectedCounties.length > 0 && (
                         <span>{data.territory.selectedCounties.length} {data.territory.selectedCounties.length === 1 ? 'county' : 'counties'} selected</span>
                       )}
                       {data.territory.polygon.length === 0 && (

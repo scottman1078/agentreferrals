@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // GET /api/notes?authorId=xxx&agentId=yyy
 export async function GET(req: NextRequest) {
   const authorId = req.nextUrl.searchParams.get('authorId')
@@ -8,6 +10,11 @@ export async function GET(req: NextRequest) {
 
   if (!authorId || !agentId) {
     return NextResponse.json({ error: 'Missing authorId or agentId' }, { status: 400 })
+  }
+
+  // Only works with real UUID agent IDs (not mock string IDs)
+  if (!UUID_RE.test(authorId) || !UUID_RE.test(agentId)) {
+    return NextResponse.json([])
   }
 
   const supabase = createAdminClient()
@@ -29,6 +36,10 @@ export async function POST(req: NextRequest) {
 
   if (!authorId || !agentId || !content?.trim()) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  }
+
+  if (!UUID_RE.test(authorId) || !UUID_RE.test(agentId)) {
+    return NextResponse.json({ error: 'Notes require real agent profiles (not demo agents)' }, { status: 400 })
   }
 
   const supabase = createAdminClient()

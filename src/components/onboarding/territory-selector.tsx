@@ -4,16 +4,18 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { MapPin, Hash, MousePointer2, Pencil, X, Loader2, Search } from 'lucide-react'
 import {
   getAllCountyFeatures,
-  findCountyAtPoint,
   STATE_FIPS,
 } from '@/lib/county-boundaries'
+import { getZipBoundary, getCentroid } from '@/lib/zip-boundaries'
 
 type LatLng = [number, number]
 
 export interface TerritoryData {
   mode: 'zip' | 'county' | 'draw'
-  /** Selected county FIPS codes (for zip & county modes) */
+  /** Selected county FIPS codes (for county mode) */
   selectedCounties: string[]
+  /** Selected zip code strings (for zip mode) */
+  selectedZips: string[]
   /** Custom drawn polygon coordinates [lat, lng][] (for draw mode) */
   drawnPolygon: LatLng[]
   /** Combined polygon(s) for storage — array of rings, each ring is [lat, lng][] */
@@ -47,8 +49,12 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const mapInstance = useRef<L.Map | null>(null)
   const countyLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
+  const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const drawnLayerRef = useRef<L.Layer | null>(null)
   const drawControlRef = useRef<L.Control.Draw | null>(null)
+
+  // Cache of zip code → boundary polygon coordinates [lat, lng][]
+  const zipBoundariesRef = useRef<Map<string, LatLng[]>>(new Map())
 
   const [leafletReady, setLeafletReady] = useState(false)
   const [activeTab, setActiveTab] = useState<'zip' | 'county' | 'draw'>(value.mode)
@@ -130,6 +136,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       mapInstance.current = null
       countyLayersRef.current.clear()
       selectedLayersRef.current.clear()
+      zipLayersRef.current.clear()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
@@ -352,6 +359,12 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       countyLayersRef.current.clear()
     }
 
+    if (activeTab !== 'zip') {
+      // Clear zip boundary layers
+      zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
+      zipLayersRef.current.clear()
+    }
+
     if (activeTab !== 'draw') {
       if (drawnLayerRef.current) {
         map.removeLayer(drawnLayerRef.current)
@@ -399,57 +412,44 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       return
     }
 
+    if (value.selectedZips.includes(zip)) {
+      setZipError('This zip code is already selected')
+      return
+    }
+
     setZipLoading(true)
     setZipError('')
 
     try {
-      // Geocode zip to lat/lng using Nominatim
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json&limit=1`
-      )
-      const results = await res.json()
+      const ring = await getZipBoundary(zip)
 
-      if (!results || results.length === 0) {
+      if (!ring) {
         setZipError('Zip code not found')
         setZipLoading(false)
         return
       }
 
-      const lat = parseFloat(results[0].lat)
-      const lng = parseFloat(results[0].lon)
+      // Cache the boundary for map rendering
+      zipBoundariesRef.current.set(zip, ring)
 
-      // Find which county contains this point
-      const fips = await findCountyAtPoint(lat, lng)
-      if (!fips) {
-        setZipError('Could not resolve county for this zip')
-        setZipLoading(false)
-        return
+      const newZips = [...value.selectedZips, zip]
+      const polygonRings: LatLng[][] = []
+      for (const z of newZips) {
+        const r = zipBoundariesRef.current.get(z)
+        if (r) polygonRings.push(r)
       }
-
-      // Check if already selected
-      if (value.selectedCounties.includes(fips)) {
-        setZipError('This area is already selected')
-        setZipLoading(false)
-        return
-      }
-
-      const newCounties = [...value.selectedCounties, fips]
-      const polygonRings = buildPolygonFromCounties(newCounties, allCounties)
-
-      // Store county display name
-      const displayName = results[0].display_name?.split(',').slice(0, 2).join(',') || `County ${fips}`
-      setCountyNames((prev) => new Map(prev).set(fips, `${zip} — ${displayName.trim()}`))
 
       onChange({
         ...value,
         mode: 'zip',
-        selectedCounties: newCounties,
+        selectedZips: newZips,
         polygon: polygonRings,
       })
 
       // Center map on the new zip
       if (mapInstance.current) {
-        mapInstance.current.flyTo([lat, lng], 9, { duration: 0.8 })
+        const center = getCentroid(ring)
+        mapInstance.current.flyTo(center, 12, { duration: 0.8 })
       }
 
       setZipInput('')
@@ -457,7 +457,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       setZipError('Failed to look up zip code')
     }
     setZipLoading(false)
-  }, [zipInput, value, allCounties, onChange])
+  }, [zipInput, value, onChange])
 
   const removeCounty = useCallback((fips: string) => {
     const newCounties = value.selectedCounties.filter((f) => f !== fips)
@@ -470,6 +470,53 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [value, allCounties, onChange])
 
+  const removeZip = useCallback((zip: string) => {
+    const newZips = value.selectedZips.filter((z) => z !== zip)
+    // Rebuild polygon from remaining zip boundaries
+    const polygonRings: LatLng[][] = []
+    for (const z of newZips) {
+      const ring = zipBoundariesRef.current.get(z)
+      if (ring) polygonRings.push(ring)
+    }
+
+    onChange({
+      ...value,
+      selectedZips: newZips,
+      polygon: polygonRings,
+    })
+  }, [value, onChange])
+
+  // Render zip boundary layers on the map
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    // Remove old zip layers
+    zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
+    zipLayersRef.current.clear()
+
+    if (activeTab !== 'zip') return
+
+    // Add zip boundary layers
+    for (const zip of value.selectedZips) {
+      const ring = zipBoundariesRef.current.get(zip)
+      if (!ring) continue
+
+      const layer = L.polygon(ring as L.LatLngExpression[], {
+        color: '#f59e0b',
+        weight: 2.5,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.25,
+      })
+
+      layer.bindTooltip(zip, { permanent: false, direction: 'center' })
+      layer.on('click', () => removeZip(zip))
+      layer.addTo(map)
+      zipLayersRef.current.set(zip, layer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.selectedZips, activeTab])
+
   const getCountyLabel = (fips: string): string => {
     if (countyNames.has(fips)) return countyNames.get(fips)!
     const stateAbbr = FIPS_TO_STATE[fips.substring(0, 2)] || ''
@@ -478,7 +525,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   const territoryCount = activeTab === 'draw'
     ? (value.drawnPolygon.length >= 3 ? 1 : 0)
-    : value.selectedCounties.length
+    : activeTab === 'zip'
+      ? value.selectedZips.length
+      : value.selectedCounties.length
 
   return (
     <div className="space-y-4">
@@ -508,7 +557,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       {activeTab === 'zip' && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Enter zip codes to add their counties to your territory.
+            Enter zip codes to add them to your territory.
           </p>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -574,8 +623,33 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         )}
       </div>
 
-      {/* Selected territories summary */}
-      {(activeTab === 'zip' || activeTab === 'county') && value.selectedCounties.length > 0 && (
+      {/* Selected territories summary — zip mode */}
+      {activeTab === 'zip' && value.selectedZips.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Selected Zip Codes ({value.selectedZips.length})
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {value.selectedZips.map((zip) => (
+              <span
+                key={zip}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+              >
+                {zip}
+                <button
+                  onClick={() => removeZip(zip)}
+                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Selected territories summary — county mode */}
+      {activeTab === 'county' && value.selectedCounties.length > 0 && (
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Selected Areas ({value.selectedCounties.length})

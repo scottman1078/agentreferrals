@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [territory, setTerritory] = useState<TerritoryData>({
     mode: 'zip',
     selectedCounties: [],
+    selectedZips: [],
     drawnPolygon: [],
     polygon: [],
   })
@@ -61,11 +62,17 @@ export default function SettingsPage() {
       setPhone(profile.phone || '')
       setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
-      // Load existing territory polygon
+      // Load existing territory polygon and zips
       if (profile.polygon && Array.isArray(profile.polygon) && profile.polygon.length > 0) {
         setTerritory((prev) => ({
           ...prev,
           polygon: profile.polygon as [number, number][][],
+          selectedZips: (profile.territory_zips as string[]) || [],
+        }))
+      } else if (profile.territory_zips && Array.isArray(profile.territory_zips)) {
+        setTerritory((prev) => ({
+          ...prev,
+          selectedZips: profile.territory_zips as string[],
         }))
       }
     } else if (!isAuthenticated) {
@@ -108,7 +115,7 @@ export default function SettingsPage() {
 
   return (
     <div className="overflow-y-auto h-full p-4 sm:p-6">
-      <div className="max-w-[640px] mx-auto">
+      <div className="max-w-[960px] mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -251,7 +258,10 @@ export default function SettingsPage() {
                     const supabase = createClient()
                     const { error } = await supabase
                       .from('ar_profiles')
-                      .update({ polygon: territory.polygon })
+                      .update({
+                        polygon: territory.polygon,
+                        territory_zips: territory.selectedZips.length > 0 ? territory.selectedZips : null,
+                      })
                       .eq('id', profile.id)
                     setSavingTerritory(false)
                     if (error) {

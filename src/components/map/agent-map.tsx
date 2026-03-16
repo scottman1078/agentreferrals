@@ -6,12 +6,14 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles, MapPin, Search, X, Loader2, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/auth-context'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { preloadAgentCounties } from '@/lib/county-boundaries'
+import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -42,6 +44,19 @@ export default function AgentMap() {
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const [countyLoadCount, setCountyLoadCount] = useState(0)
+  const [showMyZips, setShowMyZips] = useState(false)
+  const myZipLayersRef = useRef<L.Layer[]>([])
+  const zipBoundaryCache = useRef<Map<string, [number, number][]>>(new Map())
+  const { profile, refreshProfile } = useAuth()
+  const [myZips, setMyZips] = useState<string[]>([])
+  const [zipInput, setZipInput] = useState('')
+  const [zipLoading, setZipLoading] = useState(false)
+  const [zipSaving, setZipSaving] = useState(false)
+  const [zipAgentCount, setZipAgentCount] = useState<{ zip: string; count: number } | null>(null)
+  const [zipSaveToast, setZipSaveToast] = useState(false)
+  const wmsLayerRef = useRef<L.TileLayer.WMS | null>(null)
+  const wmsLabelsRef = useRef<L.TileLayer.WMS | null>(null)
+  const showMyZipsRef = useRef(false)
 
   useEffect(() => setMounted(true), [])
 
@@ -104,8 +119,9 @@ export default function AgentMap() {
     mapInstance.current = map
     renderAgents(filteredAgents, map, true)
 
-    // Click empty area → zoom in 2 levels
+    // Click empty area → zoom in 2 levels (skip when in My Zips mode)
     map.on('click', (e) => {
+      if (showMyZipsRef.current) return
       setSelectedAgent(null)
       setHoveredAgent(null)
       const currentZoom = map.getZoom()
@@ -176,6 +192,213 @@ export default function AgentMap() {
       })
     }
   }, [showVoids])
+
+  // Keep ref in sync with state
+  useEffect(() => { showMyZipsRef.current = showMyZips }, [showMyZips])
+
+  // Initialize myZips from profile
+  useEffect(() => {
+    if (profile?.territory_zips && Array.isArray(profile.territory_zips)) {
+      setMyZips(profile.territory_zips as string[])
+    }
+  }, [profile])
+
+  // Toggle "My Zips" mode — hide/show agents, add WMS overlay, enable click-to-select
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    // Clear old zip layers
+    myZipLayersRef.current.forEach((l) => map.removeLayer(l))
+    myZipLayersRef.current = []
+
+    if (showMyZips) {
+      // Hide agent markers and polygons
+      markerLayersRef.current.forEach((l) => map.removeLayer(l))
+      polygonLayersRef.current.forEach((l) => map.removeLayer(l))
+
+      // Add WMS zip boundary overlay
+      if (!wmsLayerRef.current) {
+        wmsLayerRef.current = L.tileLayer.wms(ZCTA_WMS_URL, {
+          layers: ZCTA_WMS_LAYERS,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.35,
+        })
+      }
+      wmsLayerRef.current.addTo(map)
+
+      if (!wmsLabelsRef.current) {
+        wmsLabelsRef.current = L.tileLayer.wms(ZCTA_WMS_URL, {
+          layers: ZCTA_WMS_LABELS,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.6,
+        })
+      }
+      wmsLabelsRef.current.addTo(map)
+
+      // Click-to-select handler
+      const handleMapClick = async (e: L.LeafletEvent) => {
+        const { lat, lng } = (e as L.LeafletMouseEvent).latlng
+        const zip = await getZipAtPoint(lat, lng)
+        if (!zip) return
+
+        // Check agent count
+        try {
+          const res = await fetch(`/api/zip-agents?zip=${zip}`)
+          const data = await res.json()
+          setZipAgentCount({ zip, count: data.count ?? 0 })
+          setTimeout(() => setZipAgentCount(null), 4000)
+        } catch { /* ignore */ }
+
+        // Toggle zip selection
+        setMyZips((prev) =>
+          prev.includes(zip)
+            ? prev.filter((z) => z !== zip)
+            : [...prev, zip]
+        )
+      }
+      map.on('click', handleMapClick)
+
+      // Store handler for cleanup
+      ;(map as unknown as Record<string, unknown>)._zipClickHandler = handleMapClick
+    } else {
+      // Remove WMS layers
+      if (wmsLayerRef.current && map.hasLayer(wmsLayerRef.current)) {
+        map.removeLayer(wmsLayerRef.current)
+      }
+      if (wmsLabelsRef.current && map.hasLayer(wmsLabelsRef.current)) {
+        map.removeLayer(wmsLabelsRef.current)
+      }
+
+      // Remove click handler
+      const handler = (map as unknown as Record<string, unknown>)._zipClickHandler
+      if (handler) {
+        map.off('click', handler as L.LeafletEventHandlerFn)
+        delete (map as unknown as Record<string, unknown>)._zipClickHandler
+      }
+
+      setZipAgentCount(null)
+
+      // Re-render agents when leaving zip mode
+      if (filteredAgents.length > 0) {
+        renderAgents(filteredAgents, map, false)
+      }
+      return
+    }
+
+    // Render saved zip boundaries
+    renderMyZipLayers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMyZips])
+
+  // Re-render zip layers when myZips changes
+  useEffect(() => {
+    if (!showMyZips || !mapInstance.current || !L) return
+    renderMyZipLayers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myZips])
+
+  const renderMyZipLayers = useCallback(async () => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    // Clear existing selected zip layers (not WMS)
+    myZipLayersRef.current.forEach((l) => map.removeLayer(l))
+    myZipLayersRef.current = []
+
+    for (const zip of myZips) {
+      const ring = await getZipBoundary(zip)
+      if (!ring || ring.length < 3) continue
+
+      const poly = L!.polygon(ring as L.LatLngExpression[], {
+        color: '#f59e0b',
+        weight: 3,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.3,
+      }).addTo(map)
+
+      // Show zip code label, then fetch agent count
+      poly.bindTooltip(`<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;color:#999">loading...</div>`, { permanent: true, direction: 'center', className: 'zip-label' })
+      fetch(`/api/zip-agents?zip=${zip}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const count = data.count ?? 0
+          poly.unbindTooltip()
+          poly.bindTooltip(
+            `<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;color:#666">${count} agent${count !== 1 ? 's' : ''}</div>`,
+            { permanent: true, direction: 'center', className: 'zip-label' }
+          )
+        })
+        .catch(() => {})
+
+      poly.on('click', () => handleRemoveZip(zip))
+      myZipLayersRef.current.push(poly)
+    }
+
+    // Ensure WMS layers stay visible
+    if (wmsLayerRef.current && !map.hasLayer(wmsLayerRef.current)) {
+      wmsLayerRef.current.addTo(map)
+    }
+    if (wmsLabelsRef.current && !map.hasLayer(wmsLabelsRef.current)) {
+      wmsLabelsRef.current.addTo(map)
+    }
+  }, [myZips])
+
+  const handleAddZip = useCallback(async () => {
+    const zip = zipInput.trim()
+    if (!/^\d{5}$/.test(zip) || myZips.includes(zip)) return
+
+    setZipLoading(true)
+    try {
+      const ring = await getZipBoundary(zip)
+      if (!ring) {
+        setZipLoading(false)
+        return
+      }
+
+      setMyZips((prev) => [...prev, zip])
+      setZipInput('')
+
+      // Fly to the new zip — zoom to 13 so WMS boundaries are clearly visible
+      if (mapInstance.current && ring) {
+        const center = getCentroid(ring)
+        mapInstance.current.flyTo(center, 13, { duration: 0.8 })
+      }
+    } catch { /* ignore */ }
+    setZipLoading(false)
+  }, [zipInput, myZips])
+
+  const handleRemoveZip = useCallback((zip: string) => {
+    setMyZips((prev) => prev.filter((z) => z !== zip))
+  }, [])
+
+  const handleSaveZips = useCallback(async () => {
+    if (!profile) return
+    setZipSaving(true)
+
+    // Build polygon array from Census boundaries
+    const polygonRings: [number, number][][] = []
+    for (const zip of myZips) {
+      const ring = await getZipBoundary(zip)
+      if (ring) polygonRings.push(ring)
+    }
+
+    const supabase = (await import('@/lib/supabase/client')).createClient()
+    await supabase
+      .from('ar_profiles')
+      .update({
+        territory_zips: myZips.length > 0 ? myZips : null,
+        polygon: polygonRings.length > 0 ? polygonRings : null,
+      })
+      .eq('id', profile.id)
+
+    await refreshProfile()
+    setZipSaving(false)
+    setZipSaveToast(true)
+    setTimeout(() => setZipSaveToast(false), 3000)
+  }, [profile, myZips, refreshProfile])
 
   const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
@@ -444,6 +667,32 @@ export default function AgentMap() {
           )}
         </button>
 
+        {/* Referrals / My Zips toggle */}
+        <div className="flex items-center h-8 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md overflow-hidden">
+          <button
+            onClick={() => setShowMyZips(false)}
+            className={`flex items-center gap-1.5 h-full px-3 text-xs font-semibold transition-all ${
+              !showMyZips
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Referrals
+          </button>
+          <div className="w-px h-4 bg-border" />
+          <button
+            onClick={() => setShowMyZips(true)}
+            className={`flex items-center gap-1.5 h-full px-3 text-xs font-semibold transition-all ${
+              showMyZips
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <MapPin className="w-3 h-3" />
+            My Zips
+          </button>
+        </div>
+
         {/* NORA Insights — triggers AI briefing */}
         <button
           onClick={() => {
@@ -455,6 +704,88 @@ export default function AgentMap() {
           NORA Insights
         </button>
       </div>
+
+      {/* My Zips editing panel */}
+      {showMyZips && (
+        <div
+          style={{ position: 'fixed', top: 76, right: 16, zIndex: 9000 }}
+          className="w-[320px]"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm">My Zip Codes</h3>
+              <button
+                onClick={handleSaveZips}
+                disabled={zipSaving}
+                className="flex items-center gap-1.5 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-50"
+              >
+                {zipSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                Save
+              </button>
+            </div>
+
+            {/* Search input */}
+            <div className="flex gap-1.5">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={zipInput}
+                  onChange={(e) => setZipInput(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddZip()}
+                  placeholder="Add zip code..."
+                  maxLength={5}
+                  className="w-full h-8 pl-8 pr-3 rounded-lg border border-input bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <button
+                onClick={handleAddZip}
+                disabled={zipLoading || zipInput.length !== 5}
+                className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-40"
+              >
+                {zipLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Add'}
+              </button>
+            </div>
+
+            {/* Selected zips */}
+            {myZips.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 max-h-[200px] overflow-y-auto">
+                {myZips.map((zip) => (
+                  <span
+                    key={zip}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20"
+                  >
+                    {zip}
+                    <button
+                      onClick={() => handleRemoveZip(zip)}
+                      className="hover:bg-primary/20 rounded-full p-0.5"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground text-center py-1">
+                Search or click the map to add zips
+              </p>
+            )}
+
+            {/* Agent count toast */}
+            {zipAgentCount && (
+              <div className="p-2 rounded-lg bg-secondary/80 text-xs">
+                <span className="font-bold">{zipAgentCount.zip}</span>
+                {' — '}
+                {zipAgentCount.count === 0
+                  ? 'No agents in this area yet'
+                  : `${zipAgentCount.count} agent${zipAgentCount.count !== 1 ? 's' : ''} in this area`}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
@@ -486,6 +817,14 @@ export default function AgentMap() {
           preselectedAgentId={referralAgent.id}
           onCreated={() => setReferralAgent(null)}
         />
+      )}
+
+      {/* Zip save toast */}
+      {zipSaveToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-full bg-emerald-500 text-white text-sm font-semibold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+          Zip codes saved
+        </div>
       )}
     </div>
   )
