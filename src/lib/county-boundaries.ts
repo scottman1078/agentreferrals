@@ -189,8 +189,16 @@ export async function preloadAgentCounties(
       const feat = countyMap.get(fipsList[0])
       if (feat) {
         const coords = geoJsonToLeaflet(feat)
-        if (coords) result.set(agent.id, coords)
-        continue
+        if (coords) {
+          result.set(agent.id, coords)
+          continue
+        }
+      }
+      console.warn(`[CountyBoundaries] FIPS ${fipsList[0]} found in lookup but not in atlas for "${agent.area}"`)
+    } else {
+      // Log unmatched for debugging
+      if (!areaLower.includes(', on') && !areaLower.includes(', bc') && !areaLower.includes(', ab') && !areaLower.includes(', qc') && !areaLower.includes(', mb') && !areaLower.includes(', ns')) {
+        console.warn(`[CountyBoundaries] No FIPS mapping for "${agent.area}"`)
       }
     }
 

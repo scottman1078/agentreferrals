@@ -35,7 +35,7 @@ export default function AgentMap() {
   const { filteredAgents, scope, partnerIds } = useBrokerage()
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
-  const [countiesLoaded, setCountiesLoaded] = useState(false)
+  const [countyLoadCount, setCountyLoadCount] = useState(0)
 
   useEffect(() => setMounted(true), [])
 
@@ -43,7 +43,8 @@ export default function AgentMap() {
   useEffect(() => {
     preloadAgentCounties(filteredAgents).then((map) => {
       countyPolygonsRef.current = map
-      setCountiesLoaded(true)
+      console.log(`[CountyBoundaries] Loaded ${map.size}/${filteredAgents.length} agent counties`)
+      setCountyLoadCount((c) => c + 1) // increment to force re-render
     })
   }, [filteredAgents])
 
@@ -139,7 +140,7 @@ export default function AgentMap() {
       setHoveredAgent(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag, filteredAgents, scope, countiesLoaded])
+  }, [activeTag, filteredAgents, scope, countyLoadCount])
 
   // Toggle void zones
   useEffect(() => {
@@ -287,7 +288,7 @@ export default function AgentMap() {
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAgent, partnerIds, scope, countiesLoaded])
+  }, [selectedAgent, partnerIds, scope, countyLoadCount])
 
   // Handle search result
   const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
