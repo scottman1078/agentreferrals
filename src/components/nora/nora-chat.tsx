@@ -100,13 +100,13 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
     }
   }, [profile])
 
-  // Listen for open-nora events (e.g., from check-in badge)
+  // Listen for toggle-nora events (e.g., from check-in badge)
   useEffect(() => {
-    function handleOpenNora() {
-      setIsOpen(true)
+    function handleToggleNora() {
+      setIsOpen((prev) => !prev)
     }
-    window.addEventListener('open-nora', handleOpenNora)
-    return () => window.removeEventListener('open-nora', handleOpenNora)
+    window.addEventListener('toggle-nora', handleToggleNora)
+    return () => window.removeEventListener('toggle-nora', handleToggleNora)
   }, [])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)

@@ -411,7 +411,7 @@ export default function AgentMap() {
       )}
 
       {/* Compact action bar — top left, below floating nav */}
-      <div className="fixed top-[76px] left-4 z-[500] flex items-center gap-1.5">
+      <div style={{ position: 'fixed', top: 76, left: 16, zIndex: 9000 }} className="flex items-center gap-1.5">
         {/* Filters button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -436,7 +436,7 @@ export default function AgentMap() {
             <button
               onClick={() => {
                 // Dispatch event to open NORA
-                window.dispatchEvent(new CustomEvent('open-nora', { detail: { context: 'checkins' } }))
+                window.dispatchEvent(new CustomEvent('toggle-nora', { detail: { context: 'checkins' } }))
               }}
               className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-amber-500/30 bg-amber-500/10 text-amber-600 backdrop-blur-md shadow-md hover:bg-amber-500/20 transition-all"
             >
