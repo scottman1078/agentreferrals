@@ -267,6 +267,80 @@ function geoJsonToLeaflet(feat: GeoJSON.Feature): [number, number][][] | null {
   return null
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TERRITORY SELECTOR HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+/** Expose the STATE_FIPS map for external use */
+export { STATE_FIPS }
+
+/** Get all loaded county features keyed by FIPS code */
+export async function getAllCountyFeatures(): Promise<Map<string, GeoJSON.Feature>> {
+  await loadCounties()
+  return countyMap ?? new Map()
+}
+
+/** Get all county features for a given state FIPS prefix */
+export async function getCountiesForState(stateFips: string): Promise<{ fips: string; feature: GeoJSON.Feature }[]> {
+  await loadCounties()
+  if (!countyMap) return []
+  const results: { fips: string; feature: GeoJSON.Feature }[] = []
+  for (const [fips, feat] of countyMap) {
+    if (fips.startsWith(stateFips)) {
+      results.push({ fips, feature: feat })
+    }
+  }
+  return results
+}
+
+/** Get specific county features by FIPS codes, returns Leaflet-format coords */
+export async function getCountyFeaturesByFips(fipsCodes: string[]): Promise<Map<string, [number, number][][]>> {
+  await loadCounties()
+  const result = new Map<string, [number, number][][]>()
+  if (!countyMap) return result
+  for (const fips of fipsCodes) {
+    const feat = countyMap.get(fips)
+    if (feat) {
+      const coords = geoJsonToLeaflet(feat)
+      if (coords) result.set(fips, coords)
+    }
+  }
+  return result
+}
+
+/** Find the county FIPS code that contains a given lat/lng point */
+export async function findCountyAtPoint(lat: number, lng: number): Promise<string | null> {
+  await loadCounties()
+  if (!countyMap) return null
+  for (const [fips, feat] of countyMap) {
+    if (pointInFeature(lat, lng, feat)) return fips
+  }
+  return null
+}
+
+/** Ray-casting point-in-polygon test */
+function pointInFeature(lat: number, lng: number, feat: GeoJSON.Feature): boolean {
+  const geom = feat.geometry
+  if (geom.type === 'Polygon') {
+    return pointInRing(lng, lat, geom.coordinates[0])
+  } else if (geom.type === 'MultiPolygon') {
+    return geom.coordinates.some((poly) => pointInRing(lng, lat, poly[0]))
+  }
+  return false
+}
+
+function pointInRing(x: number, y: number, ring: number[][]): boolean {
+  let inside = false
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1]
+    const xj = ring[j][0], yj = ring[j][1]
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
+      inside = !inside
+    }
+  }
+  return inside
+}
+
 /** Get bounding box of a GeoJSON feature */
 function getBbox(feat: GeoJSON.Feature): [number, number, number, number] | null {
   const coords: number[][] = []

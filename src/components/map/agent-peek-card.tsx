@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
+import { useAuth } from '@/contexts/auth-context'
+import AgentNotes from '@/components/agent-notes'
 import type { Agent } from '@/types'
 
 interface AgentPeekCardProps {
@@ -16,6 +18,7 @@ interface AgentPeekCardProps {
 
 export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessage }: AgentPeekCardProps) {
   const router = useRouter()
+  const { profile } = useAuth()
   const { getAgentReviewStats } = useAppData()
   const initials = getInitials(agent.name)
   const reviewStats = getAgentReviewStats(agent.id)
@@ -119,6 +122,9 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               </span>
             ))}
           </div>
+
+          {/* Private notes */}
+          <AgentNotes agentId={agent.id} authorId={profile?.id ?? null} variant="inline" />
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-3">

@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { CreditCard, ArrowRight, Loader2, Check, LogOut, User, Bell, FileText, Settings as SettingsIcon } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, LogOut, User, Bell, FileText, MapPin, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
+import TerritorySelector, { type TerritoryData } from '@/components/onboarding/territory-selector'
 
-type Tab = 'profile' | 'billing' | 'referrals' | 'notifications'
+type Tab = 'profile' | 'territory' | 'billing' | 'referrals' | 'notifications'
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
+  { id: 'territory', label: 'Territory', icon: MapPin },
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'referrals', label: 'Referral Defaults', icon: FileText },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -30,6 +32,14 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState('')
   const [serviceArea, setServiceArea] = useState('')
   const [brokerageName, setBrokerageName] = useState('')
+
+  const [territory, setTerritory] = useState<TerritoryData>({
+    mode: 'zip',
+    selectedCounties: [],
+    drawnPolygon: [],
+    polygon: [],
+  })
+  const [savingTerritory, setSavingTerritory] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const [saveToast, setSaveToast] = useState('')
@@ -51,6 +61,13 @@ export default function SettingsPage() {
       setPhone(profile.phone || '')
       setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
+      // Load existing territory polygon
+      if (profile.polygon && Array.isArray(profile.polygon) && profile.polygon.length > 0) {
+        setTerritory((prev) => ({
+          ...prev,
+          polygon: profile.polygon as [number, number][][],
+        }))
+      }
     } else if (!isAuthenticated) {
       setFullName("Jason O'Brien")
       setEmail('jason@jobrienhomes.com')
@@ -208,6 +225,51 @@ export default function SettingsPage() {
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
+          </div>
+        )}
+
+        {/* ═══ Territory Tab ═══ */}
+        {activeTab === 'territory' && (
+          <div className="space-y-4">
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <div className="font-bold text-sm mb-2 pb-3 border-b border-border">
+                Your Territory
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Define your service area by zip code, county, or by drawing a boundary on the map.
+              </p>
+              <TerritorySelector
+                value={territory}
+                onChange={setTerritory}
+                initialCenter={serviceArea}
+              />
+              <div className="text-right pt-4">
+                <button
+                  onClick={async () => {
+                    if (!profile) return
+                    setSavingTerritory(true)
+                    const supabase = createClient()
+                    const { error } = await supabase
+                      .from('ar_profiles')
+                      .update({ polygon: territory.polygon })
+                      .eq('id', profile.id)
+                    setSavingTerritory(false)
+                    if (error) {
+                      setSaveToast('Failed to save territory.')
+                    } else {
+                      await refreshProfile()
+                      setSaveToast('Territory saved successfully')
+                    }
+                    setTimeout(() => setSaveToast(''), 3000)
+                  }}
+                  disabled={savingTerritory || !isAuthenticated || territory.polygon.length === 0}
+                  className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+                >
+                  {savingTerritory && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {savingTerritory ? 'Saving...' : 'Save Territory'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

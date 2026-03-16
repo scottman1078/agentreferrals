@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getInitials } from '@/lib/utils'
 import { agents } from '@/data/agents'
@@ -331,17 +330,30 @@ function ConversationItem({
 // ─── Main Messages Page ───
 
 export default function MessagesPage() {
-  const searchParams = useSearchParams()
-  const preselectedAgent = searchParams.get('agent')
+  // Read ?agent= param from window.location on mount (avoids useSearchParams Suspense issues)
+  const [preselectedAgent, setPreselectedAgent] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setPreselectedAgent(params.get('agent'))
+  }, [])
 
   const [conversationList, setConversationList] = useState<Conversation[]>(mockConversations)
   const [activeConvId, setActiveConvId] = useState<string | null>(
-    preselectedAgent || mockConversations[0]?.agentId || null
+    mockConversations[0]?.agentId || null
   )
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [newMessage, setNewMessage] = useState('')
-  const [showMobileChat, setShowMobileChat] = useState(!!preselectedAgent)
+  const [showMobileChat, setShowMobileChat] = useState(false)
+
+  // Handle preselected agent from URL
+  useEffect(() => {
+    if (preselectedAgent) {
+      setActiveConvId(preselectedAgent)
+      setShowMobileChat(true)
+    }
+  }, [preselectedAgent])
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 

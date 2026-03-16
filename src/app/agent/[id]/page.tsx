@@ -25,6 +25,7 @@ import {
 import Link from 'next/link'
 import { AgentProfileReviews } from './agent-profile-reviews'
 import { AgentProfileMap } from './agent-profile-map'
+import AgentNotesSection from './agent-notes-section'
 
 // --------------- Static params ---------------
 export function generateStaticParams() {
@@ -248,6 +249,11 @@ export default async function AgentProfilePage({ params }: PageProps) {
               area={agent.area}
             />
           </div>
+        </section>
+
+        {/* ═══ PRIVATE NOTES ═══ */}
+        <section>
+          <AgentNotesSection agentId={agent.id} />
         </section>
 
         {/* ═══ CTA ═══ */}

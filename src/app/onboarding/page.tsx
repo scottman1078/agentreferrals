@@ -8,18 +8,20 @@ import { brokerages } from '@/data/brokerages'
 import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
+import TerritorySelector, { type TerritoryData } from '@/components/onboarding/territory-selector'
 import {
   ArrowRight,
   ArrowLeft,
   Check,
   Building2,
   User,
+  MapPin,
   Sparkles,
   CheckCircle2,
   Loader2,
 } from 'lucide-react'
 
-const TOTAL_STEPS = 4
+const TOTAL_STEPS = 5
 
 interface OnboardingData {
   brokerageId: string | null
@@ -30,11 +32,12 @@ interface OnboardingData {
   yearsLicensed: number | null
   dealsPerYear: number | null
   avgSalePrice: number | null
+  territory: TerritoryData
   specializations: string[]
 }
 
-const STEP_LABELS = ['Brokerage', 'Profile', 'Specializations', 'Review']
-const STEP_ICONS = [Building2, User, Sparkles, CheckCircle2]
+const STEP_LABELS = ['Brokerage', 'Profile', 'Territory', 'Specializations', 'Review']
+const STEP_ICONS = [Building2, User, MapPin, Sparkles, CheckCircle2]
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -57,12 +60,30 @@ export default function OnboardingPage() {
     yearsLicensed: null,
     dealsPerYear: null,
     avgSalePrice: null,
+    territory: {
+      mode: 'zip',
+      selectedCounties: [],
+      drawnPolygon: [],
+      polygon: [],
+    },
     specializations: [],
   })
 
-  // Load user info on mount — auth lives on the hub
+  // Load user info on mount — retry to handle race condition with auth cookie
   useEffect(() => {
-    hub.auth.getUser().then(({ data: { user } }: { data: { user: { id: string; email?: string | null; user_metadata?: Record<string, string> } | null } }) => {
+    type AuthUser = { id: string; email?: string | null; user_metadata?: Record<string, string> }
+
+    const resolveUser = async (retries = 3): Promise<AuthUser | null> => {
+      const { data: { user } } = await hub.auth.getUser() as { data: { user: AuthUser | null } }
+      if (user) return user
+      if (retries > 0) {
+        await new Promise((r) => setTimeout(r, 500))
+        return resolveUser(retries - 1)
+      }
+      return null
+    }
+
+    resolveUser().then((user) => {
       if (!user) {
         router.push('/')
         return
@@ -102,6 +123,8 @@ export default function OnboardingPage() {
           data.primaryArea.trim().length > 0
         )
       case 3:
+        return data.territory.polygon.length > 0
+      case 4:
         return data.specializations.length >= 1
       default:
         return true
@@ -142,6 +165,7 @@ export default function OnboardingPage() {
       deals_per_year: data.dealsPerYear,
       avg_sale_price: data.avgSalePrice,
       tags: data.specializations,
+      polygon: data.territory.polygon,
       status: 'active',
       updated_at: new Date().toISOString(),
     }
@@ -511,8 +535,28 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ═══ STEP 3: Specializations ═══ */}
+          {/* ═══ STEP 3: Territory ═══ */}
           {step === 3 && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center mb-8">
+                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
+                  Your Territory
+                </h1>
+                <p className="text-muted-foreground">
+                  Define where you work so we can match you with the right referrals
+                </p>
+              </div>
+
+              <TerritorySelector
+                value={data.territory}
+                onChange={(territory) => setData((prev) => ({ ...prev, territory }))}
+                initialCenter={data.primaryArea}
+              />
+            </div>
+          )}
+
+          {/* ═══ STEP 4: Specializations ═══ */}
+          {step === 4 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-8">
                 <h1 className="font-extrabold text-3xl tracking-tight mb-2">
@@ -562,8 +606,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ═══ STEP 4: Review ═══ */}
-          {step === 4 && (
+          {/* ═══ STEP 5: Review ═══ */}
+          {step === 5 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-8">
                 <h1 className="font-extrabold text-3xl tracking-tight mb-2">
@@ -635,6 +679,34 @@ export default function OnboardingPage() {
 
                 <div className="h-px bg-border" />
 
+                {/* Territory */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Territory
+                    </div>
+                    <div className="text-sm">
+                      {data.territory.mode === 'draw' && data.territory.drawnPolygon.length >= 3 && (
+                        <span>Custom boundary drawn ({data.territory.drawnPolygon.length} points)</span>
+                      )}
+                      {(data.territory.mode === 'zip' || data.territory.mode === 'county') && data.territory.selectedCounties.length > 0 && (
+                        <span>{data.territory.selectedCounties.length} {data.territory.selectedCounties.length === 1 ? 'county' : 'counties'} selected</span>
+                      )}
+                      {data.territory.polygon.length === 0 && (
+                        <span className="text-muted-foreground">Not defined</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setStep(3)}
+                    className="text-xs text-primary font-semibold hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div className="h-px bg-border" />
+
                 {/* Specializations */}
                 <div className="flex items-start justify-between">
                   <div>
@@ -657,7 +729,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setStep(3)}
+                    onClick={() => setStep(4)}
                     className="text-xs text-primary font-semibold hover:underline"
                   >
                     Edit
