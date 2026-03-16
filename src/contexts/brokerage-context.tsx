@@ -12,6 +12,7 @@ interface BrokerageContextType {
   setScope: (scope: BrokerageScope) => void
   switchBrokerage: (id: string) => void
   filteredAgents: Agent[]
+  partnerIds: string[]
 }
 
 const BrokerageContext = createContext<BrokerageContextType | null>(null)
@@ -41,6 +42,7 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
         setScope,
         switchBrokerage: setCurrentBrokerageId,
         filteredAgents,
+        partnerIds,
       }}
     >
       {children}

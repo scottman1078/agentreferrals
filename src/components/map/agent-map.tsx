@@ -31,7 +31,7 @@ export default function AgentMap() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [hoveredAgent, setHoveredAgent] = useState<{ agent: Agent; position: { x: number; y: number } } | null>(null)
   const { resolvedTheme } = useTheme()
-  const { filteredAgents, scope } = useBrokerage()
+  const { filteredAgents, scope, partnerIds } = useBrokerage()
   const { voidZones } = useAppData()
 
   useEffect(() => setMounted(true), [])
@@ -162,70 +162,95 @@ export default function AgentMap() {
     agentList.forEach((agent) => {
       if (!agent.polygon || !Array.isArray(agent.polygon) || agent.polygon.length < 3) return
 
-      const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
-        color: agent.color,
-        weight: agent.isPrimary ? 3 : 1.5,
-        fillColor: agent.color,
-        fillOpacity: agent.isPrimary ? 0.30 : 0.18,
-        smoothFactor: 1.5,
-      }).addTo(map)
+      const isPartner = partnerIds.includes(agent.id) || agent.isPrimary
+      const showPolygon = scope === 'my-network' || isPartner
 
-      allBounds.push(poly.getBounds())
+      // Partners get full polygon territory; non-partners just get a marker
+      if (showPolygon) {
+        const poly = L!.polygon(agent.polygon as L.LatLngExpression[], {
+          color: agent.color,
+          weight: isPartner ? 2.5 : 1.5,
+          fillColor: agent.color,
+          fillOpacity: isPartner ? 0.25 : 0.08,
+          smoothFactor: 1.5,
+        }).addTo(map)
 
-      const center = poly.getBounds().getCenter()
+        allBounds.push(poly.getBounds())
+
+        // Hover + click on polygon
+        const showHoverPoly = (e: L.LeafletMouseEvent) => {
+          if (selectedAgent) return
+          const containerPoint = map.latLngToContainerPoint(e.latlng)
+          const mapEl = map.getContainer().getBoundingClientRect()
+          setHoveredAgent({
+            agent,
+            position: { x: mapEl.left + containerPoint.x, y: mapEl.top + containerPoint.y },
+          })
+        }
+        poly.on('mouseover', showHoverPoly)
+        poly.on('mouseout', () => setHoveredAgent((prev) => (prev?.agent.id === agent.id ? null : prev)))
+        poly.on('click', (e: L.LeafletMouseEvent) => {
+          L!.DomEvent.stopPropagation(e)
+          setHoveredAgent(null)
+          setSelectedAgent(agent)
+          map.flyToBounds(poly.getBounds(), { padding: [80, 80], maxZoom: 10, duration: 0.8 })
+        })
+
+        layersRef.current.push(poly)
+      }
+
+      // Center point for the marker
+      const polyTemp = L!.polygon(agent.polygon as L.LatLngExpression[])
+      const center = polyTemp.getBounds().getCenter()
+      if (!showPolygon) {
+        allBounds.push(L!.latLngBounds(center, center))
+      }
+
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
+      const markerSize = isPartner ? 32 : 28
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
         html: `<div style="
-          width:32px;height:32px;border-radius:50%;
+          width:${markerSize}px;height:${markerSize}px;border-radius:50%;
           background:${agent.color};
-          border:2px solid white;
-          box-shadow:0 2px 8px rgba(0,0,0,0.3);
+          border:2px solid ${isPartner ? 'white' : 'rgba(255,255,255,0.6)'};
+          box-shadow:0 2px 8px rgba(0,0,0,${isPartner ? '0.3' : '0.15'});
           display:flex;align-items:center;justify-content:center;
-          font-size:11px;font-weight:700;color:white;
+          font-size:${isPartner ? '11' : '10'}px;font-weight:700;color:white;
+          opacity:${isPartner ? '1' : '0.7'};
           font-family:var(--font-dm-sans),system-ui,sans-serif;
           cursor:pointer;
         ">${initials}</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        iconSize: [markerSize, markerSize],
+        iconAnchor: [markerSize / 2, markerSize / 2],
       })
 
       const marker = L!.marker(center, { icon: markerIcon }).addTo(map)
 
-      // ── Hover → show lightweight preview ──
-      const showHover = (e: L.LeafletMouseEvent) => {
-        if (selectedAgent) return // don't show hover if full card is open
+      // ── Marker hover → show lightweight preview ──
+      marker.on('mouseover', (e: L.LeafletMouseEvent) => {
+        if (selectedAgent) return
         const containerPoint = map.latLngToContainerPoint(e.latlng)
         const mapEl = map.getContainer().getBoundingClientRect()
         setHoveredAgent({
           agent,
           position: { x: mapEl.left + containerPoint.x, y: mapEl.top + containerPoint.y },
         })
-      }
-      const hideHover = () => {
+      })
+      marker.on('mouseout', () => {
         setHoveredAgent((prev) => (prev?.agent.id === agent.id ? null : prev))
-      }
+      })
 
-      poly.on('mouseover', showHover)
-      poly.on('mouseout', hideHover)
-      marker.on('mouseover', showHover)
-      marker.on('mouseout', hideHover)
-
-      // ── Click → fly to territory + show full card ──
-      const handleAgentClick = (e: L.LeafletMouseEvent) => {
+      // ── Marker click → fly to territory + show full card ──
+      marker.on('click', (e: L.LeafletMouseEvent) => {
         L!.DomEvent.stopPropagation(e)
         setHoveredAgent(null)
         setSelectedAgent(agent)
-
-        // Fly to the agent's territory
-        const agentBounds = poly.getBounds()
+        const agentBounds = L!.polygon(agent.polygon as L.LatLngExpression[]).getBounds()
         map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 10, duration: 0.8 })
-      }
+      })
 
-      poly.on('click', handleAgentClick)
-      marker.on('click', handleAgentClick)
-
-      layersRef.current.push(poly, marker)
+      layersRef.current.push(marker)
     })
 
     // Fit map to actual agent locations on initial load
@@ -236,7 +261,7 @@ export default function AgentMap() {
       }
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
-  }, [selectedAgent])
+  }, [selectedAgent, partnerIds, scope])
 
   // Handle search result
   const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
