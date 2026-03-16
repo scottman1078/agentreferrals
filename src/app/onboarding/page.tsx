@@ -157,6 +157,55 @@ export default function OnboardingPage() {
       return
     }
 
+    // ── Also register in hub: agents table + user_products ──
+    try {
+      const hub = createHubClient()
+
+      // Parse city/state from primaryArea (e.g., "Kalamazoo County, Michigan")
+      const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())
+      const city = areaParts[0] || ''
+      const state = areaParts[1] || ''
+
+      // Upsert into hub agents table (by email — same agent across products)
+      await hub.from('agents').upsert({
+        profile_id: userId,
+        email: userEmail,
+        first_name: data.fullName.split(' ')[0] || '',
+        last_name: data.fullName.split(' ').slice(1).join(' ') || '',
+        phone: data.phone.trim() || null,
+        city,
+        state,
+        is_agent: true,
+        is_active: true,
+        metadata: {
+          source_platform: 'agentreferrals',
+          years_licensed: data.yearsLicensed,
+          deals_per_year: data.dealsPerYear,
+          avg_sale_price: data.avgSalePrice,
+          specializations: data.specializations,
+        },
+      }, { onConflict: 'profile_id' })
+
+      // Get AR platform ID and register in user_products
+      const { data: platform } = await hub
+        .from('platforms')
+        .select('id')
+        .eq('slug', 'agentreferrals')
+        .single()
+
+      if (platform) {
+        await hub.from('user_products').upsert({
+          profile_id: userId,
+          product_id: platform.id,
+          status: 'active',
+          tier: 'free',
+        }, { onConflict: 'profile_id,product_id' })
+      }
+    } catch (hubError) {
+      // Don't block onboarding if hub write fails — log and continue
+      console.error('[Onboarding] Hub registration failed:', hubError)
+    }
+
     router.push('/dashboard')
   }
 
