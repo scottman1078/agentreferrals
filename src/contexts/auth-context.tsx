@@ -47,6 +47,12 @@ export interface ArProfile {
   polygon: unknown | null
   territory_zips: string[] | null
   color: string | null
+  license_number: string | null
+  license_state: string | null
+  license_verified: boolean
+  license_verified_at: string | null
+  license_expiration: string | null
+  license_type: string | null
   created_at: string
   updated_at: string
 
@@ -139,6 +145,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             polygon: null,
             territory_zips: null,
             color: null,
+            license_number: null,
+            license_state: null,
+            license_verified: false,
+            license_verified_at: null,
+            license_expiration: null,
+            license_type: null,
             created_at: '',
             updated_at: '',
             brokerage: null,

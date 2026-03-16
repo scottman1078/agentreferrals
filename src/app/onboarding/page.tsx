@@ -59,6 +59,8 @@ export default function OnboardingPage() {
     customBrokerage: '',
     fullName: '',
     phone: '',
+    licenseNumber: '',
+    licenseState: '',
     primaryArea: '',
     yearsLicensed: null,
     dealsPerYear: null,
@@ -184,6 +186,25 @@ export default function OnboardingPage() {
       setSubmitError(error.message)
       setIsSubmitting(false)
       return
+    }
+
+    // ── Verify license if provided ──
+    if (data.licenseNumber.trim() && data.licenseState.trim()) {
+      try {
+        await fetch('/api/verify-license', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            licenseNumber: data.licenseNumber.trim(),
+            licenseState: data.licenseState.trim(),
+            fullName: data.fullName.trim(),
+          }),
+        })
+      } catch (licenseErr) {
+        // Don't block onboarding if verification fails
+        console.error('[Onboarding] License verification failed:', licenseErr)
+      }
     }
 
     // ── Also register in hub: agents table + user_products ──
@@ -466,6 +487,47 @@ export default function OnboardingPage() {
                   />
                 </div>
 
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                      License Verification
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Verified agents get a trust badge and appear higher in search results.
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        License Number
+                      </label>
+                      <input
+                        type="text"
+                        value={data.licenseNumber}
+                        onChange={(e) => updateField('licenseNumber', e.target.value)}
+                        placeholder="e.g. 6501234567"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        State
+                      </label>
+                      <select
+                        value={data.licenseState}
+                        onChange={(e) => updateField('licenseState', e.target.value)}
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value="">--</option>
+                        {US_STATES.map((st) => (
+                          <option key={st} value={st}>{st}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Primary Service Area *
@@ -673,6 +735,17 @@ export default function OnboardingPage() {
                         <span>{formatCurrency(data.avgSalePrice)} avg</span>
                       )}
                     </div>
+                    {data.licenseNumber && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-muted-foreground">
+                          License: {data.licenseState} #{data.licenseNumber}
+                        </span>
+                        <span className="text-xs text-primary font-medium">
+                          (will be verified)
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => setStep(2)}

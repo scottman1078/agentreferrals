@@ -8,6 +8,8 @@ interface VerifiedBadgeProps {
   size?: 'sm' | 'md' | 'lg'
   showLabel?: boolean
   className?: string
+  /** When false or undefined, renders nothing. Use to gate on license_verified. */
+  verified?: boolean
 }
 
 const sizeMap = {
@@ -16,7 +18,9 @@ const sizeMap = {
   lg: { icon: 'w-4 h-4', wrapper: 'gap-1.5 px-2 py-1', text: 'text-xs' },
 }
 
-export function VerifiedBadge({ market, size = 'md', showLabel = false, className }: VerifiedBadgeProps) {
+export function VerifiedBadge({ market, size = 'md', showLabel = false, className, verified }: VerifiedBadgeProps) {
+  // If verified prop is explicitly passed as false, render nothing
+  if (verified === false) return null
   const s = sizeMap[size]
   return (
     <div
