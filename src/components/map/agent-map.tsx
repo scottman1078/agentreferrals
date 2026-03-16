@@ -430,7 +430,7 @@ export default function AgentMap() {
           onClick={() => {
             window.dispatchEvent(new CustomEvent('nora-briefing'))
           }}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-primary/30 bg-primary/10 text-primary backdrop-blur-md shadow-md hover:bg-primary/20 transition-all"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-border bg-card/90 text-primary backdrop-blur-md shadow-md hover:bg-accent transition-all"
         >
           <Sparkles className="w-3.5 h-3.5" />
           NORA Insights
