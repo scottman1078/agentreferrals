@@ -138,21 +138,13 @@ export default function AgentMap() {
     tileLayerRef.current.setUrl(isDark ? DARK_TILES : LIGHT_TILES)
   }, [resolvedTheme, mounted])
 
-  // Filter agents by tag AND brokerage scope — refit bounds on scope/filter change
-  const prevScopeRef = useRef(scope)
-  const prevTagRef = useRef(activeTag)
+  // Filter agents by tag AND brokerage scope — always refit bounds
   useEffect(() => {
     if (!mapInstance.current || !L) return
     const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
-    const scopeChanged = prevScopeRef.current !== scope
-    const tagChanged = prevTagRef.current !== activeTag
-    prevScopeRef.current = scope
-    prevTagRef.current = activeTag
-    renderAgents(filtered, mapInstance.current, scopeChanged || tagChanged)
-    if (scopeChanged || tagChanged) {
-      setSelectedAgent(null)
-      setHoveredAgent(null)
-    }
+    renderAgents(filtered, mapInstance.current, true)
+    setSelectedAgent(null)
+    setHoveredAgent(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTag, filteredAgents, scope, countyLoadCount])
 
