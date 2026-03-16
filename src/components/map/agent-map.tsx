@@ -443,7 +443,8 @@ export default function AgentMap() {
 
     agentList.forEach((agent) => {
       const isPartner = partnerIds.includes(agent.id) || agent.isPrimary
-      const showPolygon = scope === 'my-network' || isPartner
+      const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
+      const showPolygon = scope === 'my-network' || scope === '1-degree' || scope === '2-degree' || isPartner
 
       // Resolve polygon: county boundary > zip boundary > agent.polygon
       const realPolygons = countyPolygonsRef.current.get(agent.id)
@@ -465,9 +466,10 @@ export default function AgentMap() {
       if (showPolygon) {
         const poly = L!.polygon(polygonCoords as L.LatLngExpression[][], {
           color: agent.color,
-          weight: isPartner ? 2.5 : 1.5,
+          weight: isPartner ? 2.5 : isDegreeAgent ? 2 : 1.5,
           fillColor: agent.color,
-          fillOpacity: isPartner ? 0.25 : 0.08,
+          fillOpacity: isPartner ? 0.25 : isDegreeAgent ? 0.12 : 0.08,
+          dashArray: isDegreeAgent ? '6, 4' : undefined,
           smoothFactor: 1.5,
         })
 
@@ -493,7 +495,7 @@ export default function AgentMap() {
           L!.DomEvent.stopPropagation(e)
           setHoveredAgent(null)
           setSelectedAgent(agent)
-          map.flyToBounds(poly.getBounds(), { padding: [80, 80], maxZoom: 10, duration: 0.8 })
+          map.flyToBounds(poly.getBounds(), { padding: [80, 80], maxZoom: 8, duration: 0.8 })
         })
 
       }
@@ -507,16 +509,26 @@ export default function AgentMap() {
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
       const markerSize = 32
-      const markerIcon = L!.divIcon({
-        className: 'agent-marker',
-        html: isPartner
+      const markerHtml = isPartner
+        ? `<div style="
+            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+            background:${agent.color};
+            border:2px solid white;
+            box-shadow:0 2px 8px rgba(0,0,0,0.3);
+            display:flex;align-items:center;justify-content:center;
+            font-size:11px;font-weight:700;color:white;
+            font-family:var(--font-dm-sans),system-ui,sans-serif;
+            cursor:pointer;
+          ">${initials}</div>`
+        : isDegreeAgent
           ? `<div style="
               width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-              background:${agent.color};
-              border:2px solid white;
-              box-shadow:0 2px 8px rgba(0,0,0,0.3);
+              background:white;
+              border:2.5px dashed ${agent.color};
+              box-shadow:0 2px 8px rgba(0,0,0,0.15);
               display:flex;align-items:center;justify-content:center;
-              font-size:11px;font-weight:700;color:white;
+              font-size:11px;font-weight:700;color:${agent.color};
+              opacity:0.85;
               font-family:var(--font-dm-sans),system-ui,sans-serif;
               cursor:pointer;
             ">${initials}</div>`
@@ -529,7 +541,10 @@ export default function AgentMap() {
               font-size:11px;font-weight:700;color:${agent.color};
               font-family:var(--font-dm-sans),system-ui,sans-serif;
               cursor:pointer;
-            ">${initials}</div>`,
+            ">${initials}</div>`
+      const markerIcon = L!.divIcon({
+        className: 'agent-marker',
+        html: markerHtml,
         iconSize: [markerSize, markerSize],
         iconAnchor: [markerSize / 2, markerSize / 2],
       })
@@ -556,7 +571,7 @@ export default function AgentMap() {
         setHoveredAgent(null)
         setSelectedAgent(agent)
         const agentBounds = L!.polygon(polygonCoords as L.LatLngExpression[][]).getBounds()
-        map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 10, duration: 0.8 })
+        map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 8, duration: 0.8 })
       })
 
       markerLayersRef.current.push(marker)

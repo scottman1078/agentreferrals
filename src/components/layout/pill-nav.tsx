@@ -16,6 +16,7 @@ import {
   CreditCard,
   Settings,
   MapPinned,
+  GraduationCap,
 } from 'lucide-react'
 import { getUnreadCount } from '@/data/messages'
 
@@ -28,6 +29,7 @@ const pillItems = [
 ]
 
 const moreItems = [
+  { href: '/dashboard/mentoring', icon: GraduationCap, label: 'Mentoring' },
   { href: '/dashboard/markets', icon: MapPinned, label: 'Markets' },
   { href: '/dashboard/recruiting', icon: Search, label: 'Recruiting' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documents' },

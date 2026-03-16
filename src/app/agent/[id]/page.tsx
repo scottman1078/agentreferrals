@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { agents } from '@/data/agents'
+import { getPartnerAgentIds } from '@/data/partnerships'
 import { getAgentReviewStats } from '@/data/reviews'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
@@ -21,11 +22,13 @@ import {
   MapPin,
   Building2,
   ArrowLeft,
+  GraduationCap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { AgentProfileReviews } from './agent-profile-reviews'
 import { AgentProfileMap } from './agent-profile-map'
 import AgentNotesSection from './agent-notes-section'
+import { getMentorProfile } from '@/data/mentoring'
 
 // --------------- Static params ---------------
 export function generateStaticParams() {
@@ -62,6 +65,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
   const stats = getAgentReviewStats(agent.id)
   const isElite = (agent.referNetScore ?? 0) >= 90
+  const mentorProfile = getMentorProfile(agent.id)
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,6 +129,14 @@ export default async function AgentProfilePage({ params }: PageProps) {
                   </span>
                 )}
 
+                {/* Mentor badge */}
+                {mentorProfile?.available && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    Mentor
+                  </span>
+                )}
+
                 {/* ReferNet Score */}
                 {agent.referNetScore && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -156,7 +168,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
       <div className="max-w-4xl mx-auto px-6 pb-16 space-y-10">
         {/* ═══ QUICK STATS ═══ */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <section className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             {
               icon: Home,
@@ -181,6 +193,12 @@ export default async function AgentProfilePage({ params }: PageProps) {
               label: 'Closed Referrals',
               value: (agent.closedReferrals ?? 0).toString(),
               color: 'text-violet-500',
+            },
+            {
+              icon: Users,
+              label: 'Network Size',
+              value: getPartnerAgentIds(agent.id).length.toString(),
+              color: 'text-primary',
             },
           ].map((stat) => (
             <div

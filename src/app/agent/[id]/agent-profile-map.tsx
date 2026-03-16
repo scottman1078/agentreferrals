@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
+import { getZipBoundary } from '@/lib/zip-boundaries'
 
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -56,22 +57,61 @@ export function AgentProfileMap({ polygon, color, name, area }: AgentProfileMapP
     }).addTo(map)
 
     tileLayerRef.current = tileLayer
-
-    // Draw polygon
-    const poly = L.polygon(polygon as L.LatLngExpression[], {
-      color: color,
-      weight: 2.5,
-      fillColor: color,
-      fillOpacity: 0.2,
-      smoothFactor: 1.5,
-    }).addTo(map)
-
-    poly.bindTooltip(`${name} — ${area}`, { permanent: false, direction: 'center' })
-
-    // Fit map to polygon bounds with some padding
-    map.fitBounds(poly.getBounds(), { padding: [40, 40] })
-
     mapInstance.current = map
+
+    // Draw territory — use provided polygon, or load zip boundaries from area field
+    const drawTerritory = async () => {
+      if (!L || !map) return
+
+      // If we have a real polygon, use it
+      if (polygon && polygon.length >= 3) {
+        const poly = L.polygon(polygon as L.LatLngExpression[], {
+          color: color,
+          weight: 2.5,
+          fillColor: color,
+          fillOpacity: 0.2,
+          smoothFactor: 1.5,
+        }).addTo(map)
+        poly.bindTooltip(`${name} — ${area}`, { permanent: false, direction: 'center' })
+        map.fitBounds(poly.getBounds(), { padding: [40, 40] })
+        return
+      }
+
+      // Extract zip codes from area field (e.g. "75201, 75204, 75219")
+      const zips = area.match(/\b\d{5}\b/g)
+      if (!zips || zips.length === 0) {
+        map.setView([39.8, -98.5], 4)
+        return
+      }
+
+      // Load zip boundaries and draw each one
+      const allBounds: L.LatLngBounds[] = []
+      for (const zip of zips) {
+        const ring = await getZipBoundary(zip)
+        if (ring && ring.length >= 3) {
+          const poly = L!.polygon(ring as L.LatLngExpression[], {
+            color: color,
+            weight: 2.5,
+            fillColor: color,
+            fillOpacity: 0.15,
+            smoothFactor: 1.5,
+          }).addTo(map)
+          allBounds.push(poly.getBounds())
+        }
+      }
+
+      if (allBounds.length > 0) {
+        let combined = allBounds[0]
+        for (let i = 1; i < allBounds.length; i++) {
+          combined = combined.extend(allBounds[i])
+        }
+        map.fitBounds(combined, { padding: [40, 40] })
+      } else {
+        map.setView([39.8, -98.5], 4)
+      }
+    }
+
+    drawTerritory()
 
     return () => {
       map.remove()
