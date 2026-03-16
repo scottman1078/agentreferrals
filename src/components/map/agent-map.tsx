@@ -6,11 +6,10 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Flame } from 'lucide-react'
+import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles } from 'lucide-react'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
 import { preloadAgentCounties } from '@/lib/county-boundaries'
-import { nudges, getActiveNudges } from '@/data/nudges'
 import type { Agent } from '@/types'
 
 let L: typeof import('leaflet') | null = null
@@ -426,23 +425,16 @@ export default function AgentMap() {
           )}
         </button>
 
-        {/* Check-ins badge — opens NORA */}
-        {(() => {
-          const checkInCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
-          if (checkInCount === 0) return null
-          return (
-            <button
-              onClick={() => {
-                // Dispatch event to open NORA
-                window.dispatchEvent(new CustomEvent('toggle-nora', { detail: { context: 'checkins' } }))
-              }}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-amber-500/30 bg-amber-500/10 text-amber-600 backdrop-blur-md shadow-md hover:bg-amber-500/20 transition-all"
-            >
-              <Flame className="w-3.5 h-3.5" />
-              {checkInCount} Check-ins
-            </button>
-          )
-        })()}
+        {/* NORA Insights — triggers AI briefing */}
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('nora-briefing'))
+          }}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-primary/30 bg-primary/10 text-primary backdrop-blur-md shadow-md hover:bg-primary/20 transition-all"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          NORA Insights
+        </button>
       </div>
 
       {/* Map container */}

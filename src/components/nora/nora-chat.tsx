@@ -100,7 +100,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
     }
   }, [profile])
 
-  // Listen for toggle-nora events (e.g., from check-in badge)
+  // Listen for toggle-nora events
   useEffect(() => {
     function handleToggleNora() {
       setIsOpen((prev) => !prev)
@@ -108,6 +108,80 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
     window.addEventListener('toggle-nora', handleToggleNora)
     return () => window.removeEventListener('toggle-nora', handleToggleNora)
   }, [])
+
+  // Listen for NORA Insights briefing request
+  const briefingRequestedRef = useRef(false)
+  useEffect(() => {
+    function handleBriefing() {
+      if (isOpen) {
+        // Already open — close it
+        setIsOpen(false)
+        return
+      }
+      setIsOpen(true)
+      briefingRequestedRef.current = true
+    }
+    window.addEventListener('nora-briefing', handleBriefing)
+    return () => window.removeEventListener('nora-briefing', handleBriefing)
+  }, [isOpen])
+
+  // Auto-send briefing message when NORA opens from the Insights button
+  useEffect(() => {
+    if (isOpen && briefingRequestedRef.current) {
+      briefingRequestedRef.current = false
+      // Inject a briefing request as if the user typed it
+      const briefingMsg: NoraMessage = {
+        id: `u-briefing-${Date.now()}`,
+        role: 'user',
+        content: 'Give me my daily briefing — check-ins needed, new agents, pipeline updates, and any opportunities I should know about.',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, briefingMsg])
+      setIsLoading(true)
+
+      fetch('/api/nora', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: briefingMsg.content,
+          userId: profile?.id,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.response) {
+            const matchedAgents = (data.matchedAgentIds || [])
+              .map((id: string) => agents.find((a) => a.id === id))
+              .filter(Boolean) as Agent[]
+            setMessages((prev) => [...prev, {
+              id: `n-briefing-${Date.now()}`,
+              role: 'assistant',
+              content: data.response,
+              timestamp: new Date(),
+              matchedAgents,
+            }])
+          } else {
+            const result = findResponse(briefingMsg.content, agents)
+            setMessages((prev) => [...prev, {
+              id: `n-briefing-${Date.now()}`,
+              role: 'assistant',
+              content: result.text,
+              timestamp: new Date(),
+              matchedAgents: result.agents,
+            }])
+          }
+        })
+        .catch(() => {
+          setMessages((prev) => [...prev, {
+            id: `n-briefing-${Date.now()}`,
+            role: 'assistant',
+            content: "I couldn't fetch your briefing right now. Try asking me directly!",
+            timestamp: new Date(),
+          }])
+        })
+        .finally(() => setIsLoading(false))
+    }
+  }, [isOpen, agents, profile])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
