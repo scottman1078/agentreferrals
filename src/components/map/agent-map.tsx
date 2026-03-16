@@ -346,13 +346,13 @@ export default function AgentMap() {
 
   const tagChips = [
     { key: 'all', label: 'All', color: 'hsl(43 96% 50%)' },
-    { key: 'Homes for Heroes', label: 'HFH', color: TAG_COLORS['Homes for Heroes'] },
+    { key: 'Homes for Heroes', label: 'Homes for Heroes', color: TAG_COLORS['Homes for Heroes'] },
     { key: 'Luxury', label: 'Luxury', color: TAG_COLORS['Luxury'] },
-    { key: 'First-Time Buyers', label: 'FTB', color: TAG_COLORS['First-Time Buyers'] },
-    { key: 'Investment', label: 'Invest', color: TAG_COLORS['Investment'] },
-    { key: 'Relocation', label: 'Relo', color: TAG_COLORS['Relocation'] },
-    { key: 'Land & Acreage', label: 'Land', color: TAG_COLORS['Land & Acreage'] },
-    { key: 'New Construction', label: 'New Con', color: TAG_COLORS['New Construction'] },
+    { key: 'First-Time Buyers', label: 'First-Time Buyers', color: TAG_COLORS['First-Time Buyers'] },
+    { key: 'Investment', label: 'Investment', color: TAG_COLORS['Investment'] },
+    { key: 'Relocation', label: 'Relocation', color: TAG_COLORS['Relocation'] },
+    { key: 'Land & Acreage', label: 'Land & Acreage', color: TAG_COLORS['Land & Acreage'] },
+    { key: 'New Construction', label: 'New Construction', color: TAG_COLORS['New Construction'] },
   ]
 
   const [showFilters, setShowFilters] = useState(false)
@@ -362,7 +362,7 @@ export default function AgentMap() {
       {/* Collapsible filter panel — vertical, stays open */}
       {showFilters && (
         <div style={{ position: 'fixed', top: 112, left: 16, zIndex: 9001 }} className="animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-col gap-1 p-2 w-[160px] rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+          <div className="flex flex-col gap-1 p-2 w-[190px] rounded-xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1">Specialization</div>
             {tagChips.map((chip) => {
               const isActive = activeTag === chip.key
