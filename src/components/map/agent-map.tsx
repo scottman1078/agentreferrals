@@ -58,8 +58,8 @@ export default function AgentMap() {
 
     const isDark = resolvedTheme === 'dark'
 
-    // Bounds: US + Canada (lat 24-72, lng -170 to -50)
-    const usBounds = L.latLngBounds([24, -170], [72, -50])
+    // Bounds: US + Canada with padding (prevents zooming out to world view)
+    const usBounds = L.latLngBounds([15, -175], [75, -45])
 
     const map = L.map(mapRef.current, {
       center: [39.5, -96.5],
@@ -67,7 +67,7 @@ export default function AgentMap() {
       zoomControl: false,
       maxBounds: usBounds,
       maxBoundsViscosity: 1.0,
-      minZoom: 3,
+      minZoom: 4,
     })
 
     // Add zoom control to bottom-left
@@ -79,7 +79,7 @@ export default function AgentMap() {
 
     tileLayerRef.current = tileLayer
     mapInstance.current = map
-    renderAgents(filteredAgents, map)
+    renderAgents(filteredAgents, map, true)
 
     // Clicking the map background dismisses the peek card
     map.on('click', () => {
@@ -131,10 +131,12 @@ export default function AgentMap() {
     }
   }, [showVoids])
 
-  const renderAgents = useCallback((agentList: Agent[], map: L.Map) => {
+  const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
     layersRef.current.forEach((l) => map.removeLayer(l))
     layersRef.current = []
+
+    const allBounds: L.LatLngBounds[] = []
 
     agentList.forEach((agent) => {
       // Skip agents with no/invalid polygon data
@@ -147,6 +149,8 @@ export default function AgentMap() {
         fillOpacity: agent.isPrimary ? 0.30 : 0.18,
         smoothFactor: 1.5,
       }).addTo(map)
+
+      allBounds.push(poly.getBounds())
 
       // Add a center marker with agent initials
       const center = poly.getBounds().getCenter()
@@ -184,6 +188,15 @@ export default function AgentMap() {
 
       layersRef.current.push(poly, marker)
     })
+
+    // Fit map to actual agent locations
+    if (fitBounds && allBounds.length > 0) {
+      let combined = allBounds[0]
+      for (let i = 1; i < allBounds.length; i++) {
+        combined = combined.extend(allBounds[i])
+      }
+      map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
+    }
   }, [])
 
   // Handle search result — fly to location, add marker, highlight matching polygons
