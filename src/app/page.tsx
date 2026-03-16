@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -25,6 +25,17 @@ export default function LandingPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
+  const [signupSuccess, setSignupSuccess] = useState(false)
+
+  // If user is already authenticated, redirect to dashboard
+  useEffect(() => {
+    const hub = createHubClient()
+    hub.auth.getSession().then(({ data: { session } }: { data: { session: unknown } }) => {
+      if (session) {
+        router.push('/dashboard')
+      }
+    })
+  }, [router])
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -395,6 +406,13 @@ export default function LandingPage() {
               </div>
             )}
 
+            {signupSuccess && (
+              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
+                <p className="font-bold mb-1">Check your email!</p>
+                <p className="text-xs">We sent a confirmation link to <span className="font-semibold">{email}</span>. Click it to activate your account, then come back to sign in.</p>
+              </div>
+            )}
+
             {/* Google OAuth */}
             <button
               type="button"
@@ -457,7 +475,8 @@ export default function LandingPage() {
                   setAuthLoading(false)
                   return
                 }
-                // Send welcome email
+
+                // Send welcome email (fire-and-forget)
                 const referralCode = signUpData?.user?.id
                   ? 'AR-' + signUpData.user.id.substring(0, 8).toUpperCase()
                   : 'WELCOME'
@@ -465,13 +484,20 @@ export default function LandingPage() {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ email, name: fullName, referralCode }),
-                }).catch(() => {}) // fire-and-forget
+                }).catch(() => {})
+
+                // If no session was created, email confirmation is required
+                if (!signUpData?.session) {
+                  setSignupSuccess(true)
+                  setAuthLoading(false)
+                  return
+                }
               }
 
               const params = new URLSearchParams(window.location.search)
               const defaultRedirect = authMode === 'signup' ? '/onboarding' : '/dashboard'
               const redirect = params.get('redirect') || defaultRedirect
-              // Use window.location for full page load so middleware picks up the auth cookie
+              // Use window.location for full page load so auth cookie is picked up
               window.location.href = redirect
             }}>
               {authMode === 'signup' && (

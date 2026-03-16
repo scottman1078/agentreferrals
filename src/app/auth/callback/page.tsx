@@ -13,8 +13,18 @@ export default function AuthCallback() {
     const hub = createHubClient()
     const product = createClient()
 
-    hub.auth.getSession().then(async (result: { data: { session: Session | null } }) => {
-      const session = result.data.session
+    // Wait briefly for Supabase to exchange URL hash tokens into a session
+    const resolveSession = async (retries = 3): Promise<Session | null> => {
+      const { data: { session } } = await hub.auth.getSession() as { data: { session: Session | null } }
+      if (session) return session
+      if (retries > 0) {
+        await new Promise((r) => setTimeout(r, 500))
+        return resolveSession(retries - 1)
+      }
+      return null
+    }
+
+    resolveSession().then(async (session) => {
       if (!session) {
         router.push('/')
         return

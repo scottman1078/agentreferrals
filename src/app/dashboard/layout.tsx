@@ -15,7 +15,7 @@ import type { Nudge } from '@/data/nudges'
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [showInvite, setShowInvite] = useState(false)
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
-  const { isLoading, profile, isAuthenticated } = useAuth()
+  const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const isMapPage = pathname === '/dashboard'
@@ -31,14 +31,17 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }))
   }, [])
 
-  // Redirect to onboarding if profile is incomplete (no primary_area set)
+  // Redirect to onboarding if user hasn't completed profile setup
   useEffect(() => {
     if (isLoading) return
-    if (!isAuthenticated) return
-    if (profile && !profile.primary_area) {
+    if (!isAuthenticated) {
+      router.push('/')
+      return
+    }
+    if (needsOnboarding || (profile && !profile.primary_area)) {
       router.push('/onboarding')
     }
-  }, [isLoading, isAuthenticated, profile, router])
+  }, [isLoading, isAuthenticated, needsOnboarding, profile, router])
 
   if (isLoading) {
     return (
