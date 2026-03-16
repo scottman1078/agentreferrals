@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ export default function TopBar() {
   const isMapPage = pathname === '/dashboard'
   const [searchOpen, setSearchOpen] = useState(false)
   const [showAvatarMenu, setShowAvatarMenu] = useState(false)
+  const avatarMenuRef = useRef<HTMLDivElement>(null)
   const { profile, signOut } = useAuth()
 
   // Cmd+K / Ctrl+K global shortcut
@@ -33,8 +34,10 @@ export default function TopBar() {
   // Close avatar menu on outside click
   useEffect(() => {
     if (!showAvatarMenu) return
-    function handleClick() {
-      setShowAvatarMenu(false)
+    function handleClick(e: MouseEvent) {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        setShowAvatarMenu(false)
+      }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -92,7 +95,7 @@ export default function TopBar() {
           <ThemeToggle />
 
           {/* Avatar dropdown */}
-          <div className="relative">
+          <div className="relative" ref={avatarMenuRef}>
             <button
               onClick={(e) => {
                 e.stopPropagation()

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useAuth } from '@/contexts/auth-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
@@ -54,17 +55,50 @@ interface NoraChatProps {
 
 export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const { agents, getAgentReviewStats } = useAppData()
+  const { profile } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const hasAutoOpened = useRef(false)
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const inactiveCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
 
-  const welcomeMessage = inactiveCount > 0
-    ? `Hi Jason! You have ${inactiveCount} partner${inactiveCount > 1 ? 's' : ''} you haven't contacted in 30+ days. Want me to draft some check-in messages? Or ask me anything about finding referral partners.`
-    : "Hi! I'm NORA, your AI referral assistant. Tell me about your client and I'll find the perfect agent match."
+  const buildWelcomeMessage = useCallback(() => {
+    const greetings: string[] = []
+
+    // Personalized greeting
+    greetings.push(`Hey ${firstName}! 👋`)
+
+    // Inactive partners nudge
+    if (inactiveCount > 0) {
+      greetings.push(`You have ${inactiveCount} partner${inactiveCount > 1 ? 's' : ''} you haven't contacted in 30+ days — want me to draft check-in messages?`)
+    }
+
+    // New agents suggestion
+    const recentAgents = agents.filter((a) => a.status === 'active').slice(-3)
+    if (recentAgents.length > 0) {
+      greetings.push(`There are new agents in ${recentAgents.map((a) => a.area.split(',')[0]).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 3).join(', ')} — want me to help you connect?`)
+    }
+
+    // Default fallback
+    if (greetings.length === 1) {
+      greetings.push("I'm NORA, your AI referral assistant. Ask me to find agents, draft messages, or explore new markets!")
+    }
+
+    return greetings.join('\n\n')
+  }, [firstName, inactiveCount, agents])
 
   const [messages, setMessages] = useState<NoraMessage[]>([
-    { id: 'welcome', role: 'assistant', content: welcomeMessage, timestamp: new Date() },
+    { id: 'welcome', role: 'assistant', content: buildWelcomeMessage(), timestamp: new Date() },
   ])
+
+  // Auto-open NORA on first visit after login
+  useEffect(() => {
+    if (profile && !hasAutoOpened.current) {
+      hasAutoOpened.current = true
+      const timer = setTimeout(() => setIsOpen(true), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [profile])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
@@ -85,7 +119,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg.content,
-          agentContext: agents.map(({ polygon, color, phone, email, ...rest }) => rest),
+          userId: profile?.id,
         }),
       })
 
@@ -143,7 +177,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-x-0 bottom-[88px] sm:bottom-auto sm:inset-x-auto sm:bottom-[104px] sm:right-6 z-[900] sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] flex flex-col sm:rounded-2xl border-t sm:border border-border bg-card shadow-2xl overflow-hidden">
+        <div className="fixed inset-x-0 bottom-[88px] sm:inset-x-auto sm:bottom-[152px] sm:right-6 z-[900] sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] flex flex-col sm:rounded-2xl border-t sm:border border-border bg-card shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">

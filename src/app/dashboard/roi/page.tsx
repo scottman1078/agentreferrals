@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { FeatureGate } from '@/components/ui/feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, formatFullCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,7 +29,15 @@ function ROISkeleton() {
   )
 }
 
-export default function ROIPage() {
+export default function ROIPageGated() {
+  return (
+    <FeatureGate feature="roiAnalytics">
+      <ROIPage />
+    </FeatureGate>
+  )
+}
+
+function ROIPage() {
   const { referrals, agents, referralsLoading } = useAppData()
   const chartRef = useRef<HTMLCanvasElement>(null)
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { FeatureGate } from '@/components/ui/feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
@@ -57,7 +58,15 @@ function PartnershipsSkeleton() {
   )
 }
 
-export default function PartnershipsPage() {
+export default function PartnershipsPageGated() {
+  return (
+    <FeatureGate feature="partnershipRequests">
+      <PartnershipsPage />
+    </FeatureGate>
+  )
+}
+
+function PartnershipsPage() {
   const { agentsNeedingPartner, coverageGapOpportunities, agentsLoading } = useAppData()
   const [activeTab, setActiveTab] = useState<Tab>('need-you')
   const [offeredIds, setOfferedIds] = useState<Set<string>>(new Set())

@@ -51,7 +51,7 @@ export default function BrokerageSwitcher() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            My Brokerage ({myAgentCount})
+            {currentBrokerage.name} ({myAgentCount})
           </button>
           <button
             onClick={() => setScope('all-network')}

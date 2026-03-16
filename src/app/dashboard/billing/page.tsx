@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { PLANS, FEATURE_LABELS, type SubscriptionTier } from '@/lib/stripe'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { Check, X, CreditCard, Sparkles, Crown, Zap, Rocket } from 'lucide-react'
 
 const tierIcons: Record<SubscriptionTier, typeof Zap> = {
@@ -21,8 +21,7 @@ const tierColors: Record<SubscriptionTier, { text: string; bg: string; border: s
 const featureKeys = Object.keys(FEATURE_LABELS)
 
 export default function BillingPage() {
-  // TODO: Read from ar_profiles.subscription_tier when wired to Supabase
-  const [currentTier] = useState<SubscriptionTier>('starter')
+  const { tier: currentTier } = useFeatureGate()
   const currentPlan = PLANS.find((p) => p.id === currentTier)!
 
   const handleUpgrade = (tier: SubscriptionTier) => {
@@ -101,14 +100,19 @@ export default function BillingPage() {
               <div
                 key={plan.id}
                 className={`relative p-5 rounded-xl border-2 bg-card transition-all ${
-                  isRecommended
+                  isCurrent
                     ? `${colors.border} shadow-lg shadow-primary/5`
-                    : isCurrent
-                    ? 'border-border bg-accent/30'
+                    : isRecommended && !PLANS.some((p) => p.id === currentTier && p.id !== 'starter')
+                    ? `${colors.border} shadow-lg shadow-primary/5`
                     : 'border-border hover:border-border/80'
                 }`}
               >
-                {isRecommended && (
+                {isCurrent && (
+                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${colors.bg} ${colors.text}`}>
+                    Current Plan
+                  </div>
+                )}
+                {isRecommended && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
                     Recommended
                   </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { FeatureGate } from '@/components/ui/feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatFullCurrency } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -60,7 +61,15 @@ function SignatureStatus({ doc }: { doc: Document }) {
   )
 }
 
-export default function DocumentsPage() {
+export default function DocumentsPageGated() {
+  return (
+    <FeatureGate feature="smartAgreements">
+      <DocumentsPage />
+    </FeatureGate>
+  )
+}
+
+function DocumentsPage() {
   const { documents } = useAppData()
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null)
   const [showBuilder, setShowBuilder] = useState(false)

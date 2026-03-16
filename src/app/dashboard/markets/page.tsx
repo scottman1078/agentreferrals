@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { FeatureGate } from '@/components/ui/feature-gate'
 import {
   MapPinned,
   Search,
@@ -175,7 +176,15 @@ function MarketDetailModal({
 }
 
 // ── Main Page ──
-export default function MarketsPage() {
+export default function MarketsPageGated() {
+  return (
+    <FeatureGate feature="marketExclusivity">
+      <MarketsPage />
+    </FeatureGate>
+  )
+}
+
+function MarketsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<string>('all')
   const [tierFilter, setTierFilter] = useState<TierFilter>('all')

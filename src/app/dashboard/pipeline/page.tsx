@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { FeatureGate } from '@/components/ui/feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { PIPELINE_STAGES, STAGE_COLORS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
@@ -39,7 +40,15 @@ function PipelineSkeleton() {
   )
 }
 
-export default function PipelinePage() {
+export default function PipelinePageGated() {
+  return (
+    <FeatureGate feature="pipelineTracking">
+      <PipelinePage />
+    </FeatureGate>
+  )
+}
+
+function PipelinePage() {
   const { referrals, referralsLoading } = useAppData()
   const [referralList, setReferralList] = useState<Referral[]>(referrals)
 
