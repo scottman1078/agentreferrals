@@ -21,9 +21,11 @@ export default function AgentMap() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
-  const layersRef = useRef<L.Layer[]>([])
+  const markerLayersRef = useRef<L.Layer[]>([])
+  const polygonLayersRef = useRef<L.Layer[]>([])
   const voidLayersRef = useRef<L.Layer[]>([])
   const searchLayersRef = useRef<L.Layer[]>([])
+  const POLYGON_ZOOM_THRESHOLD = 7
   const [activeTag, setActiveTag] = useState('all')
   const [showVoids, setShowVoids] = useState(false)
   const [showMigration, setShowMigration] = useState(false)
@@ -105,6 +107,18 @@ export default function AgentMap() {
       }
     })
 
+    // Show/hide polygons based on zoom level
+    map.on('zoomend', () => {
+      const zoom = map.getZoom()
+      polygonLayersRef.current.forEach((layer) => {
+        if (zoom >= POLYGON_ZOOM_THRESHOLD) {
+          if (!map.hasLayer(layer)) map.addLayer(layer)
+        } else {
+          if (map.hasLayer(layer)) map.removeLayer(layer)
+        }
+      })
+    })
+
     // Clear hover on zoom/move
     map.on('zoomstart', () => setHoveredAgent(null))
     map.on('movestart', () => setHoveredAgent(null))
@@ -166,8 +180,13 @@ export default function AgentMap() {
 
   const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
-    layersRef.current.forEach((l) => map.removeLayer(l))
-    layersRef.current = []
+    markerLayersRef.current.forEach((l) => map.removeLayer(l))
+    polygonLayersRef.current.forEach((l) => map.removeLayer(l))
+    markerLayersRef.current = []
+    polygonLayersRef.current = []
+
+    const currentZoom = map.getZoom()
+    const showPolygonsNow = currentZoom >= POLYGON_ZOOM_THRESHOLD
 
     const allBounds: L.LatLngBounds[] = []
 
@@ -181,7 +200,7 @@ export default function AgentMap() {
       const realPolygons = countyPolygonsRef.current.get(agent.id)
       const polygonCoords = realPolygons || [agent.polygon as [number, number][]]
 
-      // Partners get full polygon territory; non-partners just get a marker
+      // Partners get polygon territory (visible only when zoomed in)
       if (showPolygon) {
         const poly = L!.polygon(polygonCoords as L.LatLngExpression[][], {
           color: agent.color,
@@ -189,7 +208,11 @@ export default function AgentMap() {
           fillColor: agent.color,
           fillOpacity: isPartner ? 0.25 : 0.08,
           smoothFactor: 1.5,
-        }).addTo(map)
+        })
+
+        // Only add to map if zoomed in enough
+        if (showPolygonsNow) poly.addTo(map)
+        polygonLayersRef.current.push(poly)
 
         allBounds.push(poly.getBounds())
 
@@ -212,7 +235,6 @@ export default function AgentMap() {
           map.flyToBounds(poly.getBounds(), { padding: [80, 80], maxZoom: 10, duration: 0.8 })
         })
 
-        layersRef.current.push(poly)
       }
 
       // Center point for the marker — use real county polygon if available
@@ -276,7 +298,7 @@ export default function AgentMap() {
         map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 10, duration: 0.8 })
       })
 
-      layersRef.current.push(marker)
+      markerLayersRef.current.push(marker)
     })
 
     // Fit map to actual agent locations on initial load
