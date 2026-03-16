@@ -364,8 +364,8 @@ export default function AgentMap() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Map key legend */}
-      <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
+      {/* Map key legend — positioned below nudge banner area */}
+      <div className="fixed top-[76px] right-4 z-[400] flex items-center gap-3 px-3 py-1.5 rounded-full border border-border bg-card/90 backdrop-blur-md shadow-md">
         <div className="flex items-center gap-1.5">
           <div className="w-3.5 h-3.5 rounded-full bg-primary border border-white shadow-sm" />
           <span className="text-[10px] font-semibold text-muted-foreground">Partner</span>
