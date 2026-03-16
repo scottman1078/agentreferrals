@@ -207,20 +207,30 @@ export default function AgentMap() {
       }
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
-      const markerSize = isPartner ? 32 : 28
+      const markerSize = 32
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
-        html: `<div style="
-          width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-          background:${agent.color};
-          border:2px solid ${isPartner ? 'white' : 'rgba(255,255,255,0.6)'};
-          box-shadow:0 2px 8px rgba(0,0,0,${isPartner ? '0.3' : '0.15'});
-          display:flex;align-items:center;justify-content:center;
-          font-size:${isPartner ? '11' : '10'}px;font-weight:700;color:white;
-          opacity:${isPartner ? '1' : '0.7'};
-          font-family:var(--font-dm-sans),system-ui,sans-serif;
-          cursor:pointer;
-        ">${initials}</div>`,
+        html: isPartner
+          ? `<div style="
+              width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+              background:${agent.color};
+              border:2px solid white;
+              box-shadow:0 2px 8px rgba(0,0,0,0.3);
+              display:flex;align-items:center;justify-content:center;
+              font-size:11px;font-weight:700;color:white;
+              font-family:var(--font-dm-sans),system-ui,sans-serif;
+              cursor:pointer;
+            ">${initials}</div>`
+          : `<div style="
+              width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+              background:white;
+              border:2.5px solid ${agent.color};
+              box-shadow:0 2px 8px rgba(0,0,0,0.15);
+              display:flex;align-items:center;justify-content:center;
+              font-size:11px;font-weight:700;color:${agent.color};
+              font-family:var(--font-dm-sans),system-ui,sans-serif;
+              cursor:pointer;
+            ">${initials}</div>`,
         iconSize: [markerSize, markerSize],
         iconAnchor: [markerSize / 2, markerSize / 2],
       })
