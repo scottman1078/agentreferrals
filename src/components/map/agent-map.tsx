@@ -43,7 +43,9 @@ export default function AgentMap() {
   const { filteredAgents, scope, partnerIds } = useBrokerage()
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
+  const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())
   const [countyLoadCount, setCountyLoadCount] = useState(0)
+  const [zipLoadCount, setZipLoadCount] = useState(0)
   const [showMyZips, setShowMyZips] = useState(false)
   const myZipLayersRef = useRef<L.Layer[]>([])
   const zipBoundaryCache = useRef<Map<string, [number, number][]>>(new Map())
@@ -67,6 +69,33 @@ export default function AgentMap() {
       console.log(`[CountyBoundaries] Loaded ${map.size}/${filteredAgents.length} agent counties`)
       setCountyLoadCount((c) => c + 1) // increment to force re-render
     })
+  }, [filteredAgents])
+
+  // Preload zip code boundaries for agents that have zip-based areas
+  useEffect(() => {
+    const loadZipBoundaries = async () => {
+      let loaded = 0
+      for (const agent of filteredAgents) {
+        // Skip agents that already have polygon data or county polygons
+        if (agent.polygon && agent.polygon.length >= 3) continue
+        if (agentZipPolygonsRef.current.has(agent.id)) continue
+
+        // Extract first zip from area field
+        const firstZip = agent.area?.match(/\b(\d{5})\b/)?.[1]
+        if (!firstZip) continue
+
+        const ring = await getZipBoundary(firstZip)
+        if (ring) {
+          agentZipPolygonsRef.current.set(agent.id, ring)
+          loaded++
+        }
+      }
+      if (loaded > 0) {
+        console.log(`[ZipBoundaries] Loaded ${loaded} agent zip boundaries`)
+        setZipLoadCount((c) => c + 1)
+      }
+    }
+    loadZipBoundaries()
   }, [filteredAgents])
 
   useEffect(() => {
@@ -169,7 +198,7 @@ export default function AgentMap() {
     setSelectedAgent(null)
     setHoveredAgent(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag, filteredAgents, scope, countyLoadCount])
+  }, [activeTag, filteredAgents, scope, countyLoadCount, zipLoadCount])
 
   // Toggle void zones
   useEffect(() => {
@@ -413,14 +442,24 @@ export default function AgentMap() {
     const allBounds: L.LatLngBounds[] = []
 
     agentList.forEach((agent) => {
-      if (!agent.polygon || !Array.isArray(agent.polygon) || agent.polygon.length < 3) return
-
       const isPartner = partnerIds.includes(agent.id) || agent.isPrimary
       const showPolygon = scope === 'my-network' || isPartner
 
-      // Use real county polygon if available, fall back to demo rectangle
+      // Resolve polygon: county boundary > zip boundary > agent.polygon
       const realPolygons = countyPolygonsRef.current.get(agent.id)
-      const polygonCoords = realPolygons || [agent.polygon as [number, number][]]
+      const zipRing = agentZipPolygonsRef.current.get(agent.id)
+      let polygonCoords: [number, number][][] | null = null
+
+      if (realPolygons) {
+        polygonCoords = realPolygons
+      } else if (zipRing && zipRing.length >= 3) {
+        polygonCoords = [zipRing]
+      } else if (agent.polygon && agent.polygon.length >= 3) {
+        polygonCoords = [agent.polygon as [number, number][]]
+      }
+
+      // Skip agents with no resolvable location
+      if (!polygonCoords) return
 
       // Partners get polygon territory (visible only when zoomed in)
       if (showPolygon) {
@@ -532,7 +571,7 @@ export default function AgentMap() {
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAgent, partnerIds, scope, countyLoadCount])
+  }, [selectedAgent, partnerIds, scope, countyLoadCount, zipLoadCount])
 
   // Handle search result
   const handleSearchResult = useCallback((lat: number, lng: number, matchedAgents: Agent[]) => {
