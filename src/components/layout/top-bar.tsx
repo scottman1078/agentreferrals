@@ -64,7 +64,7 @@ export default function TopBar() {
             : 'relative bg-card border-b border-border'
         )}
       >
-        {/* Left: Logo */}
+        {/* Left: Logo + Search + Legend */}
         <div className="shrink-0 hidden sm:block">
           <AppLogo size="sm" href="/" />
         </div>
@@ -72,20 +72,35 @@ export default function TopBar() {
           <AppLogo size="sm" href="/" showWordmark={false} />
         </div>
 
-        {/* Center: Search bar */}
-        <div className="flex-1 flex justify-center">
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2 h-9 w-full max-w-[360px] px-3 rounded-xl border border-border bg-background/50 text-muted-foreground hover:text-foreground hover:bg-background transition-all"
-            title="Search for referral partners (Cmd+K)"
-          >
-            <Search className="w-4 h-4 shrink-0" />
-            <span className="text-sm truncate">Search address or city...</span>
-            <kbd className="ml-auto hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-muted font-mono text-[10px] text-muted-foreground shrink-0">
-              <Command className="w-2.5 h-2.5" />K
-            </kbd>
-          </button>
-        </div>
+        {/* Search bar — right of logo */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-2 h-9 w-full max-w-[280px] px-3 rounded-xl border border-border bg-background/50 text-muted-foreground hover:text-foreground hover:bg-background transition-all"
+          title="Search for referral partners (Cmd+K)"
+        >
+          <Search className="w-4 h-4 shrink-0" />
+          <span className="text-sm truncate">Search address or city...</span>
+          <kbd className="ml-auto hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-muted font-mono text-[10px] text-muted-foreground shrink-0">
+            <Command className="w-2.5 h-2.5" />K
+          </kbd>
+        </button>
+
+        {/* Map legend key — right of search */}
+        {isMapPage && (
+          <div className="hidden md:flex items-center gap-2.5 px-2.5 py-1 rounded-lg border border-border bg-background/50 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-primary border border-white shadow-sm" />
+              <span className="text-[10px] font-semibold text-muted-foreground">Partner</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-white border-2 border-primary" />
+              <span className="text-[10px] font-semibold text-muted-foreground">Not Connected</span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1" />
 
         {/* Right: Controls */}
         <div className="flex items-center gap-2 shrink-0">
