@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { CreditCard, ArrowRight, Loader2, Check, LogOut, User, Bell, FileText, MapPin, Settings as SettingsIcon } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, LogOut, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -44,6 +44,9 @@ export default function SettingsPage() {
 
   const [saving, setSaving] = useState(false)
   const [saveToast, setSaveToast] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [notifications, setNotifications] = useState({
     agreementSigned: true,
@@ -62,6 +65,7 @@ export default function SettingsPage() {
       setPhone(profile.phone || '')
       setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
+      setAvatarUrl(profile.avatar_url || null)
       // Load existing territory polygon and zips
       if (profile.polygon && Array.isArray(profile.polygon) && profile.polygon.length > 0) {
         setTerritory((prev) => ({
@@ -83,6 +87,61 @@ export default function SettingsPage() {
       setBrokerageName('PREMIERE Group at Real Broker LLC')
     }
   }, [profile, isAuthenticated])
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+
+    setUploadingAvatar(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() || 'jpg'
+      const path = `avatars/${profile.id}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('ar-assets')
+        .upload(path, file, { upsert: true, contentType: file.type })
+
+      if (uploadError) {
+        // Storage bucket might not exist — upload to a mock URL instead
+        console.error('[Avatar] Upload error:', uploadError.message)
+        // Fallback: use a data URL
+        const reader = new FileReader()
+        reader.onload = async () => {
+          const dataUrl = reader.result as string
+          await supabase
+            .from('ar_profiles')
+            .update({ avatar_url: dataUrl })
+            .eq('id', profile.id)
+          setAvatarUrl(dataUrl)
+          await refreshProfile()
+          setSaveToast('Photo updated')
+          setTimeout(() => setSaveToast(''), 3000)
+        }
+        reader.readAsDataURL(file)
+        setUploadingAvatar(false)
+        return
+      }
+
+      const { data: urlData } = supabase.storage.from('ar-assets').getPublicUrl(path)
+      const publicUrl = urlData.publicUrl
+
+      await supabase
+        .from('ar_profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id)
+
+      setAvatarUrl(publicUrl)
+      await refreshProfile()
+      setSaveToast('Photo updated')
+      setTimeout(() => setSaveToast(''), 3000)
+    } catch (err) {
+      console.error('[Avatar] Error:', err)
+      setSaveToast('Failed to upload photo')
+      setTimeout(() => setSaveToast(''), 3000)
+    }
+    setUploadingAvatar(false)
+  }
 
   async function handleSave() {
     if (!profile) return
@@ -155,6 +214,52 @@ export default function SettingsPage() {
               <div className="font-bold text-sm mb-5 pb-3 border-b border-border">
                 Your Profile
               </div>
+
+              {/* Avatar upload */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-border"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+                      {fullName ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AG'}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{fullName || 'Your Name'}</p>
+                  <p className="text-xs text-muted-foreground">{email}</p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-primary font-medium hover:underline mt-1"
+                  >
+                    {avatarUrl ? 'Change photo' : 'Upload photo'}
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">

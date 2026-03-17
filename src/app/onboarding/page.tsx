@@ -1133,6 +1133,15 @@ export default function OnboardingPage() {
       console.error('[Onboarding] Hub registration failed:', hubError)
     }
 
+    // Generate invite codes for this user
+    try {
+      await fetch('/api/invites/mine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+    } catch { /* ignore */ }
+
     // Clear saved state
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
 
