@@ -152,6 +152,83 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// INVITER NOTIFICATION — someone they invited just joined
+// ═══════════════════════════════════════════════════════════════
+
+export interface InviterNotificationData {
+  toEmail: string
+  toName: string
+  newMemberName: string
+  newMemberBrokerage: string
+  newMemberArea: string
+}
+
+export async function sendInviterNotification(data: InviterNotificationData) {
+  if (!client) {
+    console.log('[Postmark] No token — skipping inviter notification to', data.toEmail)
+    return { success: false, reason: 'no_token' }
+  }
+
+  const firstName = data.toName.split(' ')[0] || 'there'
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="display:inline-block;width:40px;height:40px;background:#f59e0b;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#0f1117;">A</div>
+      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#f59e0b;">Referrals</span>.ai</div>
+    </div>
+
+    <!-- Card -->
+    <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-block;width:56px;height:56px;background:linear-gradient(135deg,#10b981,#059669);border-radius:50%;line-height:56px;text-align:center;font-size:24px;">&#9989;</div>
+      </div>
+
+      <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;text-align:center;">Great news, ${firstName}!</h1>
+      <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;text-align:center;">
+        <strong style="color:#1a1a2e;">${data.newMemberName}</strong> from ${data.newMemberBrokerage} (${data.newMemberArea}) just joined AgentReferrals using your invite.
+      </p>
+
+      <div style="background:#ecfdf5;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
+        <p style="font-size:14px;color:#065f46;margin:0;font-weight:600;">They've been automatically added to your referral network.</p>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="https://agentreferrals.ai/dashboard" style="display:inline-block;background:#f59e0b;color:#0f1117;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">View Your Network</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
+      <p>AgentReferrals — AI-powered referral network for real estate agents</p>
+      <p style="margin-top:4px;"><a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Manage notifications</a></p>
+    </div>
+  </div>
+</body>
+</html>`
+
+  try {
+    const result = await client.sendEmail({
+      From: `${FROM_NAME} <${FROM_EMAIL}>`,
+      To: data.toEmail,
+      Subject: `${data.newMemberName} just joined AgentReferrals!`,
+      HtmlBody: htmlBody,
+      TextBody: `Great news, ${firstName}!\n\n${data.newMemberName} from ${data.newMemberBrokerage} (${data.newMemberArea}) just joined AgentReferrals using your invite.\n\nThey've been automatically added to your referral network.\n\nView your network: https://agentreferrals.ai/dashboard\n\n— AgentReferrals`,
+      MessageStream: 'outbound',
+    })
+    return { success: true, messageId: result.MessageID }
+  } catch (error) {
+    console.error('[Postmark] Send inviter notification failed:', error)
+    return { success: false, reason: 'send_failed', error }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAGIC LINK EMAIL — branded sign-in link
 // ═══════════════════════════════════════════════════════════════
 

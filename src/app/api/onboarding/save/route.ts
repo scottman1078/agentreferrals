@@ -63,9 +63,108 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Auto-create partnership if user was invited ──────────────
+    // Fire-and-forget: don't block onboarding completion
+    processInvitePartnership(supabase, profile).catch((err) => {
+      console.error('[onboarding/save] Invite partnership processing failed:', err)
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[onboarding/save] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+/**
+ * Check if the newly onboarded user was invited, and if so:
+ * 1. Create an active partnership with the inviter
+ * 2. Update the invite record
+ * 3. Send a notification email to the inviter
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function processInvitePartnership(
+  supabase: any,
+  profile: { id: string; email: string; full_name?: string; primary_area?: string; brokerage_id?: string }
+) {
+  // Look for pending or signed_up invites matching this user's email
+  const { data: invites, error: inviteError } = await supabase
+    .from('ar_invites')
+    .select('id, invited_by, status')
+    .eq('invitee_email', profile.email)
+    .in('status', ['pending', 'signed_up'])
+    .limit(10)
+
+  if (inviteError || !invites || invites.length === 0) {
+    return // No matching invites — nothing to do
+  }
+
+  for (const invite of invites) {
+    if (!invite.invited_by) continue
+
+    try {
+      // Get inviter's profile for market info
+      const { data: inviterProfile } = await supabase
+        .from('ar_profiles')
+        .select('id, full_name, email, primary_area, brokerage_id')
+        .eq('id', invite.invited_by)
+        .single()
+
+      if (!inviterProfile) continue
+
+      // Create active partnership
+      const { error: partnershipError } = await supabase
+        .from('ar_partnerships')
+        .insert({
+          requesting_agent_id: invite.invited_by,
+          receiving_agent_id: profile.id,
+          requesting_market: inviterProfile.primary_area || 'Unknown',
+          receiving_market: profile.primary_area || 'Unknown',
+          status: 'active',
+          message: 'Connected via invite code',
+          accepted_at: new Date().toISOString(),
+        })
+
+      if (partnershipError) {
+        console.error('[onboarding/save] Partnership insert failed:', partnershipError.message)
+        continue
+      }
+
+      // Update the invite record
+      await supabase
+        .from('ar_invites')
+        .update({
+          status: 'active',
+          signed_up_user_id: profile.id,
+          signed_up_at: new Date().toISOString(),
+        })
+        .eq('id', invite.id)
+
+      // Send notification email to the inviter (fire-and-forget)
+      const { sendInviterNotification } = await import('@/lib/postmark')
+
+      // Look up brokerage name for the new user
+      let brokerageName = 'their brokerage'
+      if (profile.brokerage_id) {
+        const { data: brokerage } = await supabase
+          .from('ar_brokerages')
+          .select('name')
+          .eq('id', profile.brokerage_id)
+          .single()
+        if (brokerage) brokerageName = brokerage.name
+      }
+
+      sendInviterNotification({
+        toEmail: inviterProfile.email,
+        toName: inviterProfile.full_name || 'there',
+        newMemberName: profile.full_name || 'A new agent',
+        newMemberBrokerage: brokerageName,
+        newMemberArea: profile.primary_area || 'Unknown area',
+      }).catch((emailErr) => {
+        console.error('[onboarding/save] Inviter notification email failed:', emailErr)
+      })
+    } catch (err) {
+      console.error('[onboarding/save] Error processing invite:', invite.id, err)
+    }
   }
 }

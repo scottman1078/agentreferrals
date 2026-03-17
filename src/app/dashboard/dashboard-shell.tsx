@@ -11,13 +11,24 @@ import NoraChat from '@/components/nora/nora-chat'
 import SetupWizard from '@/components/setup-wizard/setup-wizard'
 import { AdminTierProvider } from '@/contexts/admin-tier-context'
 import AdminTierSwitcher from '@/components/admin/tier-switcher'
+import { UserPlus, X } from 'lucide-react'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
+
+interface NewPartnerNotification {
+  inviteId: string
+  userId: string
+  name: string
+  area: string
+  brokerage: string
+  signedUpAt: string
+}
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [showInvite, setShowInvite] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
+  const [newPartners, setNewPartners] = useState<NewPartnerNotification[]>([])
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -26,6 +37,30 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const handleDismissNudge = useCallback((nudgeId: string) => {
     setNudgeList((prev) => prev.map((n) => n.id === nudgeId ? { ...n, dismissed: true } : n))
   }, [])
+
+  const handleDismissPartner = useCallback((inviteId: string) => {
+    setNewPartners((prev) => prev.filter((p) => p.inviteId !== inviteId))
+  }, [])
+
+  // Fetch new partner notifications on mount
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !profile?.id) return
+
+    const fetchNewPartners = async () => {
+      try {
+        const res = await fetch(`/api/notifications/new-partners?userId=${profile.id}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.partners && data.partners.length > 0) {
+          setNewPartners(data.partners)
+        }
+      } catch {
+        // Silently fail — non-critical
+      }
+    }
+
+    fetchNewPartners()
+  }, [isLoading, isAuthenticated, profile?.id])
 
   const handleNudgeMessageSent = useCallback((agentId: string, message: string) => {
     // Dispatch custom event so the messages page can pick it up
@@ -80,6 +115,30 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="h-screen flex flex-col relative">
         {/* Slim top bar — floating on map, solid on other pages */}
         <TopBar />
+
+        {/* New partner notifications */}
+        {newPartners.map((partner) => (
+          <div
+            key={partner.inviteId}
+            className="mx-4 mt-2 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">{partner.name} just joined your network!</p>
+              <p className="text-xs text-muted-foreground">
+                They signed up using your invite and have been added as a referral partner.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDismissPartner(partner.inviteId)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
 
         {/* Post-onboarding setup wizard */}
         {showSetupWizard && (

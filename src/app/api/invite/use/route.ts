@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
             status: 'signed_up',
             used_by: userId,
             used_at: new Date().toISOString(),
+            signed_up_user_id: userId,
+            signed_up_at: new Date().toISOString(),
           })
           .eq('id', invite.id)
 
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
         status: 'signed_up',
         used_by: userId,
         used_at: new Date().toISOString(),
+        signed_up_user_id: userId,
+        signed_up_at: new Date().toISOString(),
       })
       .eq('id', invite.id)
 
