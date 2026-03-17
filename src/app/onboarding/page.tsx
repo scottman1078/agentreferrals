@@ -922,14 +922,38 @@ export default function OnboardingPage() {
   }, [pendingSpecializations])
 
   // ── Handle email list submission ──
-  const handleEmailsSubmit = useCallback(() => {
+  const handleEmailsSubmit = useCallback(async () => {
     const validEmails = pendingEmails.filter((e) => e.trim() && e.includes('@'))
     updateData({ inviteEmails: validEmails })
-    addUserMessage(validEmails.length > 0 ? `Inviting: ${validEmails.join(', ')}` : 'No invites sent')
+
+    if (validEmails.length > 0) {
+      addUserMessage(`Inviting: ${validEmails.join(', ')}`)
+
+      // Send invite emails via Postmark
+      if (userId) {
+        try {
+          await fetch('/api/onboarding-invites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              userName: data.fullName || userName,
+              emails: validEmails,
+            }),
+          })
+        } catch {
+          // Don't block onboarding if email sending fails
+          console.error('[Onboarding] Failed to send invite emails')
+        }
+      }
+    } else {
+      addUserMessage('No invites sent')
+    }
+
     setPendingEmails([''])
     proceedToPastReferrals()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingEmails])
+  }, [pendingEmails, userId, data.fullName, userName])
 
   // ── Proceed to past referrals step ──
   const proceedToPastReferrals = useCallback(() => {
