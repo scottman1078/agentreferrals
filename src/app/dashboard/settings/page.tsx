@@ -311,16 +311,6 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Service Area
-                  </label>
-                  <LocationAutocomplete
-                    value={serviceArea}
-                    onChange={setServiceArea}
-                    placeholder="City, State"
-                  />
-                </div>
                 <div className="text-right pt-2">
                   <button
                     onClick={handleSave}

@@ -60,6 +60,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const [activeTab, setActiveTab] = useState<'zip' | 'county' | 'draw'>(value.mode)
   const [zipInput, setZipInput] = useState('')
   const [zipLoading, setZipLoading] = useState(false)
+  const [zipLoadTrigger, setZipLoadTrigger] = useState(0)
   const [zipError, setZipError] = useState('')
   const [countyNames, setCountyNames] = useState<Map<string, string>>(new Map())
   const [allCounties, setAllCounties] = useState<Map<string, GeoJSON.Feature>>(new Map())
@@ -486,6 +487,30 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [value, onChange])
 
+  // Load boundaries for existing selected zips on mount
+  useEffect(() => {
+    if (!mapInstance.current || !L || activeTab !== 'zip') return
+    if (value.selectedZips.length === 0) return
+
+    const loadMissing = async () => {
+      let loaded = 0
+      for (const zip of value.selectedZips) {
+        if (zipBoundariesRef.current.has(zip)) continue
+        const ring = await getZipBoundary(zip)
+        if (ring) {
+          zipBoundariesRef.current.set(zip, ring)
+          loaded++
+        }
+      }
+      if (loaded > 0) {
+        // Trigger re-render of zip layers
+        setZipLoadTrigger((c) => c + 1)
+      }
+    }
+    loadMissing()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leafletReady, activeTab, value.selectedZips.length])
+
   // Render zip boundary layers on the map
   useEffect(() => {
     if (!mapInstance.current || !L) return
@@ -497,7 +522,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
     if (activeTab !== 'zip') return
 
-    // Add zip boundary layers
+    // Add zip boundary layers and fit bounds
+    const allBounds: L.LatLngBounds[] = []
     for (const zip of value.selectedZips) {
       const ring = zipBoundariesRef.current.get(zip)
       if (!ring) continue
@@ -513,9 +539,19 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       layer.on('click', () => removeZip(zip))
       layer.addTo(map)
       zipLayersRef.current.set(zip, layer)
+      allBounds.push(layer.getBounds())
+    }
+
+    // Fit map to show all selected zips
+    if (allBounds.length > 0) {
+      let combined = allBounds[0]
+      for (let i = 1; i < allBounds.length; i++) {
+        combined = combined.extend(allBounds[i])
+      }
+      map.fitBounds(combined, { padding: [40, 40], maxZoom: 10 })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.selectedZips, activeTab])
+  }, [value.selectedZips, activeTab, zipLoadTrigger])
 
   const getCountyLabel = (fips: string): string => {
     if (countyNames.has(fips)) return countyNames.get(fips)!
