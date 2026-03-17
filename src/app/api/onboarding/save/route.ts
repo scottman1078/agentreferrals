@@ -7,7 +7,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { profile, hubData } = body
 
+    console.log('[onboarding/save] Received:', { profileId: profile?.id, email: profile?.email, fullName: profile?.full_name })
+
     if (!profile || !profile.id) {
+      console.error('[onboarding/save] Missing profile data:', JSON.stringify(body).slice(0, 200))
       return NextResponse.json({ error: 'Missing profile data' }, { status: 400 })
     }
 
