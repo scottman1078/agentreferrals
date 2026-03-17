@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Loader2 } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import { agents } from '@/data/agents'
 import { getPartnerAgentIds } from '@/data/partnerships'
 import { getInitials } from '@/lib/utils'
@@ -69,13 +69,16 @@ export default function AdminUsersPage() {
   const [deletingUser, setDeletingUser] = useState<string | null>(null)
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<RealUser | null>(null)
 
-  useEffect(() => {
+  function loadRealUsers() {
+    setRealUsersLoading(true)
     fetch('/api/admin/users')
       .then(r => r.json())
       .then(data => setRealUsers(data.users || []))
       .catch(() => {})
       .finally(() => setRealUsersLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { loadRealUsers() }, [])
 
   async function handleDeleteRealUser(user: RealUser) {
     setDeletingUser(user.id)
@@ -139,7 +142,17 @@ export default function AdminUsersPage() {
 
       {/* ═══ Real Supabase Users ═══ */}
       <div className="p-5 rounded-xl border border-primary/20 bg-primary/5">
-        <h2 className="font-bold text-sm mb-3">Real Users ({realUsers.length})</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-sm">Real Users ({realUsers.length})</h2>
+          <button
+            onClick={loadRealUsers}
+            disabled={realUsersLoading}
+            className="flex items-center gap-1.5 h-7 px-3 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3 h-3 ${realUsersLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
         {realUsersLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
             <Loader2 className="w-4 h-4 animate-spin" />
