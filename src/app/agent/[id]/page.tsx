@@ -26,9 +26,11 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import Link from 'next/link'
-import { AgentProfileReviews } from './agent-profile-reviews'
-import { AgentProfileMap } from './agent-profile-map'
-import AgentNotesSection from './agent-notes-section'
+import dynamic from 'next/dynamic'
+
+const AgentProfileReviews = dynamic(() => import('./agent-profile-reviews').then(m => ({ default: m.AgentProfileReviews })), { ssr: false })
+const AgentProfileMap = dynamic(() => import('./agent-profile-map').then(m => ({ default: m.AgentProfileMap })), { ssr: false })
+const AgentNotesSection = dynamic(() => import('./agent-notes-section'), { ssr: false })
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 
