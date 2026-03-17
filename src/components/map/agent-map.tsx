@@ -338,11 +338,6 @@ export default function AgentMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showMyZips])
 
-  // Keep ref in sync with latest renderMyZipLayers
-  useEffect(() => {
-    renderMyZipLayersRef.current = renderMyZipLayers
-  }, [renderMyZipLayers])
-
   // Re-render zip layers when myZips changes
   useEffect(() => {
     if (!showMyZips || !mapInstance.current || !L) return
@@ -431,6 +426,11 @@ export default function AgentMap() {
     if (wmsLayerRef.current && !map.hasLayer(wmsLayerRef.current)) wmsLayerRef.current.addTo(map)
     if (wmsLabelsRef.current && !map.hasLayer(wmsLabelsRef.current)) wmsLabelsRef.current.addTo(map)
   }, [myZips])
+
+  // Keep ref in sync with latest renderMyZipLayers (must be after useCallback above)
+  useEffect(() => {
+    renderMyZipLayersRef.current = renderMyZipLayers
+  }, [renderMyZipLayers])
 
   const handleAddZip = useCallback(async () => {
     const zip = zipInput.trim()
