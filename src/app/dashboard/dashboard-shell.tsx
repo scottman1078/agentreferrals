@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/contexts/auth-context'
 import { BrokerageProvider } from '@/contexts/brokerage-context'
@@ -25,6 +25,13 @@ interface NewPartnerNotification {
 }
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
+  const mountCountRef = useRef(0)
+  useEffect(() => {
+    mountCountRef.current += 1
+    console.log('[DashboardShell] MOUNTED (count:', mountCountRef.current, ')')
+    return () => console.log('[DashboardShell] UNMOUNTED')
+  }, [])
+
   const [showInvite, setShowInvite] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
@@ -82,26 +89,38 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [isLoading, isAuthenticated, needsOnboarding, profile, router])
 
   // Show setup wizard if user completed onboarding but has no territory.
-  // Debounced by 400ms so rapid profile re-fetches (auth state change firing twice)
-  // don't cause a flash where the wizard shows then immediately disappears.
+  // Once decided (show or skip), a ref prevents re-evaluation on subsequent profile updates.
+  const wizardDecidedRef = useRef(false)
+
   useEffect(() => {
+    const zipCount = Array.isArray(profile?.territory_zips) ? profile!.territory_zips!.length : 'null'
+    const polygonCount = Array.isArray(profile?.polygon) ? profile!.polygon!.length : 'null'
     console.log('[SetupWizard] effect', {
       isLoading,
       isAuthenticated,
       hasProfile: !!profile,
       needsOnboarding,
       primary_area: profile?.primary_area,
-      territory_zips: profile?.territory_zips,
-      polygon: profile?.polygon,
+      zipCount,
+      polygonCount,
       wizardCompleted: typeof window !== 'undefined' ? localStorage.getItem('ar_setup_wizard_completed') : 'ssr',
+      alreadyDecided: wizardDecidedRef.current,
+      showSetupWizard,
     })
 
     if (isLoading || !isAuthenticated || !profile) return
     if (needsOnboarding || !profile.primary_area) return // still needs onboarding
 
+    // Once we've decided (show or skip), don't re-evaluate
+    if (wizardDecidedRef.current) {
+      console.log('[SetupWizard] skipped re-evaluation — decision already made')
+      return
+    }
+
     // Don't show if already completed the setup wizard
     if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) {
       console.log('[SetupWizard] skipped — localStorage flag set')
+      wizardDecidedRef.current = true
       return
     }
 
@@ -111,13 +130,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       (Array.isArray(profile.territory_zips) && profile.territory_zips.length > 1) ||
       (Array.isArray(profile.polygon) && profile.polygon.length > 0)
 
-    console.log('[SetupWizard] hasRealServiceArea:', hasRealServiceArea)
+    console.log('[SetupWizard] hasRealServiceArea:', hasRealServiceArea, '(zips:', zipCount, 'polygon:', polygonCount, ')')
 
     if (hasRealServiceArea) {
       if (typeof window !== 'undefined') {
         localStorage.setItem('ar_setup_wizard_completed', 'true')
         console.log('[SetupWizard] auto-completed — user already has service area')
       }
+      wizardDecidedRef.current = true
       return
     }
 
@@ -126,12 +146,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     console.log('[SetupWizard] scheduling show in 400ms...')
     const timer = setTimeout(() => {
       console.log('[SetupWizard] showing wizard')
+      wizardDecidedRef.current = true
       setShowSetupWizard(true)
     }, 400)
     return () => {
-      console.log('[SetupWizard] timer cancelled (profile updated before 400ms)')
+      console.log('[SetupWizard] timer cancelled (profile updated before decision)')
       clearTimeout(timer)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
 
   if (isLoading) {
