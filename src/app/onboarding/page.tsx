@@ -1926,12 +1926,7 @@ export default function OnboardingPage() {
               Start over
             </button>
           )}
-          <a
-            href="/dashboard"
-            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Skip for now &rarr;
-          </a>
+{/* Skip removed — onboarding is mandatory */}
         </div>
       </div>
 
