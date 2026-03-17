@@ -14,6 +14,7 @@ import {
   Send,
   ArrowRight,
   Phone,
+  Camera,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ type InteractiveType =
   | { kind: 'emailList' }
   | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
   | { kind: 'pastReferralForm' }
+  | { kind: 'photoUpload' }
   | { kind: 'phoneInput' }
   | { kind: 'phoneCode' }
   | { kind: 'profileSummary' }
@@ -82,12 +84,13 @@ type OnboardingStep =
   | 'referral_fee'
   | 'name_phone'
   | 'license_number'
-  | 'phone_verify'
-  | 'phone_code'
   | 'invites'
   | 'invite_emails'
   | 'past_referrals'
   | 'past_referral_form'
+  | 'photo_upload'
+  | 'phone_verify'
+  | 'phone_code'
   | 'summary'
   | 'complete'
 
@@ -101,6 +104,7 @@ const PROGRESS_STEPS = [
   { key: 'license_number', label: 'License' },
   { key: 'invites', label: 'Invites' },
   { key: 'past_referrals', label: 'Referrals' },
+  { key: 'photo_upload', label: 'Photo' },
   { key: 'phone_verify', label: 'Verify' },
   { key: 'summary', label: 'Review' },
 ]
@@ -123,6 +127,7 @@ const STEP_ORDER: OnboardingStep[] = [
   'invite_emails',
   'past_referrals',
   'past_referral_form',
+  'photo_upload',
   'phone_verify',
   'phone_code',
   'summary',
@@ -164,10 +169,11 @@ function getProgressIndex(step: OnboardingStep): number {
     invite_emails: 7,
     past_referrals: 8,
     past_referral_form: 8,
-    phone_verify: 9,
-    phone_code: 9,
-    summary: 10,
-    complete: 11,
+    photo_upload: 9,
+    phone_verify: 10,
+    phone_code: 10,
+    summary: 11,
+    complete: 12,
   }
   return map[step] ?? -1
 }
@@ -250,6 +256,10 @@ export default function OnboardingPage() {
   const [phoneInputValue, setPhoneInputValue] = useState('')
   const [phoneCodeValue, setPhoneCodeValue] = useState('')
   const [normalizedPhone, setNormalizedPhone] = useState('')
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   const [needsWelcome, setNeedsWelcome] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -566,7 +576,7 @@ export default function OnboardingPage() {
             )
           }, 200)
         } else {
-          proceedToPhoneVerify()
+          proceedToPhotoUpload()
         }
         break
       }
@@ -591,7 +601,7 @@ export default function OnboardingPage() {
           }, 200)
         } else {
           addUserMessage('Continue')
-          proceedToPhoneVerify()
+          proceedToPhotoUpload()
         }
         break
       }
@@ -741,6 +751,18 @@ export default function OnboardingPage() {
         "What's your real estate license number? This helps us verify your credentials and adds a trust badge to your profile.",
         { kind: 'licenseInput' },
         'license_number'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Proceed to photo upload step ──
+  const proceedToPhotoUpload = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        "Want to add a profile photo? This helps other agents recognize you and builds trust.",
+        { kind: 'photoUpload' },
+        'photo_upload'
       )
     }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1062,6 +1084,7 @@ export default function OnboardingPage() {
       email: userEmail,
       full_name: data.fullName.trim(),
       phone: data.phone.trim() || null,
+      avatar_url: avatarPreview || null,
       brokerage_id: brokerageIdForDb,
       primary_area: data.primaryArea.trim(),
       years_licensed: data.yearsLicensed,
@@ -1168,7 +1191,7 @@ export default function OnboardingPage() {
 
     router.push('/dashboard')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, userEmail, data, phoneVerified, router])
+  }, [userId, userEmail, data, phoneVerified, avatarPreview, router])
 
   // ── Render interactive elements ──
   const renderInteractive = (msg: ChatMessage) => {
@@ -1274,7 +1297,7 @@ export default function OnboardingPage() {
                   if (currentStep === 'invites') {
                     proceedToPastReferrals()
                   } else if (currentStep === 'past_referrals') {
-                    proceedToPhoneVerify()
+                    proceedToPhotoUpload()
                   }
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
@@ -1659,12 +1682,92 @@ export default function OnboardingPage() {
             <button
               onClick={() => {
                 addUserMessage("I'll do this later")
-                proceedToPhoneVerify()
+                proceedToPhotoUpload()
               }}
               className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
             >
               Do this later
             </button>
+          </div>
+        )
+
+      case 'photoUpload':
+        return (
+          <div className="mt-3 max-w-md space-y-3">
+            {avatarPreview ? (
+              <div className="flex items-center gap-4">
+                <img src={avatarPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-primary" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Looking good!</p>
+                  <button onClick={() => photoInputRef.current?.click()} className="text-xs text-primary hover:underline">Change photo</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/30 hover:bg-accent/50 transition-all w-full text-left"
+              >
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  {avatarUploading ? (
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{avatarUploading ? 'Uploading...' : 'Upload a photo'}</p>
+                  <p className="text-xs text-muted-foreground">JPG, PNG, or GIF. Max 5MB.</p>
+                </div>
+              </button>
+            )}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setAvatarUploading(true)
+
+                // Convert to data URL for preview and storage
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const dataUrl = reader.result as string
+                  setAvatarPreview(dataUrl)
+                  setAvatarUploading(false)
+                }
+                reader.readAsDataURL(file)
+              }}
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (avatarPreview) {
+                    addUserMessage('Photo uploaded!')
+                  } else {
+                    addUserMessage("I'll add a photo later")
+                  }
+                  proceedToPhoneVerify()
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+              >
+                {avatarPreview ? 'Continue' : 'Skip'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+            {!avatarPreview && (
+              <button
+                onClick={() => {
+                  addUserMessage("I'll do this later")
+                  proceedToPhoneVerify()
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Do this later
+              </button>
+            )}
           </div>
         )
 
@@ -1767,9 +1870,25 @@ export default function OnboardingPage() {
       case 'profileSummary': {
         const brokerageName = getBrokerageName(data.brokerageId)
         const priceLabel = data.avgSalePrice ? `$${data.avgSalePrice.toLocaleString()}` : 'Not set'
+        const initials = data.fullName
+          ? data.fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+          : '?'
         return (
           <div className="mt-3 max-w-lg space-y-3">
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center gap-3 mb-2">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile" className="w-14 h-14 rounded-full object-cover border-2 border-primary" />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                    {initials}
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm font-bold">{data.fullName || 'No name'}</div>
+                  <div className="text-xs text-muted-foreground">{userEmail}</div>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Name</div>
