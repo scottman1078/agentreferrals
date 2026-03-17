@@ -2,22 +2,22 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
 import { agents } from '@/data/agents'
 import { getPartnerAgentIds } from '@/data/partnerships'
 import { getInitials } from '@/lib/utils'
 import type { SubscriptionTier } from '@/lib/stripe'
 
 const TIER_COLORS: Record<string, string> = {
-  starter: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  growth: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  pro: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  elite: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  starter: 'bg-gray-500/20 text-gray-600 dark:text-gray-300 border border-gray-500/30',
+  growth: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30',
+  pro: 'bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-500/30',
+  elite: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  invited: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  active: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30',
+  invited: 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30',
 }
 
 const ITEMS_PER_PAGE = 20
@@ -45,6 +45,9 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(0)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteToast, setDeleteToast] = useState<string | null>(null)
 
   // Get unique brokerages for the filter dropdown
   const brokerages = useMemo(() => {
@@ -108,6 +111,62 @@ export default function AdminUsersPage() {
           </optgroup>
         </select>
       </div>
+
+      {/* Delete Demo Users */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex items-center gap-2 h-9 px-4 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Delete All Demo Users
+        </button>
+        {deleteToast && (
+          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{deleteToast}</span>
+        )}
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="p-4 rounded-xl border-2 border-destructive/30 bg-destructive/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-bold text-sm">Delete all demo/mock users?</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                This will remove all ar_profiles where is_demo = true from the database. Real users will not be affected.
+              </p>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  onClick={async () => {
+                    setDeleteLoading(true)
+                    try {
+                      const res = await fetch('/api/admin/delete-demo-users', { method: 'POST' })
+                      const data = await res.json()
+                      setDeleteToast(`Deleted ${data.count ?? 0} demo users`)
+                      setTimeout(() => setDeleteToast(null), 4000)
+                    } catch {
+                      setDeleteToast('Failed to delete demo users')
+                      setTimeout(() => setDeleteToast(null), 4000)
+                    }
+                    setDeleteLoading(false)
+                    setShowDeleteConfirm(false)
+                  }}
+                  disabled={deleteLoading}
+                  className="flex items-center gap-2 h-8 px-4 rounded-lg bg-destructive text-destructive-foreground text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete Demo Users'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-8 px-4 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="p-5 rounded-xl border border-border bg-card overflow-x-auto">
