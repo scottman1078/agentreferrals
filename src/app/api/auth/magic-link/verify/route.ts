@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,49 +58,48 @@ export async function POST(request: NextRequest) {
       user = newUser.user
     }
 
-    // Generate a magic link with the correct redirect
-    const isDev = process.env.NODE_ENV === 'development'
-    const redirectTo = isDev
-      ? 'http://localhost:5500/auth/callback'
-      : 'https://agentreferrals.ai/auth/callback'
+    // Strategy: Set a temporary password, sign in with it, then clear it
+    // This creates a real session with access_token and refresh_token
+    const tempPassword = crypto.randomBytes(32).toString('hex')
 
-    const { data: linkData, error: linkError } = await hubAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: { redirectTo },
+    // Set temporary password
+    const { error: updateError } = await hubAdmin.auth.admin.updateUserById(user.id, {
+      password: tempPassword,
     })
 
-    if (linkError || !linkData) {
-      console.error('[MagicLink Verify] Failed to generate link:', linkError)
-      return NextResponse.json({ valid: false, error: 'Failed to generate session' }, { status: 500 })
+    if (updateError) {
+      console.error('[MagicLink Verify] Failed to set temp password:', updateError)
+      return NextResponse.json({ valid: false, error: 'Failed to create session' }, { status: 500 })
     }
 
-    const hashedToken = linkData.properties?.hashed_token
-    const actionLink = linkData.properties?.action_link
+    // Sign in with the temporary password to get session tokens
+    const { data: signInData, error: signInError } = await hubAdmin.auth.signInWithPassword({
+      email,
+      password: tempPassword,
+    })
 
-    // Rewrite the action link to use the correct domain
-    // The default action link goes to the Hub's site URL, which may be wrong
-    let fixedActionLink = actionLink
-    if (actionLink) {
-      try {
-        const url = new URL(actionLink)
-        // The action link is a Supabase auth endpoint — we need to keep it as-is
-        // but fix the redirect_to parameter inside it
-        const redirectParam = url.searchParams.get('redirect_to')
-        if (redirectParam && !redirectParam.includes('agentreferrals.ai') && !redirectParam.includes('localhost')) {
-          url.searchParams.set('redirect_to', redirectTo)
-          fixedActionLink = url.toString()
-        }
-      } catch {
-        // URL parse failed — use as-is
-      }
+    // Immediately clear the temporary password by setting a new random one
+    // (so the temp password can never be reused)
+    await hubAdmin.auth.admin.updateUserById(user.id, {
+      password: crypto.randomBytes(32).toString('hex'),
+    })
+
+    if (signInError || !signInData.session) {
+      console.error('[MagicLink Verify] Temp sign-in failed:', signInError)
+      return NextResponse.json({ valid: false, error: 'Failed to create session' }, { status: 500 })
     }
 
+    // Return the session tokens — the client will use setSession() to establish it
     return NextResponse.json({
       valid: true,
       email,
-      hashedToken: hashedToken || null,
-      actionLink: fixedActionLink || null,
+      access_token: signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token,
+      expires_in: signInData.session.expires_in,
+      user: {
+        id: signInData.session.user.id,
+        email: signInData.session.user.email,
+      },
     })
   } catch (error) {
     console.error('[MagicLink Verify] Unexpected error:', error)

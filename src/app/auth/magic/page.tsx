@@ -30,7 +30,7 @@ export default function MagicLinkPage() {
 
     async function verifyAndSignIn() {
       try {
-        // 1. Verify our custom token
+        // 1. Verify our custom token and get session tokens
         log('Step 1: Verifying token...')
         const res = await fetch('/api/auth/magic-link/verify', {
           method: 'POST',
@@ -38,9 +38,9 @@ export default function MagicLinkPage() {
           body: JSON.stringify({ token }),
         })
         const data = await res.json()
-        log(`Step 1: valid=${data.valid}, email=${data.email || 'none'}, hasToken=${!!data.hashedToken}, error=${data.error || 'none'}`)
+        log(`Step 1: valid=${data.valid}, email=${data.email || 'none'}, hasAccessToken=${!!data.access_token}, error=${data.error || 'none'}`)
 
-        if (!data.valid) {
+        if (!data.valid || !data.access_token) {
           setStatus('error')
           setErrorMessage(data.error || 'Link expired or invalid')
           return
@@ -48,8 +48,8 @@ export default function MagicLinkPage() {
 
         setStatus('signing-in')
 
-        // 2. Try verifyOtp with the hashed token
-        log('Step 2: Creating Hub client...')
+        // 2. Set the session on the Hub client using the returned tokens
+        log('Step 2: Setting session on Hub client...')
         const hub = createHubClient()
 
         if (!hub) {
@@ -59,19 +59,16 @@ export default function MagicLinkPage() {
           return
         }
 
-        log(`Step 2: Calling verifyOtp with email=${data.email}, tokenLen=${data.hashedToken?.length || 0}...`)
-        const { data: sessionData, error: otpError } = await hub.auth.verifyOtp({
-          email: data.email,
-          token: data.hashedToken,
-          type: 'magiclink',
+        const { data: sessionData, error: sessionError } = await hub.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
         })
 
-        log(`Step 2 result: session=${!!sessionData?.session}, userId=${sessionData?.user?.id?.slice(0, 8) || 'none'}, error=${otpError?.message || 'none'}`)
+        log(`Step 2 result: session=${!!sessionData?.session}, userId=${sessionData?.user?.id?.slice(0, 8) || 'none'}, error=${sessionError?.message || 'none'}`)
 
-        if (otpError || !sessionData?.session) {
-          log('Step 2 failed. Showing error (NOT redirecting to action link).')
+        if (sessionError || !sessionData?.session) {
           setStatus('error')
-          setErrorMessage(`Sign-in failed: ${otpError?.message || 'No session created'}. Please request a new magic link.`)
+          setErrorMessage(`Failed to set session: ${sessionError?.message || 'Unknown error'}`)
           return
         }
 
@@ -93,14 +90,14 @@ export default function MagicLinkPage() {
 
           if (arProfile && arProfile.primary_area) {
             log('Routing to /dashboard')
-            router.push('/dashboard')
+            window.location.href = '/dashboard'
           } else {
             log('Routing to /onboarding')
-            router.push('/onboarding')
+            window.location.href = '/onboarding'
           }
         } catch (err) {
           log(`Step 4 error: ${err}. Routing to /onboarding`)
-          router.push('/onboarding')
+          window.location.href = '/onboarding'
         }
       } catch (err) {
         log(`Fatal error: ${err}`)
@@ -140,7 +137,7 @@ export default function MagicLinkPage() {
           </>
         )}
 
-        {/* Debug logs — visible for troubleshooting */}
+        {/* Debug logs */}
         {debugLogs.length > 0 && (
           <div className="mt-6 p-3 rounded-lg bg-card border border-border text-left max-h-60 overflow-y-auto">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Debug Log</p>
