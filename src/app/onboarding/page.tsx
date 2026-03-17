@@ -1926,7 +1926,17 @@ export default function OnboardingPage() {
               Start over
             </button>
           )}
-{/* Skip removed — onboarding is mandatory */}
+          <button
+            onClick={async () => {
+              localStorage.removeItem(STORAGE_KEY)
+              const hub = createHubClient()
+              await hub.auth.signOut()
+              window.location.href = '/'
+            }}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Log out
+          </button>
         </div>
       </div>
 
