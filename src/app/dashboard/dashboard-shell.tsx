@@ -8,14 +8,14 @@ import TopBar from '@/components/layout/top-bar'
 import PillNav from '@/components/layout/pill-nav'
 import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
+import SetupWizard from '@/components/setup-wizard/setup-wizard'
 import { AdminTierProvider } from '@/contexts/admin-tier-context'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
-import { MapPin, X as XIcon } from 'lucide-react'
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [showInvite, setShowInvite] = useState(false)
-  const [showServiceAreaBanner, setShowServiceAreaBanner] = useState(false)
+  const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
   const router = useRouter()
@@ -45,16 +45,19 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAuthenticated, needsOnboarding, profile, router])
 
-  // Show service area setup banner if user completed onboarding but has no territory
+  // Show setup wizard if user completed onboarding but has no territory
   useEffect(() => {
     if (isLoading || !isAuthenticated || !profile) return
     if (needsOnboarding || !profile.primary_area) return // still needs onboarding
+
+    // Don't show if already completed
+    if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
     const hasZips = Array.isArray(profile.territory_zips) && profile.territory_zips.length > 0
     const hasPolygon = Array.isArray(profile.polygon) && profile.polygon.length > 0
 
     if (!hasZips && !hasPolygon) {
-      setShowServiceAreaBanner(true)
+      setShowSetupWizard(true)
     }
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
 
@@ -77,34 +80,15 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Slim top bar — floating on map, solid on other pages */}
         <TopBar />
 
-        {/* Service area setup banner */}
-        {showServiceAreaBanner && (
-          <div className="relative z-10 mx-4 mt-2 p-4 rounded-xl border border-primary/20 bg-primary/5">
-            <button
-              onClick={() => setShowServiceAreaBanner(false)}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <XIcon className="w-4 h-4" />
-            </button>
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-foreground">Welcome to AgentReferrals!</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Set up your service area so other agents can find you.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowServiceAreaBanner(false)
-                    router.push('/dashboard/settings?tab=territory')
-                  }}
-                  className="mt-2 h-8 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity"
-                >
-                  Set Up Service Area
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Post-onboarding setup wizard */}
+        {showSetupWizard && (
+          <SetupWizard
+            onComplete={() => {
+              setShowSetupWizard(false)
+              localStorage.setItem('ar_setup_wizard_completed', 'true')
+            }}
+            profile={profile}
+          />
         )}
 
         {/* Main content */}
