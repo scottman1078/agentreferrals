@@ -34,49 +34,56 @@ export async function POST(request: NextRequest) {
 
     const email = linkRecord.email
 
-    // Use Hub admin API to manage the user and generate a session link
+    // Use Hub admin API to manage the user and generate a session
     const hubUrl = process.env.NEXT_PUBLIC_HUB_URL!
     const hubKey = process.env.HUB_SERVICE_ROLE_KEY!
-    const hubAdmin = createClient(hubUrl, hubKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    const hubAdmin = createClient(hubUrl, hubKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
 
     // Look up or create the user
     const { data: listData } = await hubAdmin.auth.admin.listUsers()
-    const existingUser = listData?.users?.find((u) => u.email === email)
+    let user = listData?.users?.find((u) => u.email === email)
 
-    if (!existingUser) {
+    if (!user) {
       // Create the user if they don't exist
-      const { error: createError } = await hubAdmin.auth.admin.createUser({
+      const { data: newUser, error: createError } = await hubAdmin.auth.admin.createUser({
         email,
         email_confirm: true,
       })
-      if (createError) {
+      if (createError || !newUser.user) {
         console.error('[MagicLink Verify] Failed to create user:', createError)
         return NextResponse.json({ valid: false, error: 'Failed to create account' }, { status: 500 })
       }
+      user = newUser.user
     }
 
-    // Generate a magic link URL that Supabase can use to create a session
-    const isDev = process.env.NODE_ENV === 'development'
-    const redirectTo = isDev
-      ? 'http://localhost:5500/auth/callback'
-      : 'https://agentreferrals.ai/auth/callback'
-
+    // Generate a magic link and extract the OTP token from it
     const { data: linkData, error: linkError } = await hubAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email,
-      options: {
-        redirectTo,
-      },
     })
 
     if (linkError || !linkData) {
-      console.error('[MagicLink Verify] Failed to generate Supabase link:', linkError)
+      console.error('[MagicLink Verify] Failed to generate link:', linkError)
       return NextResponse.json({ valid: false, error: 'Failed to generate session' }, { status: 500 })
+    }
+
+    // Extract the hashed_token from the generated link properties
+    // The client will use verifyOtp with this token to establish a session
+    const hashedToken = linkData.properties?.hashed_token
+    const actionLink = linkData.properties?.action_link
+
+    if (!hashedToken) {
+      console.error('[MagicLink Verify] No hashed_token in link data')
+      return NextResponse.json({ valid: false, error: 'Failed to generate session token' }, { status: 500 })
     }
 
     return NextResponse.json({
       valid: true,
-      actionLink: linkData?.properties?.action_link,
+      email,
+      hashedToken,
+      actionLink,
     })
   } catch (error) {
     console.error('[MagicLink Verify] Unexpected error:', error)

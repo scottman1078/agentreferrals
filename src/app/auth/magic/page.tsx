@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { createHubClient } from '@/lib/supabase/hub'
+import { createClient } from '@/lib/supabase/client'
 
 export default function MagicLinkPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'verifying' | 'error'>('verifying')
+  const [status, setStatus] = useState<'verifying' | 'signing-in' | 'error'>('verifying')
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
@@ -18,8 +20,9 @@ export default function MagicLinkPage() {
       return
     }
 
-    async function verifyToken() {
+    async function verifyAndSignIn() {
       try {
+        // 1. Verify our custom token and get the Supabase OTP token
         const res = await fetch('/api/auth/magic-link/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -27,13 +30,50 @@ export default function MagicLinkPage() {
         })
         const data = await res.json()
 
-        if (data.valid && data.actionLink) {
-          // Redirect to Supabase's action link which sets up the session
-          // then redirects to /auth/callback
-          window.location.href = data.actionLink
-        } else {
+        if (!data.valid) {
           setStatus('error')
           setErrorMessage(data.error || 'Link expired or invalid')
+          return
+        }
+
+        setStatus('signing-in')
+
+        // 2. Use the hashed token to verify OTP and establish a real session
+        const hub = createHubClient()
+        const { data: sessionData, error: otpError } = await hub.auth.verifyOtp({
+          email: data.email,
+          token: data.hashedToken,
+          type: 'magiclink',
+        })
+
+        if (otpError || !sessionData?.session) {
+          console.error('[MagicLink] OTP verification failed:', otpError)
+          // Fallback: try the action link redirect
+          if (data.actionLink) {
+            window.location.href = data.actionLink
+            return
+          }
+          setStatus('error')
+          setErrorMessage('Failed to sign in. Please request a new link.')
+          return
+        }
+
+        // 3. Session established! Check if user needs onboarding
+        const product = createClient()
+        try {
+          const { data: arProfile } = await product
+            .from('ar_profiles')
+            .select('id, primary_area')
+            .eq('id', sessionData.session.user.id)
+            .single()
+
+          if (arProfile && arProfile.primary_area) {
+            router.push('/dashboard')
+          } else {
+            router.push('/onboarding')
+          }
+        } catch {
+          router.push('/onboarding')
         }
       } catch {
         setStatus('error')
@@ -41,7 +81,7 @@ export default function MagicLinkPage() {
       }
     }
 
-    verifyToken()
+    verifyAndSignIn()
   }, [searchParams, router])
 
   if (status === 'error') {
@@ -54,9 +94,7 @@ export default function MagicLinkPage() {
             </svg>
           </div>
           <h2 className="font-bold text-lg mb-2 text-foreground">Link expired or invalid</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            {errorMessage}
-          </p>
+          <p className="text-sm text-muted-foreground mb-6">{errorMessage}</p>
           <button
             onClick={() => router.push('/')}
             className="h-10 px-6 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -68,12 +106,13 @@ export default function MagicLinkPage() {
     )
   }
 
-  // Verifying state (loading)
   return (
     <div className="flex items-center justify-center h-screen bg-background">
       <div className="text-center">
         <div className="w-10 h-10 rounded-lg bg-primary mx-auto mb-4 animate-pulse" />
-        <p className="text-sm text-muted-foreground">Signing you in...</p>
+        <p className="text-sm text-muted-foreground">
+          {status === 'verifying' ? 'Verifying your link...' : 'Signing you in...'}
+        </p>
       </div>
     </div>
   )
