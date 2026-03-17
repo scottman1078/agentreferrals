@@ -17,8 +17,12 @@ import {
   Settings,
   MapPinned,
   GraduationCap,
+  Shield,
 } from 'lucide-react'
 import { getUnreadCount } from '@/data/messages'
+import { useAuth } from '@/contexts/auth-context'
+
+const ADMIN_EMAILS = ['scott@agentdashboards.com']
 
 const pillItems = [
   { href: '/dashboard', icon: Map, label: 'Map' },
@@ -43,12 +47,18 @@ export default function PillNav() {
   const [showMore, setShowMore] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const unreadCount = getUnreadCount()
+  const { profile } = useAuth()
+  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '')
+
+  const allMoreItems = isAdmin
+    ? [...moreItems, { href: '/dashboard/admin', icon: Shield, label: 'Admin' }]
+    : moreItems
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href)
 
   const isMoreActive =
-    moreItems.some((item) => isActive(item.href)) || showMore
+    allMoreItems.some((item) => isActive(item.href)) || showMore
 
   // Close popover on outside click
   useEffect(() => {
@@ -67,16 +77,21 @@ export default function PillNav() {
       {/* More popover — opens upward */}
       {showMore && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[200px] rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-          {moreItems.map((item) => {
+          {allMoreItems.map((item) => {
             const active = isActive(item.href)
+            const isAdminItem = item.href === '/dashboard/admin'
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setShowMore(false)}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+                  isAdminItem ? 'border-t border-border ' : ''
+                }${
                   active
                     ? 'text-primary bg-primary/5'
+                    : isAdminItem
+                    ? 'text-primary/80 hover:bg-primary/5'
                     : 'text-foreground hover:bg-accent'
                 }`}
               >
