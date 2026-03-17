@@ -44,6 +44,16 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Super admin bypass code
+    if (code === 'ADMIN-2026') {
+      return NextResponse.json({
+        valid: true,
+        inviteId: 'admin-bypass',
+        inviterName: 'AgentReferrals Team',
+        inviterEmail: 'scott@agentdashboards.com',
+      })
+    }
+
     // Also accept codes matching AR-XXXXXXXX pattern for demo purposes
     const demoPattern = /^AR-[A-Z0-9]{8}$/i
     if (demoPattern.test(code)) {
