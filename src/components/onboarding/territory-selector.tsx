@@ -69,6 +69,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const [mapZoom, setMapZoom] = useState(4)
   const [polygonZipsLoading, setPolygonZipsLoading] = useState(false)
   const [polygonZipsMessage, setPolygonZipsMessage] = useState('')
+  const [mapClickLoading, setMapClickLoading] = useState(false)
+  const [mapClickMessage, setMapClickMessage] = useState('')
 
   // Load Leaflet
   useEffect(() => {
@@ -671,6 +673,62 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger])
 
+  // Click-to-add zip codes: click anywhere on the map in zip mode to look up + add that zip
+  useEffect(() => {
+    if (!mapInstance.current || !L || activeTab !== 'zip') return
+    const map = mapInstance.current
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleMapClick = async (e: any) => {
+      const { lat, lng } = e.latlng
+      if (mapClickLoading) return
+
+      setMapClickMessage('')
+      setMapClickLoading(true)
+
+      try {
+        const zip = await getZipAtPoint(lat, lng)
+        if (!zip) {
+          setMapClickMessage('No zip code found at that location.')
+          setTimeout(() => setMapClickMessage(''), 3000)
+          return
+        }
+        if (value.selectedZips.includes(zip)) {
+          // Already selected — clicking a selected zip removes it (handled by layer click)
+          return
+        }
+        if (value.selectedZips.length >= 30) {
+          setMapClickMessage('Maximum of 30 zip codes reached.')
+          setTimeout(() => setMapClickMessage(''), 3000)
+          return
+        }
+
+        const ring = await getZipBoundary(zip)
+        if (!ring) return
+
+        zipBoundariesRef.current.set(zip, ring)
+
+        const newZips = [...value.selectedZips, zip]
+        const polygonRings: LatLng[][] = []
+        for (const z of newZips) {
+          const r = zipBoundariesRef.current.get(z)
+          if (r) polygonRings.push(r)
+        }
+
+        onChange({ ...value, mode: 'zip', selectedZips: newZips, polygon: polygonRings })
+      } catch {
+        setMapClickMessage('Failed to look up zip code.')
+        setTimeout(() => setMapClickMessage(''), 3000)
+      } finally {
+        setMapClickLoading(false)
+      }
+    }
+
+    map.on('click', handleMapClick)
+    return () => { map.off('click', handleMapClick) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, mapClickLoading, value, onChange])
+
   const getCountyLabel = (fips: string): string => {
     if (countyNames.has(fips)) return countyNames.get(fips)!
     const stateAbbr = FIPS_TO_STATE[fips.substring(0, 2)] || ''
@@ -768,10 +826,29 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       {/* Map */}
       <div className="relative rounded-xl border border-border overflow-hidden">
-        <div ref={mapRef} className="w-full h-[400px] bg-muted" />
+        <div ref={mapRef} className={`w-full h-[400px] bg-muted ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} />
         {!leafletReady && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {activeTab === 'zip' && mapClickLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-sm pointer-events-none">
+            <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2 text-sm font-medium shadow-sm">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              Looking up zip code...
+            </div>
+          </div>
+        )}
+        {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+            {mapClickMessage}
+          </div>
+        )}
+        {activeTab === 'zip' && !mapClickLoading && !mapClickMessage && leafletReady && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm pointer-events-none">
+            <MapPin className="w-3 h-3 inline mr-1.5" />
+            Click the map to add a zip code
           </div>
         )}
         {activeTab === 'county' && mapZoom < 6 && (
