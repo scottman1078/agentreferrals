@@ -12,6 +12,7 @@ export async function GET() {
     const { count, error } = await supabase
       .from('ar_profiles')
       .select('*', { count: 'exact', head: true })
+      .eq('is_demo', false)
 
     if (error) throw error
 

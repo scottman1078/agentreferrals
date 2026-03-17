@@ -33,7 +33,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [])
 
   const [showInvite, setShowInvite] = useState(false)
-  const [showSetupWizard, setShowSetupWizard] = useState(false)
+  // sessionStorage persists the show-wizard decision across remounts within the same tab
+  const [showSetupWizard, setShowSetupWizard] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return sessionStorage.getItem('ar_show_setup_wizard') === 'true'
+  })
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const [newPartners, setNewPartners] = useState<NewPartnerNotification[]>([])
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
@@ -135,6 +139,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     if (hasRealServiceArea) {
       if (typeof window !== 'undefined') {
         localStorage.setItem('ar_setup_wizard_completed', 'true')
+        sessionStorage.removeItem('ar_show_setup_wizard')
         console.log('[SetupWizard] auto-completed — user already has service area')
       }
       wizardDecidedRef.current = true
@@ -142,11 +147,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
 
     // Delay showing so a second profile fetch (onAuthStateChange) can cancel this
-    // before the wizard ever renders
+    // before the wizard ever renders. On fire, persist to sessionStorage so a
+    // remount within the same tab restores the wizard immediately.
     console.log('[SetupWizard] scheduling show in 400ms...')
     const timer = setTimeout(() => {
       console.log('[SetupWizard] showing wizard')
       wizardDecidedRef.current = true
+      sessionStorage.setItem('ar_show_setup_wizard', 'true')
       setShowSetupWizard(true)
     }, 400)
     return () => {
@@ -205,6 +212,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             onComplete={() => {
               setShowSetupWizard(false)
               localStorage.setItem('ar_setup_wizard_completed', 'true')
+              sessionStorage.removeItem('ar_show_setup_wizard')
             }}
             profile={profile}
           />
