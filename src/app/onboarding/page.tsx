@@ -511,7 +511,7 @@ export default function OnboardingPage() {
         setTimeout(() => {
           addNoraMessage(
             'What referral fee percentage do you typically work with?',
-            { kind: 'chips', options: ['20%', '25%', '30%', 'Other'], selected: '25%' },
+            { kind: 'chips', options: ['20%', '25%', '30%', 'Other'] },
             'referral_fee'
           )
         }, 200)
@@ -702,7 +702,7 @@ export default function OnboardingPage() {
           setTimeout(() => {
             addNoraMessage(
               'What referral fee percentage do you typically work with?',
-              { kind: 'chips', options: ['20%', '25%', '30%', 'Other'], selected: '25%' },
+              { kind: 'chips', options: ['20%', '25%', '30%', 'Other'] },
               'referral_fee'
             )
           }, 200)
