@@ -1,11 +1,13 @@
 'use client'
 
-import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User } from 'lucide-react'
+import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
+import { useBrokerage } from '@/contexts/brokerage-context'
+import { getConnectionPath } from '@/data/partnerships'
 import AgentNotes from '@/components/agent-notes'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import type { Agent } from '@/types'
@@ -28,6 +30,22 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
   const commScore = getCommScore(agent.id)
   const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
+
+  // Connection path for degree-of-separation agents
+  const { scope, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { agents: allAgents } = useAppData()
+  const isDegreeView = scope === '1-degree' || scope === '2-degree'
+  const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
+  const connectionPath = isDegreeView && isDegreeAgent ? getConnectionPath('jason', agent.id) : null
+  const pathAgents = connectionPath
+    ? connectionPath.map((id) => {
+        if (id === 'jason') return { id, name: 'You', color: '#f0a500', initials: 'You' }
+        const a = allAgents.find((ag) => ag.id === id)
+        return a
+          ? { id: a.id, name: a.name, color: a.color, initials: getInitials(a.name) }
+          : { id, name: id, color: '#6b7280', initials: '?' }
+      })
+    : null
 
   return (
     <div className="fixed bottom-[88px] left-4 right-4 max-w-lg mx-auto z-[450]">
@@ -95,6 +113,31 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               <span className="text-[11px] text-muted-foreground">
                 ({reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''})
               </span>
+            </div>
+          )}
+
+          {/* Connection path */}
+          {pathAgents && pathAgents.length > 1 && (
+            <div className="mt-2.5 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5">
+                Connection Path
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {pathAgents.map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-1.5">
+                    {i > 0 && <ArrowRight className="w-3 h-3 text-primary/40 shrink-0" />}
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
+                        style={{ background: p.color }}
+                      >
+                        {p.initials}
+                      </div>
+                      <span className="text-xs font-semibold whitespace-nowrap">{p.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
