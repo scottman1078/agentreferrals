@@ -6,7 +6,8 @@ import {
   getAllCountyFeatures,
   STATE_FIPS,
 } from '@/lib/county-boundaries'
-import { getZipBoundary, getCentroid } from '@/lib/zip-boundaries'
+import { getZipBoundary, getCentroid, getZipAtPoint } from '@/lib/zip-boundaries'
+import { pointInPolygon } from '@/lib/geo-utils'
 
 type LatLng = [number, number]
 
@@ -66,6 +67,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const [allCounties, setAllCounties] = useState<Map<string, GeoJSON.Feature>>(new Map())
   const [visibleStateFips, setVisibleStateFips] = useState<string[]>([])
   const [mapZoom, setMapZoom] = useState(4)
+  const [polygonZipsLoading, setPolygonZipsLoading] = useState(false)
+  const [polygonZipsMessage, setPolygonZipsMessage] = useState('')
 
   // Load Leaflet
   useEffect(() => {
@@ -327,6 +330,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           drawnPolygon: coords,
           polygon: [coords],
         })
+
+        // Resolve which zip codes intersect the drawn polygon
+        resolvePolygonToZips(coords)
       })
 
       map.on('draw:deleted', () => {
@@ -485,6 +491,95 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       selectedZips: newZips,
       polygon: polygonRings,
     })
+  }, [value, onChange])
+
+  /** Given a drawn polygon, sample points inside it and resolve zip codes via Census API */
+  const resolvePolygonToZips = useCallback(async (coords: LatLng[]) => {
+    if (coords.length < 3) return
+
+    setPolygonZipsLoading(true)
+    setPolygonZipsMessage('Identifying zip codes in your drawn area...')
+
+    try {
+      // Calculate bounding box
+      const lats = coords.map(([lat]) => lat)
+      const lngs = coords.map(([, lng]) => lng)
+      const minLat = Math.min(...lats)
+      const maxLat = Math.max(...lats)
+      const minLng = Math.min(...lngs)
+      const maxLng = Math.max(...lngs)
+
+      // Generate grid sample points ~0.02 degrees apart
+      const step = 0.02
+      const samplePoints: LatLng[] = []
+      for (let lat = minLat; lat <= maxLat; lat += step) {
+        for (let lng = minLng; lng <= maxLng; lng += step) {
+          if (pointInPolygon(lat, lng, coords)) {
+            samplePoints.push([lat, lng])
+          }
+        }
+      }
+
+      // Cap at 60 sample points to avoid too many API calls
+      const capped = samplePoints.slice(0, 60)
+
+      // Batch calls with small delays to avoid hammering the Census API
+      const uniqueZips = new Set<string>()
+      const batchSize = 5
+      for (let i = 0; i < capped.length; i += batchSize) {
+        const batch = capped.slice(i, i + batchSize)
+        const results = await Promise.all(
+          batch.map(([lat, lng]) => getZipAtPoint(lat, lng))
+        )
+        for (const zip of results) {
+          if (zip) uniqueZips.add(zip)
+        }
+        // Small delay between batches
+        if (i + batchSize < capped.length) {
+          await new Promise((r) => setTimeout(r, 200))
+        }
+      }
+
+      const zipsArray = Array.from(uniqueZips).sort()
+
+      if (zipsArray.length === 0) {
+        setPolygonZipsMessage('No zip codes found in the drawn area. Try drawing a larger boundary.')
+        setPolygonZipsLoading(false)
+        return
+      }
+
+      setPolygonZipsMessage(`Based on your drawn area, ${zipsArray.length} zip code${zipsArray.length > 1 ? 's' : ''} will be included:`)
+
+      // Merge with existing selected zips (avoid duplicates)
+      const mergedZips = Array.from(new Set([...value.selectedZips, ...zipsArray]))
+
+      // Fetch boundaries for new zips and build polygon rings
+      const polygonRings: LatLng[][] = []
+      for (const zip of mergedZips) {
+        if (!zipBoundariesRef.current.has(zip)) {
+          const ring = await getZipBoundary(zip)
+          if (ring) zipBoundariesRef.current.set(zip, ring)
+        }
+        const ring = zipBoundariesRef.current.get(zip)
+        if (ring) polygonRings.push(ring)
+      }
+
+      onChange({
+        ...value,
+        mode: 'draw',
+        drawnPolygon: coords,
+        selectedZips: mergedZips,
+        polygon: polygonRings.length > 0 ? polygonRings : [coords],
+      })
+
+      // Trigger zip layer re-render
+      setZipLoadTrigger((c) => c + 1)
+    } catch (err) {
+      console.error('[polygon-to-zip] Error:', err)
+      setPolygonZipsMessage('Failed to identify zip codes. Your drawn boundary has been saved.')
+    }
+
+    setPolygonZipsLoading(false)
   }, [value, onChange])
 
   // Load boundaries for existing selected zips on mount
@@ -710,9 +805,47 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       )}
 
       {activeTab === 'draw' && value.drawnPolygon.length >= 3 && (
-        <div className="flex items-center gap-2 text-sm text-primary font-medium">
-          <MapPin className="w-4 h-4" />
-          Custom territory drawn ({value.drawnPolygon.length} points)
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-primary font-medium">
+            <MapPin className="w-4 h-4" />
+            Custom boundary drawn ({value.drawnPolygon.length} points)
+          </div>
+
+          {/* Polygon-to-zip loading / results */}
+          {polygonZipsLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {polygonZipsMessage}
+            </div>
+          )}
+
+          {!polygonZipsLoading && polygonZipsMessage && (
+            <p className="text-xs text-muted-foreground">{polygonZipsMessage}</p>
+          )}
+
+          {!polygonZipsLoading && value.selectedZips.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Included Zip Codes ({value.selectedZips.length})
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {value.selectedZips.map((zip) => (
+                  <span
+                    key={zip}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                  >
+                    {zip}
+                    <button
+                      onClick={() => removeZip(zip)}
+                      className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

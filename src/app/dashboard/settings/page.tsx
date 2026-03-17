@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
@@ -14,7 +14,7 @@ type Tab = 'profile' | 'territory' | 'billing' | 'referrals' | 'notifications'
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
-  { id: 'territory', label: 'Territory', icon: MapPin },
+  { id: 'territory', label: 'Service Area(s)', icon: MapPin },
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'referrals', label: 'Referral Defaults', icon: FileText },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -32,7 +32,16 @@ export default function SettingsPage() {
   const { profile, isAuthenticated, refreshProfile } = useAuth()
   const { tier, plan } = useFeatureGate()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+
+  // Auto-select tab from URL parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && TABS.some(t => t.id === tabParam)) {
+      setActiveTab(tabParam as Tab)
+    }
+  }, [searchParams])
 
   // Form state
   const [fullName, setFullName] = useState('')
@@ -328,15 +337,29 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* ═══ Territory Tab ═══ */}
+        {/* ═══ Service Area Tab ═══ */}
         {activeTab === 'territory' && (
           <div className="space-y-4">
+            {(tier === 'starter') && (
+              <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 mb-4">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Free Plan — Limited Visibility</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You&apos;re on the free version of AgentReferrals. Only agents in your direct referral network will see your service area.
+                      <a href="/dashboard/billing" className="text-primary font-semibold hover:underline ml-1">Upgrade to be visible to all agents &rarr;</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="p-5 rounded-xl border border-border bg-card">
               <div className="font-bold text-sm mb-2 pb-3 border-b border-border">
-                Your Territory
+                Your Service Area(s)
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Define your service area by zip code, county, or by drawing a boundary on the map.
+                Define your service area by zip code or by drawing a boundary on the map.
               </p>
               <TerritorySelector
                 value={territory}
@@ -358,18 +381,18 @@ export default function SettingsPage() {
                       .eq('id', profile.id)
                     setSavingTerritory(false)
                     if (error) {
-                      setSaveToast('Failed to save territory.')
+                      setSaveToast('Failed to save service area.')
                     } else {
                       await refreshProfile()
-                      setSaveToast('Territory saved successfully')
+                      setSaveToast('Service area saved successfully')
                     }
                     setTimeout(() => setSaveToast(''), 3000)
                   }}
-                  disabled={savingTerritory || !isAuthenticated || territory.polygon.length === 0}
+                  disabled={savingTerritory || !isAuthenticated || (territory.polygon.length === 0 && territory.selectedZips.length === 0)}
                   className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   {savingTerritory && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {savingTerritory ? 'Saving...' : 'Save Territory'}
+                  {savingTerritory ? 'Saving...' : 'Save Service Area'}
                 </button>
               </div>
             </div>
