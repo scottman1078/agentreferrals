@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { agents } from '@/data/agents'
 import { getPartnerAgentIds } from '@/data/partnerships'
 import { getInitials } from '@/lib/utils'
@@ -41,6 +41,20 @@ function getCommScore(agent: typeof agents[0]): number {
   return 65
 }
 
+interface RealUser {
+  id: string
+  email: string
+  full_name: string | null
+  primary_area: string | null
+  phone: string | null
+  status: string | null
+  subscription_tier: string | null
+  phone_verified: boolean | null
+  years_licensed: number | null
+  deals_per_year: number | null
+  created_at: string | null
+}
+
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -48,6 +62,45 @@ export default function AdminUsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteToast, setDeleteToast] = useState<string | null>(null)
+
+  // Real Supabase users
+  const [realUsers, setRealUsers] = useState<RealUser[]>([])
+  const [realUsersLoading, setRealUsersLoading] = useState(true)
+  const [deletingUser, setDeletingUser] = useState<string | null>(null)
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<RealUser | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/users')
+      .then(r => r.json())
+      .then(data => setRealUsers(data.users || []))
+      .catch(() => {})
+      .finally(() => setRealUsersLoading(false))
+  }, [])
+
+  async function handleDeleteRealUser(user: RealUser) {
+    setDeletingUser(user.id)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setRealUsers(prev => prev.filter(u => u.id !== user.id))
+        setDeleteToast(`Deleted ${user.full_name || user.email}`)
+        setTimeout(() => setDeleteToast(null), 4000)
+      } else {
+        setDeleteToast(`Failed: ${data.error}`)
+        setTimeout(() => setDeleteToast(null), 4000)
+      }
+    } catch {
+      setDeleteToast('Failed to delete user')
+      setTimeout(() => setDeleteToast(null), 4000)
+    }
+    setDeletingUser(null)
+    setConfirmDeleteUser(null)
+  }
 
   // Get unique brokerages for the filter dropdown
   const brokerages = useMemo(() => {
@@ -81,8 +134,76 @@ export default function AdminUsersPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-extrabold tracking-tight">Users</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{agents.length} total agents in the network</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{realUsers.length} real users · {agents.length} demo agents</p>
       </div>
+
+      {/* ═══ Real Supabase Users ═══ */}
+      <div className="p-5 rounded-xl border border-primary/20 bg-primary/5">
+        <h2 className="font-bold text-sm mb-3">Real Users ({realUsers.length})</h2>
+        {realUsersLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading...
+          </div>
+        ) : realUsers.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-2">No real users yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {realUsers.map((user) => (
+              <div key={user.id} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border">
+                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-primary-foreground shrink-0">
+                  {user.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm">{user.full_name || 'No name'}</div>
+                  <div className="text-[11px] text-muted-foreground">{user.email}</div>
+                </div>
+                <div className="text-xs text-muted-foreground hidden sm:block">{user.primary_area || '—'}</div>
+                <div className="text-xs text-muted-foreground hidden md:block">
+                  {user.phone_verified ? '✓ Verified' : 'Unverified'}
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${TIER_COLORS[user.subscription_tier || 'starter'] || TIER_COLORS.starter}`}>
+                  {user.subscription_tier || 'starter'}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${STATUS_COLORS[user.status || 'active'] || STATUS_COLORS.active}`}>
+                  {user.status || 'active'}
+                </span>
+                {confirmDeleteUser?.id === user.id ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleDeleteRealUser(user)}
+                      disabled={deletingUser === user.id}
+                      className="text-[10px] px-2 py-1 rounded bg-destructive text-destructive-foreground font-bold hover:opacity-90 disabled:opacity-50"
+                    >
+                      {deletingUser === user.id ? 'Deleting...' : 'Confirm'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteUser(null)}
+                      className="text-[10px] px-2 py-1 rounded border border-border font-bold hover:bg-accent"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteUser(user)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    title="Delete user"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {deleteToast && (
+          <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-2">{deleteToast}</p>
+        )}
+      </div>
+
+      <div className="h-px bg-border" />
+      <h2 className="font-bold text-sm text-muted-foreground">Demo Agents ({agents.length})</h2>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
