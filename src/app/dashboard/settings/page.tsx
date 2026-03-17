@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { CreditCard, ArrowRight, Loader2, Check, LogOut, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -20,8 +20,16 @@ const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
 ]
 
+function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length === 10) return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  if (digits.length === 11 && digits[0] === '1') return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+  if (digits.length > 10) return `+${digits.slice(0, digits.length - 10)} (${digits.slice(-10, -7)}) ${digits.slice(-7, -4)}-${digits.slice(-4)}`
+  return phone
+}
+
 export default function SettingsPage() {
-  const { profile, isAuthenticated, refreshProfile, signOut } = useAuth()
+  const { profile, isAuthenticated, refreshProfile } = useAuth()
   const { tier, plan } = useFeatureGate()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -62,7 +70,7 @@ export default function SettingsPage() {
     if (profile) {
       setFullName(profile.full_name || '')
       setEmail(profile.email || '')
-      setPhone(profile.phone || '')
+      setPhone(profile.phone ? formatPhoneDisplay(profile.phone) : '')
       setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
       setAvatarUrl(profile.avatar_url || null)
@@ -326,17 +334,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Logout */}
-            <button
-              onClick={async () => {
-                await signOut()
-                window.location.href = '/'
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
+            {/* Sign out moved to avatar dropdown in top bar */}
           </div>
         )}
 

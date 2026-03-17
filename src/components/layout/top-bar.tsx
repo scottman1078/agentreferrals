@@ -137,10 +137,14 @@ export default function TopBar() {
                 e.stopPropagation()
                 setShowAvatarMenu(!showAvatarMenu)
               }}
-              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-[11px] text-primary-foreground shrink-0 hover:opacity-90 transition-opacity"
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-[11px] text-primary-foreground shrink-0 hover:opacity-90 transition-opacity overflow-hidden"
               title={displayName}
             >
-              {initials}
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </button>
 
             {showAvatarMenu && (
