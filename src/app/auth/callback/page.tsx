@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { createClient } from '@/lib/supabase/client'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Session } from '@supabase/supabase-js'
 
 export default function AuthCallback() {
@@ -16,37 +17,69 @@ export default function AuthCallback() {
     const product = createClient()
 
     const handleAuth = async () => {
+      let session: Session | null = null
+
       // 1. Try to exchange the code from the URL (email confirmation / PKCE flow)
       const code = searchParams.get('code')
       if (code) {
         setStatus('Confirming your email...')
         try {
-          await hub.auth.exchangeCodeForSession(code)
+          const { data } = await hub.auth.exchangeCodeForSession(code)
+          if (data?.session) session = data.session as Session
         } catch (err) {
           console.error('[AuthCallback] Code exchange failed:', err)
         }
       }
 
-      // 2. Resolve the session with extended retries
-      setStatus('Setting up your session...')
-      let session: Session | null = null
-      for (let attempt = 0; attempt < 8; attempt++) {
-        const { data } = await hub.auth.getSession() as { data: { session: Session | null } }
-        if (data.session) {
-          session = data.session
-          break
-        }
-        await new Promise((r) => setTimeout(r, 600))
-      }
-
+      // 2. Check if URL hash has tokens (magic link / implicit flow)
       if (!session) {
-        // Last resort: check if the URL hash has tokens (implicit flow)
         const hash = window.location.hash
         if (hash && hash.includes('access_token')) {
-          // Let Supabase handle the hash
-          await new Promise((r) => setTimeout(r, 1500))
+          setStatus('Setting up your session...')
+          const params = new URLSearchParams(hash.substring(1))
+          const accessToken = params.get('access_token')
+          const refreshToken = params.get('refresh_token')
+
+          if (accessToken && refreshToken) {
+            // Use a regular Supabase client (not SSR) to set the session
+            // because createBrowserClient from @supabase/ssr doesn't support setSession from hash
+            const hubUrl = process.env.NEXT_PUBLIC_HUB_URL
+            const hubAnonKey = process.env.NEXT_PUBLIC_HUB_ANON_KEY
+            if (hubUrl && hubAnonKey) {
+              const regularClient = createSupabaseClient(hubUrl, hubAnonKey)
+              const { data: sessionData, error } = await regularClient.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              })
+              if (!error && sessionData?.session) {
+                session = sessionData.session
+                // Also set it on the SSR hub client so it persists
+                try {
+                  await hub.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                  })
+                } catch {
+                  // SSR client may not support this — session is set on regular client
+                }
+              } else {
+                console.error('[AuthCallback] setSession failed:', error?.message)
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Try getSession with retries (for Google OAuth and normal sign-in flows)
+      if (!session) {
+        setStatus('Setting up your session...')
+        for (let attempt = 0; attempt < 8; attempt++) {
           const { data } = await hub.auth.getSession() as { data: { session: Session | null } }
-          session = data.session
+          if (data.session) {
+            session = data.session
+            break
+          }
+          await new Promise((r) => setTimeout(r, 600))
         }
       }
 
@@ -58,8 +91,13 @@ export default function AuthCallback() {
         return
       }
 
-      // 3. Check if user has completed onboarding
+      // 4. Session established — check if user needs onboarding
       setStatus('Almost there...')
+      // Clear the hash from the URL for cleanliness
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+
       try {
         const { data: arProfile } = await product
           .from('ar_profiles')
@@ -68,13 +106,12 @@ export default function AuthCallback() {
           .single()
 
         if (arProfile && arProfile.primary_area) {
-          router.push('/dashboard')
+          window.location.href = '/dashboard'
         } else {
-          router.push('/onboarding')
+          window.location.href = '/onboarding'
         }
       } catch {
-        // No profile — needs onboarding
-        router.push('/onboarding')
+        window.location.href = '/onboarding'
       }
     }
 
