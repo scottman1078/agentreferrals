@@ -29,6 +29,7 @@ import Link from 'next/link'
 import { ClientReviews, ClientMap, ClientNotes } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import { getVerifiedCount } from '@/data/verified-referrals'
 import ContactInfoGate from './contact-info-gate'
 import AuthGate from './auth-gate'
 import ProfileViewGate from './profile-view-gate'
@@ -70,6 +71,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
   const isElite = (agent.referNetScore ?? 0) >= 90
   const mentorProfile = getMentorProfile(agent.id)
   const commScore = getCommScore(agent.id)
+  const verifiedRefCount = getVerifiedCount(agent.id)
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,6 +143,14 @@ export default async function AgentProfilePage({ params }: PageProps) {
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                     <GraduationCap className="w-3.5 h-3.5" />
                     Mentor
+                  </span>
+                )}
+
+                {/* Verified Referrals badge */}
+                {verifiedRefCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    {verifiedRefCount} Verified Referral{verifiedRefCount !== 1 ? 's' : ''}
                   </span>
                 )}
 
@@ -219,6 +229,13 @@ export default async function AgentProfilePage({ params }: PageProps) {
               color: commScore ? getCommScoreColor(commScore.overall).split(' ')[0] : 'text-muted-foreground',
               sublabel: commScore?.label,
             },
+            ...(verifiedRefCount > 0 ? [{
+              icon: BadgeCheck,
+              label: 'Verified Referrals',
+              value: verifiedRefCount.toString(),
+              color: 'text-emerald-500',
+              sublabel: undefined as string | undefined,
+            }] : []),
           ].map((stat) => (
             <div
               key={stat.label}

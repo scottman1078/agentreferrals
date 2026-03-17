@@ -18,6 +18,7 @@ import {
   MapPinned,
   GraduationCap,
   Shield,
+  History,
 } from 'lucide-react'
 import { getUnreadCount } from '@/data/messages'
 import { useAuth } from '@/contexts/auth-context'
@@ -37,6 +38,7 @@ const moreItems = [
   { href: '/dashboard/markets', icon: MapPinned, label: 'Markets' },
   { href: '/dashboard/recruiting', icon: Search, label: 'Recruiting' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documents' },
+  { href: '/dashboard/referral-history', icon: History, label: 'Referral History' },
   { href: '/dashboard/invite', icon: UserPlus, label: 'Invite' },
   { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },

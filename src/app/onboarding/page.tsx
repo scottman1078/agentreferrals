@@ -16,6 +16,15 @@ import {
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+interface PastReferralEntry {
+  direction: 'sent' | 'received'
+  partnerName: string
+  partnerEmail: string
+  market: string
+  salePrice: number
+  closeYear: number
+}
+
 interface OnboardingData {
   brokerageId: string | null
   customBrokerage: string
@@ -30,6 +39,7 @@ interface OnboardingData {
   avgReferralFee: number
   specializations: string[]
   inviteEmails: string[]
+  pastReferrals: PastReferralEntry[]
 }
 
 type InteractiveType =
@@ -40,6 +50,7 @@ type InteractiveType =
   | { kind: 'dualInput'; fields: { key: string; placeholder: string; type?: string }[] }
   | { kind: 'emailList' }
   | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
+  | { kind: 'pastReferralForm' }
 
 interface ChatMessage {
   id: string
@@ -64,6 +75,8 @@ type OnboardingStep =
   | 'name_phone'
   | 'invites'
   | 'invite_emails'
+  | 'past_referrals'
+  | 'past_referral_form'
   | 'complete'
 
 const PROGRESS_STEPS = [
@@ -75,6 +88,7 @@ const PROGRESS_STEPS = [
   { key: 'avg_price', label: 'Pricing' },
   { key: 'name_phone', label: 'Profile' },
   { key: 'invites', label: 'Invites' },
+  { key: 'past_referrals', label: 'Referrals' },
 ]
 
 const STEP_ORDER: OnboardingStep[] = [
@@ -92,6 +106,8 @@ const STEP_ORDER: OnboardingStep[] = [
   'name_phone',
   'invites',
   'invite_emails',
+  'past_referrals',
+  'past_referral_form',
   'complete',
 ]
 
@@ -113,7 +129,9 @@ function getProgressIndex(step: OnboardingStep): number {
     name_phone: 6,
     invites: 7,
     invite_emails: 7,
-    complete: 8,
+    past_referrals: 8,
+    past_referral_form: 8,
+    complete: 9,
   }
   return map[step] ?? -1
 }
@@ -164,6 +182,7 @@ export default function OnboardingPage() {
     avgReferralFee: 25,
     specializations: [],
     inviteEmails: [],
+    pastReferrals: [],
   })
 
   // For multi-select state (specializations)
@@ -174,6 +193,13 @@ export default function OnboardingPage() {
   const [pendingDualInput, setPendingDualInput] = useState<Record<string, string>>({})
   // For text input
   const [inputValue, setInputValue] = useState('')
+  // For past referral form
+  const [prDirection, setPrDirection] = useState<'sent' | 'received'>('sent')
+  const [prPartnerName, setPrPartnerName] = useState('')
+  const [prPartnerEmail, setPrPartnerEmail] = useState('')
+  const [prMarket, setPrMarket] = useState('')
+  const [prSalePrice, setPrSalePrice] = useState<number | null>(null)
+  const [prCloseYear, setPrCloseYear] = useState<number | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -459,6 +485,48 @@ export default function OnboardingPage() {
             )
           }, 200)
         } else {
+          proceedToPastReferrals()
+        }
+        break
+      }
+
+      case 'past_referrals': {
+        addUserMessage(value === 'add' ? 'Add Past Referrals' : 'Skip for Now')
+
+        if (value === 'add') {
+          setTimeout(() => {
+            addNoraMessage(
+              "Let's add one. Tell me about the referral:",
+              { kind: 'pastReferralForm' },
+              'past_referral_form'
+            )
+          }, 200)
+        } else {
+          completeOnboarding()
+        }
+        break
+      }
+
+      case 'past_referral_form': {
+        // "Add Another" or "Continue"
+        if (value === 'another') {
+          addUserMessage('Add Another')
+          // Reset form state
+          setPrDirection('sent')
+          setPrPartnerName('')
+          setPrPartnerEmail('')
+          setPrMarket('')
+          setPrSalePrice(null)
+          setPrCloseYear(null)
+          setTimeout(() => {
+            addNoraMessage(
+              "Let's add another one:",
+              { kind: 'pastReferralForm' },
+              'past_referral_form'
+            )
+          }, 200)
+        } else {
+          addUserMessage('Continue')
           completeOnboarding()
         }
         break
@@ -649,9 +717,65 @@ export default function OnboardingPage() {
     updateData({ inviteEmails: validEmails })
     addUserMessage(validEmails.length > 0 ? `Inviting: ${validEmails.join(', ')}` : 'No invites sent')
     setPendingEmails([''])
-    completeOnboarding()
+    proceedToPastReferrals()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingEmails])
+
+  // ── Proceed to past referrals step ──
+  const proceedToPastReferrals = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        "One more thing \u2014 have you done any referral deals in the past? Adding them helps build your verified track record. Other agents can see how many verified referrals you've completed.",
+        { kind: 'buttons', options: [
+          { label: 'Add Past Referrals', value: 'add', primary: true },
+          { label: 'Skip for Now', value: 'skip' },
+        ]},
+        'past_referrals'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Handle past referral form submission ──
+  const handlePastReferralSubmit = useCallback(() => {
+    if (!prPartnerName || !prPartnerEmail) return
+
+    const entry: PastReferralEntry = {
+      direction: prDirection,
+      partnerName: prPartnerName,
+      partnerEmail: prPartnerEmail,
+      market: prMarket,
+      salePrice: prSalePrice ?? 0,
+      closeYear: prCloseYear ?? 2025,
+    }
+
+    setData((prev) => ({
+      ...prev,
+      pastReferrals: [...prev.pastReferrals, entry],
+    }))
+
+    addUserMessage(`${prDirection === 'sent' ? 'Sent' : 'Received'} referral with ${prPartnerName} \u2022 ${prMarket || 'Unknown market'}`)
+
+    // Reset form
+    setPrDirection('sent')
+    setPrPartnerName('')
+    setPrPartnerEmail('')
+    setPrMarket('')
+    setPrSalePrice(null)
+    setPrCloseYear(null)
+
+    setTimeout(() => {
+      addNoraMessage(
+        "Got it! Want to add another, or continue?",
+        { kind: 'buttons', options: [
+          { label: 'Add Another', value: 'another', primary: true },
+          { label: 'Continue', value: 'continue' },
+        ]},
+        'past_referral_form'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prDirection, prPartnerName, prPartnerEmail, prMarket, prSalePrice, prCloseYear])
 
   // ── Complete onboarding ──
   const completeOnboarding = useCallback(() => {
@@ -1007,6 +1131,117 @@ export default function OnboardingPage() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        )
+
+      case 'pastReferralForm':
+        return (
+          <div className="mt-3 space-y-3 max-w-md">
+            {/* Direction toggle */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPrDirection('sent')}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  prDirection === 'sent'
+                    ? 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
+                    : 'border border-border bg-card hover:bg-accent'
+                }`}
+              >
+                I sent
+              </button>
+              <button
+                onClick={() => setPrDirection('received')}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  prDirection === 'received'
+                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
+                    : 'border border-border bg-card hover:bg-accent'
+                }`}
+              >
+                I received
+              </button>
+            </div>
+
+            {/* Partner name */}
+            <input
+              type="text"
+              value={prPartnerName}
+              onChange={(e) => setPrPartnerName(e.target.value)}
+              placeholder="Partner name"
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+
+            {/* Partner email */}
+            <input
+              type="email"
+              value={prPartnerEmail}
+              onChange={(e) => setPrPartnerEmail(e.target.value)}
+              placeholder="Partner email"
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+
+            {/* Market */}
+            <input
+              type="text"
+              value={prMarket}
+              onChange={(e) => setPrMarket(e.target.value)}
+              placeholder="Market (e.g. Nashville, TN)"
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+
+            {/* Sale price chips */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Approximate sale price</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: '$100k-250k', value: 175000 },
+                  { label: '$250k-500k', value: 375000 },
+                  { label: '$500k-750k', value: 625000 },
+                  { label: '$750k+', value: 1000000 },
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setPrSalePrice(opt.value)}
+                    className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                      prSalePrice === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Close year chips */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Close year</label>
+              <div className="flex gap-2">
+                {[2024, 2025, 2026].map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => setPrCloseYear(year)}
+                    className={`px-4 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                      prCloseYear === year
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              onClick={handlePastReferralSubmit}
+              disabled={!prPartnerName || !prPartnerEmail}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add Referral
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         )
 
