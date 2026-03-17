@@ -1,81 +1,190 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { createClient } from '@/lib/supabase/client'
 import { brokerages } from '@/data/brokerages'
-import { ALL_TAGS, TAG_COLORS, US_STATES } from '@/lib/constants'
-import { formatCurrency } from '@/lib/utils'
-import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
-import TerritorySelector, { type TerritoryData } from '@/components/onboarding/territory-selector'
+import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
 import {
-  ArrowRight,
-  ArrowLeft,
   Check,
-  Building2,
-  User,
-  MapPin,
   Sparkles,
-  CheckCircle2,
   Loader2,
-  ShieldCheck,
+  Send,
+  ArrowRight,
 } from 'lucide-react'
 
-const TOTAL_STEPS = 5
+// ── Types ──────────────────────────────────────────────────────────────
 
 interface OnboardingData {
   brokerageId: string | null
   customBrokerage: string
+  teamName: string
+  isOnTeam: boolean
   fullName: string
   phone: string
-  licenseNumber: string
-  licenseState: string
-  primaryArea: string
   yearsLicensed: number | null
-  dealsPerYear: number | null
+  referralsPerYear: number | null
+  primaryArea: string
   avgSalePrice: number | null
-  territory: TerritoryData
+  avgReferralFee: number
   specializations: string[]
+  inviteEmails: string[]
 }
 
-const STEP_LABELS = ['Brokerage', 'Profile', 'Territory', 'Specializations', 'Review']
-const STEP_ICONS = [Building2, User, MapPin, Sparkles, CheckCircle2]
+type InteractiveType =
+  | { kind: 'chips'; options: string[]; selected?: string }
+  | { kind: 'brokerage' }
+  | { kind: 'multiSelect'; options: string[]; selected: string[] }
+  | { kind: 'input'; placeholder: string; type?: string }
+  | { kind: 'dualInput'; fields: { key: string; placeholder: string; type?: string }[] }
+  | { kind: 'emailList' }
+  | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
+
+interface ChatMessage {
+  id: string
+  role: 'nora' | 'user'
+  content: string
+  interactive?: InteractiveType
+  resolved?: boolean // true once the user has answered this question
+}
+
+type OnboardingStep =
+  | 'welcome'
+  | 'brokerage'
+  | 'custom_brokerage'
+  | 'team'
+  | 'team_name'
+  | 'experience'
+  | 'referral_volume'
+  | 'service_area'
+  | 'specializations'
+  | 'avg_price'
+  | 'referral_fee'
+  | 'name_phone'
+  | 'invites'
+  | 'invite_emails'
+  | 'complete'
+
+const PROGRESS_STEPS = [
+  { key: 'brokerage', label: 'Brokerage' },
+  { key: 'team', label: 'Team' },
+  { key: 'experience', label: 'Experience' },
+  { key: 'service_area', label: 'Area' },
+  { key: 'specializations', label: 'Specializations' },
+  { key: 'avg_price', label: 'Pricing' },
+  { key: 'name_phone', label: 'Profile' },
+  { key: 'invites', label: 'Invites' },
+]
+
+const STEP_ORDER: OnboardingStep[] = [
+  'welcome',
+  'brokerage',
+  'custom_brokerage',
+  'team',
+  'team_name',
+  'experience',
+  'referral_volume',
+  'service_area',
+  'specializations',
+  'avg_price',
+  'referral_fee',
+  'name_phone',
+  'invites',
+  'invite_emails',
+  'complete',
+]
+
+const STORAGE_KEY = 'ar_onboarding_state'
+
+function getProgressIndex(step: OnboardingStep): number {
+  const map: Record<string, number> = {
+    welcome: -1,
+    brokerage: 0,
+    custom_brokerage: 0,
+    team: 1,
+    team_name: 1,
+    experience: 2,
+    referral_volume: 2,
+    service_area: 3,
+    specializations: 4,
+    avg_price: 5,
+    referral_fee: 5,
+    name_phone: 6,
+    invites: 7,
+    invite_emails: 7,
+    complete: 8,
+  }
+  return map[step] ?? -1
+}
+
+// ── Typing Indicator ───────────────────────────────────────────────────
+
+function TypingIndicator() {
+  return (
+    <div className="flex items-start gap-3 nora-msg-enter">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+        <Sparkles className="w-4 h-4 text-primary" />
+      </div>
+      <div className="bg-card border border-border rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full bg-primary/60 nora-typing-dot" />
+        <div className="w-2 h-2 rounded-full bg-primary/60 nora-typing-dot" />
+        <div className="w-2 h-2 rounded-full bg-primary/60 nora-typing-dot" />
+      </div>
+    </div>
+  )
+}
+
+// ── Main Component ─────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
   const router = useRouter()
   const hub = createHubClient()
   const supabase = createClient()
 
-  const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [userEmail, setUserEmail] = useState<string>('')
-  const [userName, setUserName] = useState<string>('')
+  const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
 
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome')
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [data, setData] = useState<OnboardingData>({
     brokerageId: null,
     customBrokerage: '',
+    teamName: '',
+    isOnTeam: false,
     fullName: '',
     phone: '',
-    licenseNumber: '',
-    licenseState: '',
-    primaryArea: '',
     yearsLicensed: null,
-    dealsPerYear: null,
+    referralsPerYear: null,
+    primaryArea: '',
     avgSalePrice: null,
-    territory: {
-      mode: 'zip',
-      selectedCounties: [],
-      selectedZips: [],
-      drawnPolygon: [],
-      polygon: [],
-    },
+    avgReferralFee: 25,
     specializations: [],
+    inviteEmails: [],
   })
 
-  // Load user info on mount — retry to handle race condition with auth cookie
+  // For multi-select state (specializations)
+  const [pendingSpecializations, setPendingSpecializations] = useState<string[]>([])
+  // For email list state
+  const [pendingEmails, setPendingEmails] = useState<string[]>([''])
+  // For dual input state
+  const [pendingDualInput, setPendingDualInput] = useState<Record<string, string>>({})
+  // For text input
+  const [inputValue, setInputValue] = useState('')
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const initializedRef = useRef(false)
+
+  // ── Scroll to bottom on new messages ──
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isTyping])
+
+  // ── Load user info on mount ──
   useEffect(() => {
     type AuthUser = { id: string; email?: string | null; user_metadata?: Record<string, string> }
 
@@ -102,54 +211,472 @@ export default function OnboardingPage() {
     })
   }, [hub, router])
 
-  const updateField = <K extends keyof OnboardingData>(
-    key: K,
-    value: OnboardingData[K]
-  ) => {
-    setData((prev) => ({ ...prev, [key]: value }))
-  }
-
-  const toggleSpecialization = (tag: string) => {
-    setData((prev) => ({
-      ...prev,
-      specializations: prev.specializations.includes(tag)
-        ? prev.specializations.filter((t) => t !== tag)
-        : [...prev.specializations, tag],
-    }))
-  }
-
-  // Validation per step
-  const canAdvance = (): boolean => {
-    switch (step) {
-      case 1:
-        return data.brokerageId !== null
-      case 2:
-        return (
-          data.fullName.trim().length > 0 &&
-          data.primaryArea.trim().length > 0
-        )
-      case 3:
-        return data.territory.polygon.length > 0
-      case 4:
-        return data.specializations.length >= 1
-      default:
-        return true
+  // ── Persist state to localStorage ──
+  const saveToStorage = useCallback((newData: OnboardingData, step: OnboardingStep, msgs: ChatMessage[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: newData, step, messages: msgs }))
+    } catch {
+      // silently fail
     }
+  }, [])
+
+  // ── Restore state from localStorage on mount ──
+  useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.data && parsed.step && parsed.messages) {
+          setData(parsed.data)
+          setCurrentStep(parsed.step)
+          setMessages(parsed.messages)
+          if (parsed.data.specializations) {
+            setPendingSpecializations(parsed.data.specializations)
+          }
+          return
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    // No saved state — start fresh with welcome message
+    addNoraMessage(
+      "Hey! I'm NORA, your AI assistant at AgentReferrals. Let's get your profile set up \u2014 it'll only take a couple minutes.\n\nFirst up: what brokerage are you with?",
+      { kind: 'brokerage' },
+      'brokerage'
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Helper: add a NORA message with typing delay ──
+  const addNoraMessage = useCallback((
+    content: string,
+    interactive?: InteractiveType,
+    nextStep?: OnboardingStep
+  ) => {
+    setIsTyping(true)
+    const delay = Math.min(400 + content.length * 3, 900)
+    setTimeout(() => {
+      setIsTyping(false)
+      const msg: ChatMessage = {
+        id: `nora-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        role: 'nora',
+        content,
+        interactive,
+        resolved: false,
+      }
+      setMessages((prev) => {
+        const updated = [...prev, msg]
+        if (nextStep) {
+          setCurrentStep(nextStep)
+          saveToStorage(data, nextStep, updated)
+        }
+        return updated
+      })
+    }, delay)
+  }, [data, saveToStorage])
+
+  // ── Helper: add a user message ──
+  const addUserMessage = useCallback((content: string) => {
+    setMessages((prev) => {
+      // Mark the last NORA message as resolved
+      const updated = prev.map((m, i) =>
+        i === prev.length - 1 && m.role === 'nora' ? { ...m, resolved: true } : m
+      )
+      return [
+        ...updated,
+        {
+          id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          role: 'user',
+          content,
+        },
+      ]
+    })
+  }, [])
+
+  // ── Update data helper ──
+  const updateData = useCallback((updates: Partial<OnboardingData>) => {
+    setData((prev) => {
+      const next = { ...prev, ...updates }
+      return next
+    })
+  }, [])
+
+  // ── Get brokerage name by ID ──
+  const getBrokerageName = (id: string | null): string => {
+    if (!id) return 'Not selected'
+    if (id === 'other') return data.customBrokerage || 'Other / Independent'
+    const match = brokerages.find((b) => b.id === id)
+    return match?.name ?? 'Not selected'
   }
 
-  const handleSubmit = async () => {
+  // ── Handle chip selection ──
+  const handleChipSelect = useCallback((value: string) => {
+    switch (currentStep) {
+      case 'brokerage': {
+        const brokerageId = value === 'other' ? 'other' : value
+        updateData({ brokerageId })
+        const bName = brokerageId === 'other' ? 'Other / Independent' : getBrokerageName(brokerageId)
+        addUserMessage(bName)
+
+        if (brokerageId === 'other') {
+          setTimeout(() => {
+            addNoraMessage(
+              "What's the name of your brokerage?",
+              { kind: 'input', placeholder: 'Enter your brokerage name' },
+              'custom_brokerage'
+            )
+          }, 200)
+        } else {
+          setTimeout(() => {
+            addNoraMessage(
+              `Got it! Are you on a team at ${bName}, or do you work independently?`,
+              { kind: 'buttons', options: [
+                { label: "I'm on a team", value: 'team' },
+                { label: 'Independent', value: 'independent', primary: false },
+              ]},
+              'team'
+            )
+          }, 200)
+        }
+        break
+      }
+
+      case 'team': {
+        const isTeam = value === 'team'
+        updateData({ isOnTeam: isTeam })
+        addUserMessage(isTeam ? "I'm on a team" : 'Independent')
+
+        if (isTeam) {
+          setTimeout(() => {
+            addNoraMessage(
+              "What's your team name?",
+              { kind: 'input', placeholder: 'Enter your team name' },
+              'team_name'
+            )
+          }, 200)
+        } else {
+          setTimeout(() => {
+            addNoraMessage(
+              'How long have you been a licensed agent?',
+              { kind: 'chips', options: ['< 1 year', '1-3 years', '3-5 years', '5-10 years', '10+ years'] },
+              'experience'
+            )
+          }, 200)
+        }
+        break
+      }
+
+      case 'experience': {
+        const yearMap: Record<string, number> = {
+          '< 1 year': 0,
+          '1-3 years': 2,
+          '3-5 years': 4,
+          '5-10 years': 7,
+          '10+ years': 15,
+        }
+        updateData({ yearsLicensed: yearMap[value] ?? null })
+        addUserMessage(value)
+
+        setTimeout(() => {
+          addNoraMessage(
+            'How many referrals do you typically send or receive per year?',
+            { kind: 'chips', options: ['0-5', '5-10', '10-20', '20+'] },
+            'referral_volume'
+          )
+        }, 200)
+        break
+      }
+
+      case 'referral_volume': {
+        const refMap: Record<string, number> = { '0-5': 3, '5-10': 7, '10-20': 15, '20+': 25 }
+        updateData({ referralsPerYear: refMap[value] ?? null })
+        addUserMessage(value)
+
+        setTimeout(() => {
+          addNoraMessage(
+            'What zip codes or areas do you serve? You can list multiple separated by commas.',
+            { kind: 'input', placeholder: 'e.g. 90210, Beverly Hills, CA' },
+            'service_area'
+          )
+        }, 200)
+        break
+      }
+
+      case 'avg_price': {
+        const priceMap: Record<string, number> = {
+          '$100k-250k': 175000,
+          '$250k-500k': 375000,
+          '$500k-750k': 625000,
+          '$750k-1M': 875000,
+          '$1M+': 1500000,
+        }
+        updateData({ avgSalePrice: priceMap[value] ?? null })
+        addUserMessage(value)
+
+        setTimeout(() => {
+          addNoraMessage(
+            'What referral fee percentage do you typically work with?',
+            { kind: 'chips', options: ['20%', '25%', '30%', 'Other'], selected: '25%' },
+            'referral_fee'
+          )
+        }, 200)
+        break
+      }
+
+      case 'referral_fee': {
+        const feeMap: Record<string, number> = { '20%': 20, '25%': 25, '30%': 30 }
+        if (value === 'Other') {
+          addUserMessage('Other')
+          setTimeout(() => {
+            addNoraMessage(
+              'What percentage do you typically work with?',
+              { kind: 'input', placeholder: 'e.g. 22', type: 'number' },
+              'referral_fee'
+            )
+          }, 200)
+        } else {
+          updateData({ avgReferralFee: feeMap[value] ?? 25 })
+          addUserMessage(value)
+          proceedToNamePhone()
+        }
+        break
+      }
+
+      case 'invites': {
+        addUserMessage(value === 'send' ? 'Send Invites' : 'Skip for Now')
+
+        if (value === 'send') {
+          setTimeout(() => {
+            addNoraMessage(
+              'Enter up to 5 email addresses of agents you want to invite.',
+              { kind: 'emailList' },
+              'invite_emails'
+            )
+          }, 200)
+        } else {
+          completeOnboarding()
+        }
+        break
+      }
+
+      default:
+        break
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, data])
+
+  // ── Handle text input submission ──
+  const handleInputSubmit = useCallback((value: string) => {
+    if (!value.trim()) return
+    setInputValue('')
+
+    switch (currentStep) {
+      case 'custom_brokerage': {
+        updateData({ brokerageId: 'other', customBrokerage: value.trim() })
+        addUserMessage(value.trim())
+
+        setTimeout(() => {
+          addNoraMessage(
+            `Got it! Are you on a team at ${value.trim()}, or do you work independently?`,
+            { kind: 'buttons', options: [
+              { label: "I'm on a team", value: 'team' },
+              { label: 'Independent', value: 'independent', primary: false },
+            ]},
+            'team'
+          )
+        }, 200)
+        break
+      }
+
+      case 'team_name': {
+        updateData({ teamName: value.trim() })
+        addUserMessage(value.trim())
+
+        setTimeout(() => {
+          addNoraMessage(
+            'How long have you been a licensed agent?',
+            { kind: 'chips', options: ['< 1 year', '1-3 years', '3-5 years', '5-10 years', '10+ years'] },
+            'experience'
+          )
+        }, 200)
+        break
+      }
+
+      case 'experience': {
+        const num = parseInt(value.trim(), 10)
+        if (!isNaN(num)) {
+          updateData({ yearsLicensed: num })
+          addUserMessage(`${num} years`)
+
+          setTimeout(() => {
+            addNoraMessage(
+              'How many referrals do you typically send or receive per year?',
+              { kind: 'chips', options: ['0-5', '5-10', '10-20', '20+'] },
+              'referral_volume'
+            )
+          }, 200)
+        }
+        break
+      }
+
+      case 'referral_volume': {
+        const num = parseInt(value.trim(), 10)
+        if (!isNaN(num)) {
+          updateData({ referralsPerYear: num })
+          addUserMessage(`${num} per year`)
+
+          setTimeout(() => {
+            addNoraMessage(
+              'What zip codes or areas do you serve? You can list multiple separated by commas.',
+              { kind: 'input', placeholder: 'e.g. 90210, Beverly Hills, CA' },
+              'service_area'
+            )
+          }, 200)
+        }
+        break
+      }
+
+      case 'service_area': {
+        updateData({ primaryArea: value.trim() })
+        addUserMessage(value.trim())
+
+        setTimeout(() => {
+          addNoraMessage(
+            'What types of properties do you specialize in? Select all that apply.',
+            { kind: 'multiSelect', options: ALL_TAGS, selected: [] },
+            'specializations'
+          )
+        }, 200)
+        break
+      }
+
+      case 'avg_price': {
+        const num = parseInt(value.trim().replace(/[$,]/g, ''), 10)
+        if (!isNaN(num)) {
+          updateData({ avgSalePrice: num })
+          addUserMessage(`$${num.toLocaleString()}`)
+
+          setTimeout(() => {
+            addNoraMessage(
+              'What referral fee percentage do you typically work with?',
+              { kind: 'chips', options: ['20%', '25%', '30%', 'Other'], selected: '25%' },
+              'referral_fee'
+            )
+          }, 200)
+        }
+        break
+      }
+
+      case 'referral_fee': {
+        const num = parseInt(value.trim().replace('%', ''), 10)
+        if (!isNaN(num) && num > 0 && num <= 100) {
+          updateData({ avgReferralFee: num })
+          addUserMessage(`${num}%`)
+          proceedToNamePhone()
+        }
+        break
+      }
+
+      default:
+        break
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep])
+
+  // ── Proceed to name/phone step ──
+  const proceedToNamePhone = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        "Almost done! What's your full name and phone number?",
+        { kind: 'dualInput', fields: [
+          { key: 'fullName', placeholder: 'Full name', type: 'text' },
+          { key: 'phone', placeholder: '(555) 123-4567', type: 'tel' },
+        ]},
+        'name_phone'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Handle dual input submission ──
+  const handleDualInputSubmit = useCallback(() => {
+    const name = pendingDualInput.fullName?.trim() || data.fullName
+    const phone = pendingDualInput.phone?.trim() || ''
+    if (!name) return
+
+    updateData({ fullName: name, phone })
+    addUserMessage(`${name}${phone ? ` \u2022 ${phone}` : ''}`)
+    setPendingDualInput({})
+
+    setTimeout(() => {
+      addNoraMessage(
+        `You're all set! AgentReferrals is invite-only during our founding member period. You have 5 invite codes to share with agents you trust. Want to send some now, or skip for later?`,
+        { kind: 'buttons', options: [
+          { label: 'Send Invites', value: 'send', primary: true },
+          { label: 'Skip for Now', value: 'skip' },
+        ]},
+        'invites'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingDualInput, data.fullName])
+
+  // ── Handle multi-select continue ──
+  const handleSpecializationsContinue = useCallback(() => {
+    if (pendingSpecializations.length === 0) return
+
+    updateData({ specializations: pendingSpecializations })
+    addUserMessage(pendingSpecializations.join(', '))
+
+    setTimeout(() => {
+      addNoraMessage(
+        "What's the average price of homes you sell?",
+        { kind: 'chips', options: ['$100k-250k', '$250k-500k', '$500k-750k', '$750k-1M', '$1M+'] },
+        'avg_price'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSpecializations])
+
+  // ── Handle email list submission ──
+  const handleEmailsSubmit = useCallback(() => {
+    const validEmails = pendingEmails.filter((e) => e.trim() && e.includes('@'))
+    updateData({ inviteEmails: validEmails })
+    addUserMessage(validEmails.length > 0 ? `Inviting: ${validEmails.join(', ')}` : 'No invites sent')
+    setPendingEmails([''])
+    completeOnboarding()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingEmails])
+
+  // ── Complete onboarding ──
+  const completeOnboarding = useCallback(() => {
+    const finalName = data.fullName || userName || 'there'
+    setTimeout(() => {
+      addNoraMessage(
+        `Welcome to AgentReferrals, ${finalName.split(' ')[0]}! Your profile is live. Head to your dashboard to explore your network.`,
+        { kind: 'buttons', options: [
+          { label: 'Go to Dashboard', value: 'dashboard', primary: true },
+        ]},
+        'complete'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.fullName, userName])
+
+  // ── Handle final submission + navigate ──
+  const handleComplete = useCallback(async () => {
     if (!userId) return
     setIsSubmitting(true)
-    setSubmitError(null)
 
-    // Resolve brokerage: if "other", it's custom text; otherwise look up the ar_brokerages ID
+    // Resolve brokerage ID
     let brokerageIdForDb: string | null = null
-
     if (data.brokerageId && data.brokerageId !== 'other') {
-      // Look up the ar_brokerages row by matching the static brokerage name
-      const selectedBrokerage = brokerages.find(
-        (b) => b.id === data.brokerageId
-      )
+      const selectedBrokerage = brokerages.find((b) => b.id === data.brokerageId)
       if (selectedBrokerage) {
         const { data: brokerageRow } = await supabase
           .from('ar_brokerages')
@@ -168,56 +695,39 @@ export default function OnboardingPage() {
       brokerage_id: brokerageIdForDb,
       primary_area: data.primaryArea.trim(),
       years_licensed: data.yearsLicensed,
-      deals_per_year: data.dealsPerYear,
+      deals_per_year: data.referralsPerYear,
       avg_sale_price: data.avgSalePrice,
       tags: data.specializations,
-      polygon: data.territory.polygon,
-      territory_zips: data.territory.selectedZips.length > 0 ? data.territory.selectedZips : null,
+      polygon: [],
+      territory_zips: data.primaryArea
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => /^\d{5}$/.test(s)),
       status: 'active',
       updated_at: new Date().toISOString(),
     }
 
-    // Upsert: creates ar_profiles row for new hub users, updates for existing
+    // Clean up territory_zips
+    if (upsertPayload.territory_zips.length === 0) {
+      upsertPayload.territory_zips = null as unknown as string[]
+    }
+
     const { error } = await supabase
       .from('ar_profiles')
       .upsert(upsertPayload, { onConflict: 'id' })
 
     if (error) {
-      setSubmitError(error.message)
-      setIsSubmitting(false)
-      return
+      console.error('[Onboarding] Profile upsert failed:', error.message)
     }
 
-    // ── Verify license if provided ──
-    if (data.licenseNumber.trim() && data.licenseState.trim()) {
-      try {
-        await fetch('/api/verify-license', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            licenseNumber: data.licenseNumber.trim(),
-            licenseState: data.licenseState.trim(),
-            fullName: data.fullName.trim(),
-          }),
-        })
-      } catch (licenseErr) {
-        // Don't block onboarding if verification fails
-        console.error('[Onboarding] License verification failed:', licenseErr)
-      }
-    }
-
-    // ── Also register in hub: agents table + user_products ──
+    // ── Hub registration ──
     try {
-      const hub = createHubClient()
-
-      // Parse city/state from primaryArea (e.g., "Kalamazoo County, Michigan")
+      const hubClient = createHubClient()
       const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())
       const city = areaParts[0] || ''
       const state = areaParts[1] || ''
 
-      // Upsert into hub agents table (by email — same agent across products)
-      await hub.from('agents').upsert({
+      await hubClient.from('agents').upsert({
         profile_id: userId,
         email: userEmail,
         first_name: data.fullName.split(' ')[0] || '',
@@ -230,21 +740,23 @@ export default function OnboardingPage() {
         metadata: {
           source_platform: 'agentreferrals',
           years_licensed: data.yearsLicensed,
-          deals_per_year: data.dealsPerYear,
+          deals_per_year: data.referralsPerYear,
           avg_sale_price: data.avgSalePrice,
           specializations: data.specializations,
+          avg_referral_fee: data.avgReferralFee,
+          team_name: data.teamName || null,
+          is_on_team: data.isOnTeam,
         },
       }, { onConflict: 'profile_id' })
 
-      // Get AR platform ID and register in user_products
-      const { data: platform } = await hub
+      const { data: platform } = await hubClient
         .from('platforms')
         .select('id')
         .eq('slug', 'agentreferrals')
         .single()
 
       if (platform) {
-        await hub.from('user_products').upsert({
+        await hubClient.from('user_products').upsert({
           profile_id: userId,
           product_id: platform.id,
           status: 'active',
@@ -252,21 +764,260 @@ export default function OnboardingPage() {
         }, { onConflict: 'profile_id,product_id' })
       }
     } catch (hubError) {
-      // Don't block onboarding if hub write fails — log and continue
       console.error('[Onboarding] Hub registration failed:', hubError)
     }
 
+    // Clear saved state
+    try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+
     router.push('/dashboard')
+  }, [userId, userEmail, data, supabase, router])
+
+  // ── Render interactive elements ──
+  const renderInteractive = (msg: ChatMessage) => {
+    if (!msg.interactive || msg.resolved) return null
+    const interactive = msg.interactive
+
+    switch (interactive.kind) {
+      case 'brokerage':
+        return (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg">
+            {brokerages.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => handleChipSelect(b.id)}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+              >
+                {b.logoUrl ? (
+                  <div className="w-8 h-8 rounded-lg bg-white border border-border flex items-center justify-center p-1 overflow-hidden shrink-0">
+                    <img src={b.logoUrl} alt={b.name} className="w-7 h-7 object-contain" />
+                  </div>
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-[10px] text-white shrink-0"
+                    style={{ background: b.color }}
+                  >
+                    {b.logo}
+                  </div>
+                )}
+                <span className="text-xs font-semibold truncate">{b.name}</span>
+              </button>
+            ))}
+            <button
+              onClick={() => handleChipSelect('other')}
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs bg-muted text-muted-foreground shrink-0">
+                +
+              </div>
+              <span className="text-xs font-semibold">Other / Independent</span>
+            </button>
+          </div>
+        )
+
+      case 'chips':
+        return (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {interactive.options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => handleChipSelect(opt)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                  interactive.selected === opt
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border bg-card hover:bg-accent'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'buttons':
+        return (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {interactive.options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  if (opt.value === 'dashboard') {
+                    handleComplete()
+                  } else {
+                    handleChipSelect(opt.value)
+                  }
+                }}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  opt.primary !== false
+                    ? 'bg-primary text-primary-foreground hover:opacity-90'
+                    : 'border border-border bg-card hover:bg-accent'
+                }`}
+              >
+                {opt.value === 'dashboard' && isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    {opt.label}
+                    {opt.value === 'dashboard' && <ArrowRight className="w-4 h-4" />}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'input':
+        return (
+          <div className="mt-3 flex gap-2 max-w-md">
+            <input
+              type={interactive.type || 'text'}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleInputSubmit(inputValue)
+                }
+              }}
+              placeholder={interactive.placeholder}
+              className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              autoFocus
+            />
+            <button
+              onClick={() => handleInputSubmit(inputValue)}
+              className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        )
+
+      case 'dualInput':
+        return (
+          <div className="mt-3 space-y-2 max-w-md">
+            {interactive.fields.map((field) => (
+              <input
+                key={field.key}
+                type={field.type || 'text'}
+                value={pendingDualInput[field.key] ?? (field.key === 'fullName' ? data.fullName : '')}
+                onChange={(e) => setPendingDualInput((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleDualInputSubmit()
+                }}
+                placeholder={field.placeholder}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus={field.key === 'fullName'}
+              />
+            ))}
+            <button
+              onClick={handleDualInputSubmit}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )
+
+      case 'multiSelect':
+        return (
+          <div className="mt-3 space-y-3 max-w-lg">
+            <div className="flex flex-wrap gap-2">
+              {interactive.options.map((tag) => {
+                const isSelected = pendingSpecializations.includes(tag)
+                const color = TAG_COLORS[tag] ?? '#6b7280'
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setPendingSpecializations((prev) =>
+                        prev.includes(tag)
+                          ? prev.filter((t) => t !== tag)
+                          : [...prev, tag]
+                      )
+                    }}
+                    className={`px-4 py-2 rounded-full border text-sm font-semibold transition-all ${
+                      isSelected
+                        ? 'shadow-md scale-105'
+                        : 'border-border bg-card hover:border-primary/30 hover:shadow-sm'
+                    }`}
+                    style={
+                      isSelected
+                        ? { borderColor: color, backgroundColor: `${color}15`, color }
+                        : undefined
+                    }
+                  >
+                    {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+            {pendingSpecializations.length > 0 && (
+              <button
+                onClick={handleSpecializationsContinue}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+              >
+                Continue with {pendingSpecializations.length} selected
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+            {pendingSpecializations.length === 0 && (
+              <p className="text-xs text-muted-foreground">Select at least 1 to continue</p>
+            )}
+          </div>
+        )
+
+      case 'emailList':
+        return (
+          <div className="mt-3 space-y-2 max-w-md">
+            {pendingEmails.map((email, i) => (
+              <input
+                key={i}
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setPendingEmails((prev) => {
+                    const updated = [...prev]
+                    updated[i] = e.target.value
+                    return updated
+                  })
+                }}
+                placeholder={`agent${i + 1}@email.com`}
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus={i === 0}
+              />
+            ))}
+            <div className="flex gap-2">
+              {pendingEmails.length < 5 && (
+                <button
+                  onClick={() => setPendingEmails((prev) => [...prev, ''])}
+                  className="px-4 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  + Add another
+                </button>
+              )}
+              <button
+                onClick={handleEmailsSubmit}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+              >
+                {pendingEmails.some((e) => e.trim() && e.includes('@')) ? 'Send Invites' : 'Skip'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )
+
+      default:
+        return null
+    }
   }
 
-  const getBrokerageName = (): string => {
-    if (data.brokerageId === 'other') return data.customBrokerage || 'Other'
-    const match = brokerages.find((b) => b.id === data.brokerageId)
-    return match?.name ?? 'Not selected'
-  }
-
-  // ─── Progress bar ───
-  const progressPercent = (step / TOTAL_STEPS) * 100
+  // ── Progress bar ──
+  const progressIdx = getProgressIndex(currentStep)
+  const progressPercent = progressIdx >= 0 ? ((progressIdx + 1) / PROGRESS_STEPS.length) * 100 : 0
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -278,16 +1029,14 @@ export default function OnboardingPage() {
           </div>
           <span className="font-extrabold text-[15px] tracking-tight">
             Agent<span className="text-primary">Referrals</span>
-            <span className="text-muted-foreground text-xs font-medium">
-              .ai
-            </span>
+            <span className="text-muted-foreground text-xs font-medium">.ai</span>
           </span>
         </a>
         <a
           href="/dashboard"
           className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          Skip for now →
+          Skip for now &rarr;
         </a>
       </div>
 
@@ -299,48 +1048,38 @@ export default function OnboardingPage() {
         />
       </div>
 
-      {/* Step indicators */}
-      <div className="flex items-center justify-center gap-3 py-6">
-        {STEP_LABELS.map((label, i) => {
-          const stepNum = i + 1
-          const Icon = STEP_ICONS[i]
-          const isActive = step === stepNum
-          const isComplete = step > stepNum
+      {/* Progress step dots */}
+      <div className="flex items-center justify-center gap-2 py-3 px-4 border-b border-border bg-card/50">
+        {PROGRESS_STEPS.map((s, i) => {
+          const isComplete = progressIdx > i
+          const isCurrent = progressIdx === i
           return (
-            <div key={label} className="flex items-center gap-3">
+            <div key={s.key} className="flex items-center gap-2">
               {i > 0 && (
-                <div
-                  className={`w-8 h-px ${
-                    isComplete ? 'bg-primary' : 'bg-border'
-                  }`}
-                />
+                <div className={`w-6 h-px ${isComplete ? 'bg-primary' : 'bg-border'}`} />
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                     isComplete
                       ? 'bg-primary text-primary-foreground'
-                      : isActive
+                      : isCurrent
                         ? 'bg-primary/10 text-primary border-2 border-primary'
                         : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  {isComplete ? (
-                    <Check className="w-3.5 h-3.5" />
-                  ) : (
-                    <Icon className="w-3.5 h-3.5" />
-                  )}
+                  {isComplete ? <Check className="w-3 h-3" /> : i + 1}
                 </div>
                 <span
-                  className={`text-xs font-medium hidden sm:block ${
-                    isActive
+                  className={`text-[10px] font-medium hidden md:block ${
+                    isCurrent
                       ? 'text-foreground'
                       : isComplete
                         ? 'text-primary'
                         : 'text-muted-foreground'
                   }`}
                 >
-                  {label}
+                  {s.label}
                 </span>
               </div>
             </div>
@@ -348,527 +1087,48 @@ export default function OnboardingPage() {
         })}
       </div>
 
-      {/* Content area */}
-      <div className="flex-1 flex items-start justify-center px-4 pb-12">
-        <div className="w-full max-w-2xl">
-          {/* ═══ STEP 1: Brokerage ═══ */}
-          {step === 1 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center mb-8">
-                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Welcome to AgentReferrals
-                </h1>
-                <p className="text-muted-foreground">
-                  Let&apos;s set up your profile so agents can find you
-                </p>
-              </div>
-
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Select your brokerage
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                {brokerages.map((b) => {
-                  const isSelected = data.brokerageId === b.id
-                  return (
-                    <button
-                      key={b.id}
-                      onClick={() => updateField('brokerageId', b.id)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:shadow-md ${
-                        isSelected
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-border bg-card hover:border-primary/30'
-                      }`}
-                    >
-                      {b.logoUrl ? (
-                        <div className="w-12 h-12 rounded-xl bg-white border border-border flex items-center justify-center p-1.5 overflow-hidden mb-2">
-                          <img src={b.logoUrl} alt={b.name} className="w-12 h-12 object-contain" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs text-white mb-2" style={{ background: b.color }}>
-                          {b.logo}
-                        </div>
-                      )}
-                      <div className="font-bold text-sm">{b.name}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {b.memberCount.toLocaleString()} agents
-                      </div>
-                      {isSelected && (
-                        <div className="mt-2">
-                          <Check className="w-4 h-4 text-primary" />
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-
-                {/* Other / Independent */}
-                <button
-                  onClick={() => updateField('brokerageId', 'other')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all hover:shadow-md ${
-                    data.brokerageId === 'other'
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border bg-card hover:border-primary/30'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs bg-muted text-muted-foreground mb-2">
-                    +
-                  </div>
-                  <div className="font-bold text-sm">
-                    Other / Independent
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    Not listed above
-                  </div>
-                  {data.brokerageId === 'other' && (
-                    <div className="mt-2">
-                      <Check className="w-4 h-4 text-primary" />
+      {/* Chat area */}
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className="nora-msg-enter">
+              {msg.role === 'nora' ? (
+                <div>
+                  {/* NORA message */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4 text-primary" />
                     </div>
-                  )}
-                </button>
-              </div>
-
-              {/* Custom brokerage input */}
-              {data.brokerageId === 'other' && (
-                <div className="mt-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Brokerage Name
-                  </label>
-                  <input
-                    type="text"
-                    value={data.customBrokerage}
-                    onChange={(e) =>
-                      updateField('customBrokerage', e.target.value)
-                    }
-                    placeholder="Enter your brokerage name"
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
+                    <div className="flex-1">
+                      <div className="bg-card border border-border rounded-2xl rounded-tl-md px-4 py-3 text-sm leading-relaxed whitespace-pre-line max-w-lg">
+                        {msg.content}
+                      </div>
+                      {renderInteractive(msg)}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* User message */
+                <div className="flex justify-end">
+                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-3 text-sm leading-relaxed max-w-md">
+                    {msg.content}
+                  </div>
                 </div>
               )}
             </div>
-          )}
+          ))}
 
-          {/* ═══ STEP 2: Profile ═══ */}
-          {step === 2 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center mb-8">
-                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Your Profile
-                </h1>
-                <p className="text-muted-foreground">
-                  Help other agents learn about your business
-                </p>
-              </div>
+          {isTyping && <TypingIndicator />}
 
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={data.fullName}
-                    onChange={(e) => updateField('fullName', e.target.value)}
-                    placeholder="Your full name"
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    required
-                  />
-                </div>
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={data.phone}
-                    onChange={(e) => updateField('phone', e.target.value)}
-                    placeholder="(555) 123-4567"
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                      License Verification
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Verified agents get a trust badge and appear higher in search results.
-                  </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                        License Number
-                      </label>
-                      <input
-                        type="text"
-                        value={data.licenseNumber}
-                        onChange={(e) => updateField('licenseNumber', e.target.value)}
-                        placeholder="e.g. 6501234567"
-                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                        State
-                      </label>
-                      <select
-                        value={data.licenseState}
-                        onChange={(e) => updateField('licenseState', e.target.value)}
-                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      >
-                        <option value="">--</option>
-                        {US_STATES.map((st) => (
-                          <option key={st} value={st}>{st}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Primary Service Area *
-                  </label>
-                  <LocationAutocomplete
-                    value={data.primaryArea}
-                    onChange={(val) => updateField('primaryArea', val)}
-                    placeholder="e.g. Kalamazoo, MI"
-                    helpText="City and state where you primarily work"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      Years Licensed
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={data.yearsLicensed ?? ''}
-                      onChange={(e) =>
-                        updateField(
-                          'yearsLicensed',
-                          e.target.value ? Number(e.target.value) : null
-                        )
-                      }
-                      placeholder="5"
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      Deals / Year
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={data.dealsPerYear ?? ''}
-                      onChange={(e) =>
-                        updateField(
-                          'dealsPerYear',
-                          e.target.value ? Number(e.target.value) : null
-                        )
-                      }
-                      placeholder="20"
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                      Avg Sale Price
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step={10000}
-                      value={data.avgSalePrice ?? ''}
-                      onChange={(e) =>
-                        updateField(
-                          'avgSalePrice',
-                          e.target.value ? Number(e.target.value) : null
-                        )
-                      }
-                      placeholder="350000"
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ═══ STEP 3: Territory ═══ */}
-          {step === 3 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center mb-8">
-                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Your Territory
-                </h1>
-                <p className="text-muted-foreground">
-                  Define where you work so we can match you with the right referrals
-                </p>
-              </div>
-
-              <TerritorySelector
-                value={data.territory}
-                onChange={(territory) => setData((prev) => ({ ...prev, territory }))}
-                initialCenter={data.primaryArea}
-              />
-            </div>
-          )}
-
-          {/* ═══ STEP 4: Specializations ═══ */}
-          {step === 4 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center mb-8">
-                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Your Specializations
-                </h1>
-                <p className="text-muted-foreground">
-                  Select at least one area of expertise so we can match you
-                  with the right referrals
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3 justify-center">
-                {ALL_TAGS.map((tag) => {
-                  const isSelected = data.specializations.includes(tag)
-                  const color = TAG_COLORS[tag] ?? '#6b7280'
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => toggleSpecialization(tag)}
-                      className={`px-5 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
-                        isSelected
-                          ? 'shadow-md scale-105'
-                          : 'border-border bg-card hover:border-primary/30 hover:shadow-sm'
-                      }`}
-                      style={
-                        isSelected
-                          ? {
-                              borderColor: color,
-                              backgroundColor: `${color}10`,
-                              color: color,
-                            }
-                          : undefined
-                      }
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5 inline mr-1.5" />}
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {data.specializations.length === 0 && (
-                <p className="text-center text-xs text-muted-foreground mt-4">
-                  Select at least 1 specialization to continue
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* ═══ STEP 5: Review ═══ */}
-          {step === 5 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center mb-8">
-                <h1 className="font-extrabold text-3xl tracking-tight mb-2">
-                  Almost Done!
-                </h1>
-                <p className="text-muted-foreground">
-                  Review your information and complete setup
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6 space-y-5">
-                {/* Brokerage */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                      Brokerage
-                    </div>
-                    <div className="font-bold">{getBrokerageName()}</div>
-                  </div>
-                  <button
-                    onClick={() => setStep(1)}
-                    className="text-xs text-primary font-semibold hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-
-                <div className="h-px bg-border" />
-
-                {/* Profile */}
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                      Profile
-                    </div>
-                    <div>
-                      <span className="font-bold">{data.fullName}</span>
-                      {userEmail && (
-                        <span className="text-sm text-muted-foreground ml-2">
-                          {userEmail}
-                        </span>
-                      )}
-                    </div>
-                    {data.phone && (
-                      <div className="text-sm text-muted-foreground">
-                        {data.phone}
-                      </div>
-                    )}
-                    <div className="text-sm">{data.primaryArea}</div>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      {data.yearsLicensed != null && (
-                        <span>{data.yearsLicensed} yrs licensed</span>
-                      )}
-                      {data.dealsPerYear != null && (
-                        <span>{data.dealsPerYear} deals/yr</span>
-                      )}
-                      {data.avgSalePrice != null && (
-                        <span>{formatCurrency(data.avgSalePrice)} avg</span>
-                      )}
-                    </div>
-                    {data.licenseNumber && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-muted-foreground">
-                          License: {data.licenseState} #{data.licenseNumber}
-                        </span>
-                        <span className="text-xs text-primary font-medium">
-                          (will be verified)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setStep(2)}
-                    className="text-xs text-primary font-semibold hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-
-                <div className="h-px bg-border" />
-
-                {/* Territory */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                      Territory
-                    </div>
-                    <div className="text-sm">
-                      {data.territory.mode === 'draw' && data.territory.drawnPolygon.length >= 3 && (
-                        <span>Custom boundary drawn ({data.territory.drawnPolygon.length} points)</span>
-                      )}
-                      {data.territory.mode === 'zip' && data.territory.selectedZips.length > 0 && (
-                        <span>{data.territory.selectedZips.length} zip {data.territory.selectedZips.length === 1 ? 'code' : 'codes'} selected ({data.territory.selectedZips.join(', ')})</span>
-                      )}
-                      {data.territory.mode === 'county' && data.territory.selectedCounties.length > 0 && (
-                        <span>{data.territory.selectedCounties.length} {data.territory.selectedCounties.length === 1 ? 'county' : 'counties'} selected</span>
-                      )}
-                      {data.territory.polygon.length === 0 && (
-                        <span className="text-muted-foreground">Not defined</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setStep(3)}
-                    className="text-xs text-primary font-semibold hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-
-                <div className="h-px bg-border" />
-
-                {/* Specializations */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                      Specializations
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {data.specializations.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: `${TAG_COLORS[tag] ?? '#6b7280'}15`,
-                            color: TAG_COLORS[tag] ?? '#6b7280',
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setStep(4)}
-                    className="text-xs text-primary font-semibold hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-
-              {submitError && (
-                <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-                  {submitError}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ═══ Navigation Buttons ═══ */}
-          <div className="flex items-center justify-between mt-8">
-            {step > 1 ? (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="flex items-center gap-2 h-10 px-5 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-accent transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </button>
-            ) : (
-              <div />
-            )}
-
-            {step < TOTAL_STEPS ? (
-              <button
-                onClick={() => setStep(step + 1)}
-                disabled={!canAdvance()}
-                className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Next
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    Complete Setup
-                    <Check className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            )}
-          </div>
+      {/* Bottom bar — subtle branding */}
+      <div className="h-12 flex items-center justify-center border-t border-border bg-card/50">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span>Powered by <span className="font-semibold text-foreground">NORA</span> AI</span>
         </div>
       </div>
     </div>
