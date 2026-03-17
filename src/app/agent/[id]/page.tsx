@@ -29,6 +29,9 @@ import Link from 'next/link'
 import { ClientReviews, ClientMap, ClientNotes } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import ContactInfoGate from './contact-info-gate'
+import AuthGate from './auth-gate'
+import ProfileViewGate from './profile-view-gate'
 
 // --------------- Static params ---------------
 export function generateStaticParams() {
@@ -70,6 +73,9 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Profile view rate limiter */}
+      <ProfileViewGate agentId={agent.id} />
+
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden">
         {/* Gradient backdrop */}
@@ -244,6 +250,11 @@ export default async function AgentProfilePage({ params }: PageProps) {
           </div>
         </section>
 
+        {/* ═══ CONTACT INFO (gated) ═══ */}
+        <AuthGate agentName={agent.name} section="contact information">
+          <ContactInfoGate agentId={agent.id} phone={agent.phone} email={agent.email} />
+        </AuthGate>
+
         {/* ═══ ABOUT / BIO ═══ */}
         <section>
           <h2 className="text-lg font-bold mb-3">About</h2>
@@ -265,12 +276,14 @@ export default async function AgentProfilePage({ params }: PageProps) {
         </section>
 
         {/* ═══ REVIEWS ═══ */}
-        <section>
-          <h2 className="text-lg font-bold mb-3">Referral Reviews</h2>
-          <div className="p-5 rounded-xl border border-border bg-card">
-            <ClientReviews agentId={agent.id} agentName={agent.name} />
-          </div>
-        </section>
+        <AuthGate agentName={agent.name} section="referral reviews">
+          <section>
+            <h2 className="text-lg font-bold mb-3">Referral Reviews</h2>
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <ClientReviews agentId={agent.id} agentName={agent.name} />
+            </div>
+          </section>
+        </AuthGate>
 
         {/* ═══ COVERAGE MAP ═══ */}
         <section>
@@ -286,42 +299,46 @@ export default async function AgentProfilePage({ params }: PageProps) {
         </section>
 
         {/* ═══ PRIVATE NOTES ═══ */}
-        <section>
-          <ClientNotes agentId={agent.id} />
-        </section>
+        <AuthGate agentName={agent.name} section="private notes">
+          <section>
+            <ClientNotes agentId={agent.id} />
+          </section>
+        </AuthGate>
 
         {/* ═══ CTA ═══ */}
-        <section className="p-6 rounded-xl border border-border bg-card text-center space-y-4">
-          <h2 className="text-xl font-bold">
-            Interested in partnering with {agent.name.split(' ')[0]}?
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Send a referral, request a partnership, or start a conversation.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/login"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-            >
-              <Send className="w-4 h-4" />
-              Send Referral to {agent.name.split(' ')[0]}
-            </a>
-            <a
-              href="/login"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
-            >
-              <Users className="w-4 h-4" />
-              Request Partnership
-            </a>
-            <a
-              href={`/dashboard/messages?agent=${agent.id}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Message {agent.name.split(' ')[0]}
-            </a>
-          </div>
-        </section>
+        <AuthGate agentName={agent.name} section="partnership actions">
+          <section className="p-6 rounded-xl border border-border bg-card text-center space-y-4">
+            <h2 className="text-xl font-bold">
+              Interested in partnering with {agent.name.split(' ')[0]}?
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Send a referral, request a partnership, or start a conversation.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="/login"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+                Send Referral to {agent.name.split(' ')[0]}
+              </a>
+              <a
+                href="/login"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Request Partnership
+              </a>
+              <a
+                href={`/dashboard/messages?agent=${agent.id}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-accent transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Message {agent.name.split(' ')[0]}
+              </a>
+            </div>
+          </section>
+        </AuthGate>
       </div>
     </div>
   )

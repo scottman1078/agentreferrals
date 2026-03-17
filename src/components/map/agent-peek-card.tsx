@@ -1,6 +1,7 @@
 'use client'
 
-import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users } from 'lucide-react'
+import { useState } from 'react'
+import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
@@ -10,6 +11,9 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { getConnectionPath, getPartnerAgentIds, existingRequests } from '@/data/partnerships'
 import AgentNotes from '@/components/agent-notes'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import { addBlock, isBlocked } from '@/data/report-block'
+import ReportAgentModal from '@/components/report-agent-modal'
+import type { ReportReason } from '@/data/report-block'
 import type { Agent } from '@/types'
 
 interface AgentPeekCardProps {
@@ -52,6 +56,31 @@ function getPartnershipDuration(agentId: string): string | null {
 export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessage }: AgentPeekCardProps) {
   const router = useRouter()
   const { profile } = useAuth()
+  const [showMenu, setShowMenu] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [blocked, setBlocked] = useState(() => isBlocked(profile?.id ?? 'jason', agent.id))
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false)
+
+  function handleReport(reason: ReportReason, description: string) {
+    // POST to API (fire-and-forget for mock)
+    fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reporterId: profile?.id ?? 'jason',
+        reportedAgentId: agent.id,
+        reason,
+        description,
+      }),
+    }).catch(() => {})
+  }
+
+  function handleBlock() {
+    addBlock(profile?.id ?? 'jason', agent.id)
+    setBlocked(true)
+    setShowBlockConfirm(false)
+    setShowMenu(false)
+  }
   const { getAgentReviewStats } = useAppData()
   const initials = getInitials(agent.name)
   const reviewStats = getAgentReviewStats(agent.id)
@@ -99,13 +128,55 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           <GripHorizontal className="w-6 h-6 text-muted-foreground/40" />
         </div>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+        {/* Top-right buttons: menu + close */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {/* More menu (report/block) */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="w-7 h-7 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </button>
+            {showMenu && (
+              <div className="absolute top-8 right-0 w-44 rounded-xl border border-border bg-card shadow-xl py-1 z-10">
+                <button
+                  onClick={() => {
+                    setShowMenu(false)
+                    setShowReportModal(true)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent transition-colors"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Report Agent
+                </button>
+                {!blocked ? (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false)
+                      setShowBlockConfirm(true)
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent transition-colors"
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    Block Agent
+                  </button>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    Agent blocked
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
         <div className="px-4 pb-4">
           {/* Agent info row */}
@@ -301,6 +372,50 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           </div>
         </div>
       </div>
+
+      {/* Block confirmation dialog */}
+      {showBlockConfirm && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBlockConfirm(false)
+          }}
+        >
+          <div className="w-full max-w-[360px] rounded-2xl border border-border bg-card shadow-2xl p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
+              <Ban className="w-6 h-6 text-destructive" />
+            </div>
+            <h3 className="font-bold text-base mb-1">Block {agent.name}?</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              This agent will be hidden from your network and won&apos;t be able to contact you.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setShowBlockConfirm(false)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold border border-border hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBlock}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity"
+              >
+                Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report modal */}
+      {showReportModal && (
+        <ReportAgentModal
+          agentId={agent.id}
+          agentName={agent.name}
+          onClose={() => setShowReportModal(false)}
+          onSubmit={handleReport}
+        />
+      )}
     </div>
   )
 }

@@ -28,6 +28,7 @@ import {
 import SuggestedOutreach from '@/components/nudges/suggested-outreach'
 import { nudges as initialNudges } from '@/data/nudges'
 import { getCommNudges } from '@/data/comm-nudges'
+import { getPartnerAgentIds, getConnectionPath } from '@/data/partnerships'
 import type { Nudge } from '@/data/nudges'
 
 // ─── New Message Modal (supports single + group) ───
@@ -712,30 +713,95 @@ export default function MessagesPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input bar */}
-      <div className="shrink-0 px-4 py-3 border-t border-border bg-card">
-        <div className="flex gap-2">
-          <input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend()
-              }
-            }}
-            placeholder={`Message ${activeConversation.agentName.split(' ')[0]}...`}
-            className="flex-1 h-10 px-4 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!newMessage.trim()}
-            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      {/* Input bar — with partnership gate */}
+      {(() => {
+        // Skip gate for group chats
+        if (activeConversation.isGroup) {
+          return (
+            <div className="shrink-0 px-4 py-3 border-t border-border bg-card">
+              <div className="flex gap-2">
+                <input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+                  }}
+                  placeholder={`Message ${activeConversation.agentName.split(' ')[0]}...`}
+                  className="flex-1 h-10 px-4 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <button onClick={handleSend} disabled={!newMessage.trim()} className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50">
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )
+        }
+
+        const partnerIds = getPartnerAgentIds('jason')
+        const isPartner = partnerIds.includes(activeConversation.agentId)
+
+        if (isPartner) {
+          return (
+            <div className="shrink-0 px-4 py-3 border-t border-border bg-card">
+              <div className="flex gap-2">
+                <input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+                  }}
+                  placeholder={`Message ${activeConversation.agentName.split(' ')[0]}...`}
+                  className="flex-1 h-10 px-4 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <button onClick={handleSend} disabled={!newMessage.trim()} className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50">
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )
+        }
+
+        // Non-partner: check if 1-degree (has a mutual connection)
+        const connectionPath = getConnectionPath('jason', activeConversation.agentId)
+        if (connectionPath && connectionPath.length === 3) {
+          // 1-degree: there's a mutual connection in the middle
+          const mutualId = connectionPath[1]
+          const mutualAgent = agents.find((a) => a.id === mutualId)
+          const mutualName = mutualAgent?.name ?? mutualId
+          return (
+            <div className="shrink-0 px-4 py-3 border-t border-border bg-card">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
+                <Users className="w-5 h-5 text-amber-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    Request an introduction through {mutualName} first
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    You&apos;re connected through a mutual partner. Ask for an intro to start messaging.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // Unconnected agent
+        return (
+          <div className="shrink-0 px-4 py-3 border-t border-border bg-card">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
+              <Users className="w-5 h-5 text-primary shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-primary">
+                  Send a partnership request to message this agent
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Connect with {activeConversation.agentName.split(' ')[0]} as a referral partner to unlock direct messaging.
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   ) : (
     <div className="flex flex-col items-center justify-center h-full bg-background text-center px-6">
