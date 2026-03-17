@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const email = linkRecord.email
 
-    // Use Hub admin API to manage the user and generate a session
+    // Use Hub admin API
     const hubUrl = process.env.NEXT_PUBLIC_HUB_URL!
     const hubKey = process.env.HUB_SERVICE_ROLE_KEY!
     const hubAdmin = createClient(hubUrl, hubKey, {
@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
     let user = listData?.users?.find((u) => u.email === email)
 
     if (!user) {
-      // Create the user if they don't exist
       const { data: newUser, error: createError } = await hubAdmin.auth.admin.createUser({
         email,
         email_confirm: true,
@@ -58,10 +57,16 @@ export async function POST(request: NextRequest) {
       user = newUser.user
     }
 
-    // Generate a magic link and extract the OTP token from it
+    // Generate a magic link with the correct redirect
+    const isDev = process.env.NODE_ENV === 'development'
+    const redirectTo = isDev
+      ? 'http://localhost:5500/auth/callback'
+      : 'https://agentreferrals.ai/auth/callback'
+
     const { data: linkData, error: linkError } = await hubAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email,
+      options: { redirectTo },
     })
 
     if (linkError || !linkData) {
@@ -69,21 +74,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Failed to generate session' }, { status: 500 })
     }
 
-    // Extract the hashed_token from the generated link properties
-    // The client will use verifyOtp with this token to establish a session
     const hashedToken = linkData.properties?.hashed_token
     const actionLink = linkData.properties?.action_link
 
-    if (!hashedToken) {
-      console.error('[MagicLink Verify] No hashed_token in link data')
-      return NextResponse.json({ valid: false, error: 'Failed to generate session token' }, { status: 500 })
+    // Rewrite the action link to use the correct domain
+    // The default action link goes to the Hub's site URL, which may be wrong
+    let fixedActionLink = actionLink
+    if (actionLink) {
+      try {
+        const url = new URL(actionLink)
+        // The action link is a Supabase auth endpoint — we need to keep it as-is
+        // but fix the redirect_to parameter inside it
+        const redirectParam = url.searchParams.get('redirect_to')
+        if (redirectParam && !redirectParam.includes('agentreferrals.ai') && !redirectParam.includes('localhost')) {
+          url.searchParams.set('redirect_to', redirectTo)
+          fixedActionLink = url.toString()
+        }
+      } catch {
+        // URL parse failed — use as-is
+      }
     }
 
     return NextResponse.json({
       valid: true,
       email,
-      hashedToken,
-      actionLink,
+      hashedToken: hashedToken || null,
+      actionLink: fixedActionLink || null,
     })
   } catch (error) {
     console.error('[MagicLink Verify] Unexpected error:', error)
