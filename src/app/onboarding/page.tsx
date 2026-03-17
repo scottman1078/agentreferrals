@@ -231,6 +231,7 @@ export default function OnboardingPage() {
   const [prSalePrice, setPrSalePrice] = useState<number | null>(null)
   const [prCloseYear, setPrCloseYear] = useState<number | null>(null)
 
+  const [needsWelcome, setNeedsWelcome] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
@@ -262,10 +263,28 @@ export default function OnboardingPage() {
       setUserId(user.id)
       setUserEmail(user.email ?? '')
       const name = user.user_metadata?.full_name ?? ''
+      const phone = user.user_metadata?.phone ?? ''
       setUserName(name)
-      setData((prev) => ({ ...prev, fullName: name }))
+      setData((prev) => ({ ...prev, fullName: name, phone }))
     })
   }, [hub, router])
+
+  // ── Send personalized welcome once user name is available ──
+  useEffect(() => {
+    if (!needsWelcome) return
+    if (!userName && !userId) return // still loading
+    setNeedsWelcome(false)
+    const firstName = userName?.split(' ')[0] || ''
+    const greeting = firstName
+      ? `Hey ${firstName}! I'm NORA, your AI assistant at AgentReferrals.`
+      : "Hey! I'm NORA, your AI assistant at AgentReferrals."
+    addNoraMessage(
+      `${greeting} Let's get your profile set up \u2014 it'll only take a couple minutes.\n\nFirst up: what brokerage are you with?`,
+      { kind: 'brokerage' },
+      'brokerage'
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsWelcome, userName, userId])
 
   // ── Persist state to localStorage ──
   const saveToStorage = useCallback((newData: OnboardingData, step: OnboardingStep, msgs: ChatMessage[]) => {
@@ -299,12 +318,8 @@ export default function OnboardingPage() {
       // ignore parse errors
     }
 
-    // No saved state — start fresh with welcome message
-    addNoraMessage(
-      "Hey! I'm NORA, your AI assistant at AgentReferrals. Let's get your profile set up \u2014 it'll only take a couple minutes.\n\nFirst up: what brokerage are you with?",
-      { kind: 'brokerage' },
-      'brokerage'
-    )
+    // No saved state — flag that we need to send welcome once user loads
+    setNeedsWelcome(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -700,16 +715,13 @@ export default function OnboardingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep])
 
-  // ── Proceed to name/phone step ──
+  // ── Skip to license step (name + phone already collected during sign-up) ──
   const proceedToNamePhone = useCallback(() => {
     setTimeout(() => {
       addNoraMessage(
-        "Almost done! What's your full name and phone number?",
-        { kind: 'dualInput', fields: [
-          { key: 'fullName', placeholder: 'Full name', type: 'text' },
-          { key: 'phone', placeholder: '(555) 123-4567', type: 'tel' },
-        ]},
-        'name_phone'
+        "What's your real estate license number? This helps us verify your credentials and adds a trust badge to your profile.",
+        { kind: 'licenseInput' },
+        'license_number'
       )
     }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps

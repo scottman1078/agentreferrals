@@ -29,6 +29,7 @@ export default function LandingPage() {
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [signupPhone, setSignupPhone] = useState('')
   const [signInMethod, setSignInMethod] = useState<'magic' | 'password'>('magic')
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
@@ -912,7 +913,7 @@ export default function LandingPage() {
                       const { data: signUpData, error } = await hub.auth.signUp({
                         email,
                         password,
-                        options: { data: { full_name: fullName, invited_by: inviterName } },
+                        options: { data: { full_name: fullName, phone: signupPhone, invited_by: inviterName } },
                       })
                       if (error) {
                         if (error.message?.toLowerCase().includes('already registered') || error.message?.toLowerCase().includes('already been registered')) {
@@ -962,6 +963,14 @@ export default function LandingPage() {
                         placeholder="Your full name"
                         className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
                         required
+                      />
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Phone Number</label>
+                      <input
+                        type="tel"
+                        value={signupPhone}
+                        onChange={(e) => setSignupPhone(e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
                       <input
