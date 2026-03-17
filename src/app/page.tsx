@@ -621,22 +621,24 @@ export default function LandingPage() {
                     e.preventDefault()
                     setAuthLoading(true)
                     setAuthError(null)
-                    const hub = createHubClient()
-                    const isDev = window.location.hostname === 'localhost'
-                    const redirectTo = isDev
-                      ? 'http://localhost:5500/auth/callback'
-                      : 'https://agentreferrals.ai/auth/callback'
-                    const { error } = await hub.auth.signInWithOtp({
-                      email,
-                      options: { emailRedirectTo: redirectTo },
-                    })
-                    if (error) {
-                      setAuthError(error.message)
+                    try {
+                      const res = await fetch('/api/auth/magic-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email }),
+                      })
+                      const data = await res.json()
+                      if (!data.success) {
+                        setAuthError(data.error || 'Failed to send magic link')
+                        setAuthLoading(false)
+                        return
+                      }
+                      setMagicLinkSent(true)
                       setAuthLoading(false)
-                      return
+                    } catch {
+                      setAuthError('Failed to send magic link. Please try again.')
+                      setAuthLoading(false)
                     }
-                    setMagicLinkSent(true)
-                    setAuthLoading(false)
                   }}>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
                     <input

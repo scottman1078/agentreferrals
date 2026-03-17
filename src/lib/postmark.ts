@@ -152,6 +152,72 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// MAGIC LINK EMAIL — branded sign-in link
+// ═══════════════════════════════════════════════════════════════
+
+export interface MagicLinkEmailData {
+  toEmail: string
+  firstName: string
+  magicUrl: string
+}
+
+export async function sendMagicLinkEmail(data: MagicLinkEmailData) {
+  if (!client) {
+    console.log('[Postmark] No token — skipping magic link email to', data.toEmail)
+    return { success: false, reason: 'no_token' }
+  }
+
+  const greeting = data.firstName && data.firstName !== 'there'
+    ? `Hi ${data.firstName},`
+    : 'Hi there,'
+
+  const htmlBody = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+  <!-- Header -->
+  <tr><td style="background:#1a1a1a;padding:24px 32px;">
+    <span style="color:#f59e0b;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
+  </td></tr>
+  <!-- Body -->
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">${greeting}</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to sign in to your AgentReferrals account. This link expires in 15 minutes.</p>
+    <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+      <a href="${data.magicUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Sign In to AgentReferrals</a>
+    </td></tr></table>
+    <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">If you didn't request this link, you can safely ignore this email. Your account is secure.</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center;">AgentReferrals — The AI-powered agent referral network</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  try {
+    const result = await client.sendEmail({
+      From: `${FROM_NAME} <${FROM_EMAIL}>`,
+      To: data.toEmail,
+      Subject: 'Your AgentReferrals sign-in link',
+      HtmlBody: htmlBody,
+      TextBody: `${greeting}\n\nClick the link below to sign in to AgentReferrals:\n\n${data.magicUrl}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, you can safely ignore this email.\n\n— AgentReferrals`,
+      MessageStream: 'outbound',
+    })
+    return { success: true, messageId: result.MessageID }
+  } catch (error) {
+    console.error('[Postmark] Send magic link email failed:', error)
+    return { success: false, reason: 'send_failed', error }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // WELCOME EMAIL — sent when a new agent registers an account
 // ═══════════════════════════════════════════════════════════════
 
