@@ -439,6 +439,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       return
     }
 
+    if (value.selectedZips.length >= 30) {
+      setZipError('Maximum of 30 zip codes allowed')
+      return
+    }
+
     setZipLoading(true)
     setZipError('')
 
@@ -705,9 +710,14 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       {/* Input area per tab */}
       {activeTab === 'zip' && (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Enter zip codes to add them to your territory.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Enter zip codes to add them to your territory.
+            </p>
+            <span className="text-xs text-muted-foreground font-medium">
+              Max 30 zip codes
+            </span>
+          </div>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -726,7 +736,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
             </div>
             <button
               onClick={handleZipSubmit}
-              disabled={zipLoading || zipInput.length !== 5}
+              disabled={zipLoading || zipInput.length !== 5 || value.selectedZips.length >= 30}
               className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all disabled:opacity-40"
             >
               {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
