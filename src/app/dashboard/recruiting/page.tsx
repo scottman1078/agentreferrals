@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials, formatCurrency } from '@/lib/utils'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { MapPin, Check } from 'lucide-react'
 import type { Candidate } from '@/types'
 
@@ -14,7 +15,11 @@ export default function RecruitingPage() {
   const candidates = selectedZone ? (candidatesByZone[selectedZone] || []) : []
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3 shrink-0">
+        <BackToDashboard />
+      </div>
+      <div className="flex flex-1 overflow-hidden">
       {/* Filters */}
       <div className="hidden md:flex flex-col w-[260px] min-w-[260px] overflow-y-auto p-5 border-r border-border bg-card">
         <div className="font-bold text-base mb-5">Find Agents</div>
@@ -107,6 +112,7 @@ export default function RecruitingPage() {
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   )

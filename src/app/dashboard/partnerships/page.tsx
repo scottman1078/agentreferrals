@@ -9,6 +9,7 @@ import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import Link from 'next/link'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import {
   Handshake,
   AlertTriangle,
@@ -114,6 +115,9 @@ export default function PartnershipsPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3">
+        <BackToDashboard />
+      </div>
       {/* Header */}
       <div className="shrink-0 border-b border-border">
         <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">

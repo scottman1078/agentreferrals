@@ -9,6 +9,7 @@ import CreateReferralModal from '@/components/referral/create-referral-modal'
 import AgreementBuilder from '@/components/agreements/agreement-builder'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { Plus, GitPullRequestArrow, FileSignature, MessageSquareMore, ChevronDown, ChevronUp, X as XIcon } from 'lucide-react'
 import { getCommNudges } from '@/data/comm-nudges'
 import type { CommNudge } from '@/data/comm-nudges'
@@ -159,6 +160,9 @@ function PipelinePage() {
   if (referralList.length === 0) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
+        <div className="px-4 sm:px-6 pt-3">
+          <BackToDashboard />
+        </div>
         <div className="shrink-0 border-b border-border px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
           <div className="flex items-center gap-3 sm:gap-5">
             <h1 className="font-bold text-lg sm:text-xl">Referral Pipeline</h1>
@@ -193,6 +197,9 @@ function PipelinePage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3">
+        <BackToDashboard />
+      </div>
       <div className="shrink-0 border-b border-border px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
         <div className="flex items-center gap-3 sm:gap-5 mb-3 sm:mb-0">
           <h1 className="font-bold text-lg sm:text-xl">Referral Pipeline</h1>

@@ -10,6 +10,7 @@ import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
 import SetupWizard from '@/components/setup-wizard/setup-wizard'
 import { AdminTierProvider } from '@/contexts/admin-tier-context'
+import AdminTierSwitcher from '@/components/admin/tier-switcher'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
 
@@ -105,6 +106,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+
+        {/* Admin-only floating tier switcher */}
+        <AdminTierSwitcher />
       </div>
     </BrokerageProvider>
   )

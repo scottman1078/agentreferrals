@@ -25,6 +25,7 @@ import {
   Check,
   Users,
 } from 'lucide-react'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import SuggestedOutreach from '@/components/nudges/suggested-outreach'
 import { nudges as initialNudges } from '@/data/nudges'
 import { getCommNudges } from '@/data/comm-nudges'
@@ -824,7 +825,11 @@ export default function MessagesPage() {
   )
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3 shrink-0">
+        <BackToDashboard />
+      </div>
+      <div className="flex flex-1 overflow-hidden">
       {/* Left panel: conversation list */}
       <div
         className={`w-full lg:w-[320px] lg:min-w-[320px] shrink-0 ${
@@ -852,6 +857,7 @@ export default function MessagesPage() {
           existingConversationIds={existingConversationIds}
         />
       )}
+      </div>
     </div>
   )
 }

@@ -12,6 +12,7 @@ import {
   type MentorProfile,
   type MentorSpecialization,
 } from '@/data/mentoring'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import {
   GraduationCap,
   Search,
@@ -56,6 +57,9 @@ export default function MentoringPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3">
+        <BackToDashboard />
+      </div>
       {/* Header */}
       <div className="shrink-0 border-b border-border px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
         <div className="flex items-center gap-2.5 mb-3">

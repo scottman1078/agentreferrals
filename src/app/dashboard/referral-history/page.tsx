@@ -8,6 +8,7 @@ import {
   getPendingCount,
   type VerifiedReferral,
 } from '@/data/verified-referrals'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import {
   BadgeCheck,
   Clock,
@@ -154,6 +155,7 @@ export default function ReferralHistoryPage() {
   return (
     <div className="min-h-screen bg-background overflow-y-auto">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-32">
+        <BackToDashboard />
         {/* ── Header ── */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Referral History</h1>

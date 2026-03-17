@@ -6,6 +6,7 @@ import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, formatFullCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { DollarSign, BarChart3, Handshake, Target, PieChart } from 'lucide-react'
 
 function ROISkeleton() {
@@ -103,6 +104,7 @@ function ROIPage() {
   if (referrals.length === 0) {
     return (
       <div className="overflow-y-auto h-full p-6">
+        <BackToDashboard />
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-bold text-xl">ROI Dashboard</h1>
         </div>
@@ -117,6 +119,7 @@ function ROIPage() {
 
   return (
     <div className="overflow-y-auto h-full p-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-bold text-xl">ROI Dashboard</h1>
         <div className="text-xs text-muted-foreground">YTD · January – March 2025</div>

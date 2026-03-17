@@ -21,6 +21,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react'
 import { markets, TIER_CONFIG, US_STATES, type Market } from '@/data/markets'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { VerifiedBadge } from '@/components/ui/verified-badge'
 import { cn } from '@/lib/utils'
 
@@ -260,6 +261,9 @@ function MarketsPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 sm:px-6 pt-3">
+        <BackToDashboard />
+      </div>
       {/* Header */}
       <div className="shrink-0 border-b border-border">
         <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">

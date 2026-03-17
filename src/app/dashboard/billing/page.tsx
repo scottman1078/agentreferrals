@@ -2,6 +2,7 @@
 
 import { PLANS, FEATURE_LABELS, type SubscriptionTier } from '@/lib/stripe'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { Check, X, CreditCard, Sparkles, Crown, Zap, Rocket } from 'lucide-react'
 
 const tierIcons: Record<SubscriptionTier, typeof Zap> = {
@@ -37,6 +38,7 @@ export default function BillingPage() {
   return (
     <div className="overflow-y-auto h-full p-4 sm:p-6">
       <div className="max-w-[1100px] mx-auto">
+        <BackToDashboard />
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">

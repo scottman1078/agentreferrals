@@ -6,6 +6,7 @@ import { useAppData } from '@/lib/data-provider'
 import { formatFullCurrency } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
 import AgreementBuilder from '@/components/agreements/agreement-builder'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { X, Check, Clock, FileText, Plus, AlertTriangle, PenLine } from 'lucide-react'
 import type { Document } from '@/types'
 
@@ -76,6 +77,7 @@ function DocumentsPage() {
 
   return (
     <div className="overflow-y-auto h-full p-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between mb-5">
         <h1 className="font-bold text-xl">Referral Agreements</h1>
         <div className="flex items-center gap-2">

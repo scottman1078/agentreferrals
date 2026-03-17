@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import type { Invite } from '@/data/invites'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import {
   Copy, Check, Send, Link2, Mail, MessageSquare, UserPlus,
   Users, Gift, TrendingUp, Clock, Eye, UserCheck, Sparkles,
@@ -220,6 +221,7 @@ export default function InvitePage() {
   return (
     <div className="overflow-y-auto h-full p-6">
       <div className="max-w-5xl mx-auto">
+        <BackToDashboard />
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>

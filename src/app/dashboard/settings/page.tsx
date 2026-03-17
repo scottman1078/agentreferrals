@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -192,6 +193,7 @@ export default function SettingsPage() {
   return (
     <div className="overflow-y-auto h-full p-4 sm:p-6">
       <div className="max-w-[960px] mx-auto">
+        <BackToDashboard />
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
