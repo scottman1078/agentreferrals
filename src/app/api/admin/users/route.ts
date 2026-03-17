@@ -36,18 +36,18 @@ export async function DELETE(request: NextRequest) {
     const { createClient } = await import('@supabase/supabase-js')
     const supabase = createAdminClient()
 
-    // Delete AR profile
-    await supabase.from('ar_profiles').delete().eq('id', userId)
-
-    // Delete AR invites by this user
+    // Delete dependent rows first to avoid FK constraint failures
     await supabase.from('ar_invites').delete().eq('invited_by', userId)
-
-    // Delete AR partnerships
     await supabase.from('ar_partnerships').delete().or(`requesting_agent_id.eq.${userId},receiving_agent_id.eq.${userId}`)
-
-    // Delete AR magic links
     if (email) {
       await supabase.from('ar_magic_links').delete().eq('email', email)
+    }
+
+    // Delete AR profile — check for errors so we don't falsely report success
+    const { error: profileDeleteError } = await supabase.from('ar_profiles').delete().eq('id', userId)
+    if (profileDeleteError) {
+      console.error('[admin/users] ar_profiles delete failed:', profileDeleteError)
+      return NextResponse.json({ error: profileDeleteError.message }, { status: 500 })
     }
 
     // Remove from Hub — only remove the AR product subscription, NOT the user
