@@ -98,13 +98,11 @@ export default function LandingPage() {
         setInviteValid(true)
         setInviterName(data.inviterName || 'An AgentReferrals member')
         setValidatedInviteCode(inviteCode.trim())
-        // Pre-fill email if the invite was sent to a specific address
+        // Pre-fill email as a convenience (not locked — user can change it)
         if (data.inviteeEmail) {
           setEmail(data.inviteeEmail)
-          setInviteeEmailLocked(true)
         } else {
           setEmail('')
-          setInviteeEmailLocked(false)
         }
         setPassword('')
       } else {
@@ -975,7 +973,7 @@ export default function LandingPage() {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => { if (!inviteeEmailLocked) { setEmail(e.target.value); setExistingAccount(null) } }}
+                        onChange={(e) => { setEmail(e.target.value); setExistingAccount(null) }}
                         onBlur={async () => {
                           if (!email || !email.includes('@')) return
                           setCheckingAccount(true)
@@ -988,16 +986,9 @@ export default function LandingPage() {
                           setCheckingAccount(false)
                         }}
                         placeholder="you@email.com"
-                        readOnly={inviteeEmailLocked}
-                        className={`w-full h-10 px-3 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${inviteeEmailLocked ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-background'}`}
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         required
                       />
-                      {inviteeEmailLocked && (
-                        <p className="text-[11px] text-muted-foreground mt-1 mb-2">
-                          This invite was sent to this email address.
-                          <button type="button" onClick={() => { setInviteeEmailLocked(false) }} className="text-primary font-medium ml-1 hover:underline">Use a different email</button>
-                        </p>
-                      )}
                       {checkingAccount && (
                         <p className="text-[11px] text-muted-foreground mt-1 mb-3">Checking account...</p>
                       )}
