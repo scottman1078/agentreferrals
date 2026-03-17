@@ -1,0 +1,3 @@
+ALTER TABLE ar_profiles
+  ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ;

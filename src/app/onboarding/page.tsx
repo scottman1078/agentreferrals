@@ -8,10 +8,12 @@ import { brokerages } from '@/data/brokerages'
 import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
 import {
   Check,
+  CheckCircle2,
   Sparkles,
   Loader2,
   Send,
   ArrowRight,
+  Phone,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -54,6 +56,8 @@ type InteractiveType =
   | { kind: 'emailList' }
   | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
   | { kind: 'pastReferralForm' }
+  | { kind: 'phoneInput' }
+  | { kind: 'phoneCode' }
   | { kind: 'profileSummary' }
 
 interface ChatMessage {
@@ -78,6 +82,8 @@ type OnboardingStep =
   | 'referral_fee'
   | 'name_phone'
   | 'license_number'
+  | 'phone_verify'
+  | 'phone_code'
   | 'invites'
   | 'invite_emails'
   | 'past_referrals'
@@ -94,6 +100,7 @@ const PROGRESS_STEPS = [
   { key: 'avg_price', label: 'Pricing' },
   { key: 'name_phone', label: 'Profile' },
   { key: 'license_number', label: 'License' },
+  { key: 'phone_verify', label: 'Phone' },
   { key: 'invites', label: 'Invites' },
   { key: 'past_referrals', label: 'Referrals' },
   { key: 'summary', label: 'Review' },
@@ -113,6 +120,8 @@ const STEP_ORDER: OnboardingStep[] = [
   'referral_fee',
   'name_phone',
   'license_number',
+  'phone_verify',
+  'phone_code',
   'invites',
   'invite_emails',
   'past_referrals',
@@ -151,12 +160,14 @@ function getProgressIndex(step: OnboardingStep): number {
     referral_fee: 5,
     name_phone: 6,
     license_number: 7,
-    invites: 8,
-    invite_emails: 8,
-    past_referrals: 9,
-    past_referral_form: 9,
-    summary: 10,
-    complete: 11,
+    phone_verify: 8,
+    phone_code: 8,
+    invites: 9,
+    invite_emails: 9,
+    past_referrals: 10,
+    past_referral_form: 10,
+    summary: 11,
+    complete: 12,
   }
   return map[step] ?? -1
 }
@@ -231,6 +242,15 @@ export default function OnboardingPage() {
   const [prSalePrice, setPrSalePrice] = useState<number | null>(null)
   const [prCloseYear, setPrCloseYear] = useState<number | null>(null)
 
+  // Phone verification state
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [phoneVerifying, setPhoneVerifying] = useState(false)
+  const [phoneCodeChecking, setPhoneCodeChecking] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
+  const [phoneInputValue, setPhoneInputValue] = useState('')
+  const [phoneCodeValue, setPhoneCodeValue] = useState('')
+  const [normalizedPhone, setNormalizedPhone] = useState('')
+
   const [needsWelcome, setNeedsWelcome] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -263,9 +283,8 @@ export default function OnboardingPage() {
       setUserId(user.id)
       setUserEmail(user.email ?? '')
       const name = user.user_metadata?.full_name ?? ''
-      const phone = user.user_metadata?.phone ?? ''
       setUserName(name)
-      setData((prev) => ({ ...prev, fullName: name, phone }))
+      setData((prev) => ({ ...prev, fullName: name }))
     })
   }, [hub, router])
 
@@ -705,7 +724,7 @@ export default function OnboardingPage() {
         const license = value.trim()
         updateData({ licenseNumber: license })
         addUserMessage(license)
-        proceedToInvites()
+        proceedToPhoneVerify()
         break
       }
 
@@ -727,6 +746,18 @@ export default function OnboardingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // ── Proceed to phone verification step ──
+  const proceedToPhoneVerify = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        "Last thing before we finalize \u2014 what's your phone number? We'll send a quick verification code to confirm it.",
+        { kind: 'phoneInput' },
+        'phone_verify'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Proceed to invites step ──
   const proceedToInvites = useCallback(() => {
     setTimeout(() => {
@@ -741,6 +772,117 @@ export default function OnboardingPage() {
     }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ── Handle phone verification: send code ──
+  const handleSendPhoneCode = useCallback(async () => {
+    const phone = phoneInputValue.trim()
+    if (!phone) return
+    setPhoneVerifying(true)
+    setPhoneError('')
+
+    try {
+      const res = await fetch('/api/auth/verify-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      })
+      const result = await res.json()
+
+      if (!result.success) {
+        setPhoneError(result.error || 'Failed to send code')
+        setPhoneVerifying(false)
+        return
+      }
+
+      const normalized = result.normalizedPhone || phone
+      setNormalizedPhone(normalized)
+      updateData({ phone: normalized })
+      addUserMessage(phone)
+
+      setTimeout(() => {
+        addNoraMessage(
+          `I just sent a 6-digit code to ${phone}. Enter it below.`,
+          { kind: 'phoneCode' },
+          'phone_code'
+        )
+      }, 200)
+    } catch {
+      setPhoneError('Something went wrong. Please try again.')
+    } finally {
+      setPhoneVerifying(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneInputValue])
+
+  // ── Handle phone verification: check code ──
+  const handleCheckPhoneCode = useCallback(async () => {
+    const code = phoneCodeValue.trim()
+    if (code.length !== 6) return
+    setPhoneCodeChecking(true)
+    setPhoneError('')
+
+    try {
+      const phone = normalizedPhone || data.phone
+      const res = await fetch('/api/auth/verify-phone/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code }),
+      })
+      const result = await res.json()
+
+      if (result.verified) {
+        setPhoneVerified(true)
+        addUserMessage('Verified!')
+
+        setTimeout(() => {
+          addNoraMessage(
+            'Phone verified! \u2705',
+            undefined,
+            'phone_code'
+          )
+          setTimeout(() => {
+            proceedToInvites()
+          }, 400)
+        }, 200)
+      } else {
+        setPhoneError(result.error || "That code didn't match. Try again.")
+      }
+    } catch {
+      setPhoneError('Something went wrong. Please try again.')
+    } finally {
+      setPhoneCodeChecking(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneCodeValue, normalizedPhone, data.phone])
+
+  // ── Handle phone verification: resend code ──
+  const handleResendPhoneCode = useCallback(async () => {
+    const phone = normalizedPhone || data.phone
+    if (!phone) return
+    setPhoneVerifying(true)
+    setPhoneError('')
+
+    try {
+      const res = await fetch('/api/auth/verify-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      })
+      const result = await res.json()
+
+      if (!result.success) {
+        setPhoneError(result.error || 'Failed to resend code')
+      } else {
+        setPhoneError('')
+        setPhoneCodeValue('')
+      }
+    } catch {
+      setPhoneError('Something went wrong. Please try again.')
+    } finally {
+      setPhoneVerifying(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedPhone, data.phone])
 
   // ── Handle dual input submission ──
   const handleDualInputSubmit = useCallback(() => {
@@ -905,6 +1047,8 @@ export default function OnboardingPage() {
       team_name: data.teamName.trim() || null,
       is_on_team: data.isOnTeam,
       license_number: data.licenseNumber.trim() || null,
+      phone_verified: phoneVerified,
+      phone_verified_at: phoneVerified ? new Date().toISOString() : null,
       tags: data.specializations,
       polygon: [],
       territory_zips: data.primaryArea
@@ -993,7 +1137,8 @@ export default function OnboardingPage() {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
 
     router.push('/dashboard')
-  }, [userId, userEmail, data, supabase, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, userEmail, data, phoneVerified, supabase, router])
 
   // ── Render interactive elements ──
   const renderInteractive = (msg: ChatMessage) => {
@@ -1238,7 +1383,7 @@ export default function OnboardingPage() {
               onClick={() => {
                 addUserMessage("I'll do this later")
                 setInputValue('')
-                proceedToInvites()
+                proceedToPhoneVerify()
               }}
               className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
             >
@@ -1493,6 +1638,102 @@ export default function OnboardingPage() {
           </div>
         )
 
+      case 'phoneInput':
+        return (
+          <div className="mt-3 max-w-md space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="tel"
+                value={phoneInputValue}
+                onChange={(e) => {
+                  setPhoneInputValue(e.target.value)
+                  setPhoneError('')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && phoneInputValue.trim()) {
+                    handleSendPhoneCode()
+                  }
+                }}
+                placeholder="(555) 123-4567"
+                className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus
+              />
+              <button
+                onClick={handleSendPhoneCode}
+                disabled={phoneVerifying || !phoneInputValue.trim()}
+                className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {phoneVerifying ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Phone className="w-4 h-4" />
+                )}
+                {phoneVerifying ? 'Sending...' : 'Send Code'}
+              </button>
+            </div>
+            {phoneError && (
+              <p className="text-xs text-red-500">{phoneError}</p>
+            )}
+          </div>
+        )
+
+      case 'phoneCode':
+        return (
+          <div className="mt-3 max-w-md space-y-2">
+            {phoneVerified ? (
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="text-sm font-semibold">Phone verified!</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={phoneCodeValue}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6)
+                      setPhoneCodeValue(val)
+                      setPhoneError('')
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && phoneCodeValue.length === 6) {
+                        handleCheckPhoneCode()
+                      }
+                    }}
+                    placeholder="000000"
+                    className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-center text-lg font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleCheckPhoneCode}
+                    disabled={phoneCodeChecking || phoneCodeValue.length !== 6}
+                    className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {phoneCodeChecking ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Verify'
+                    )}
+                  </button>
+                </div>
+                {phoneError && (
+                  <p className="text-xs text-red-500">{phoneError}</p>
+                )}
+                <button
+                  onClick={handleResendPhoneCode}
+                  disabled={phoneVerifying}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                  {phoneVerifying ? 'Sending...' : 'Resend Code'}
+                </button>
+              </>
+            )}
+          </div>
+        )
+
       case 'profileSummary': {
         const brokerageName = getBrokerageName(data.brokerageId)
         const priceLabel = data.avgSalePrice ? `$${data.avgSalePrice.toLocaleString()}` : 'Not set'
@@ -1506,7 +1747,17 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone</div>
-                  <div className="text-sm font-semibold mt-0.5">{data.phone || '—'}</div>
+                  <div className="text-sm font-semibold mt-0.5 flex items-center gap-1.5">
+                    {data.phone || '\u2014'}
+                    {data.phone && phoneVerified && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600">
+                        <CheckCircle2 className="w-3 h-3" /> Verified
+                      </span>
+                    )}
+                    {data.phone && !phoneVerified && (
+                      <span className="text-[10px] font-bold text-red-500">Not verified</span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Brokerage</div>
