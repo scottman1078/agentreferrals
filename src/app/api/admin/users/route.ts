@@ -48,17 +48,30 @@ export async function DELETE(request: NextRequest) {
       await supabase.from('ar_magic_links').delete().eq('email', email)
     }
 
-    // Delete from Hub
+    // Remove from Hub — only remove the AR product subscription, NOT the user
+    // The user may be on other platforms (OnSpec, PipelinePulse, etc.)
     const hubUrl = process.env.NEXT_PUBLIC_HUB_URL
     const hubKey = process.env.HUB_SERVICE_ROLE_KEY
     if (hubUrl && hubKey) {
       const hub = createClient(hubUrl, hubKey, { auth: { autoRefreshToken: false, persistSession: false } })
 
-      // Delete Hub profile
-      await hub.from('profiles').delete().eq('id', userId)
+      // Remove AR from user_products (keep user and other products intact)
+      const { data: platform } = await hub
+        .from('platforms')
+        .select('id')
+        .eq('slug', 'agentreferrals')
+        .single()
 
-      // Delete Hub auth user
-      await hub.auth.admin.deleteUser(userId)
+      if (platform) {
+        await hub.from('user_products').delete()
+          .eq('profile_id', userId)
+          .eq('product_id', platform.id)
+      }
+
+      // Remove from Hub agents table (AR-specific agent record)
+      await hub.from('agents').delete().eq('profile_id', userId)
+
+      // DO NOT delete Hub profile or Hub auth — they may use other platforms
     }
 
     return NextResponse.json({ success: true })
