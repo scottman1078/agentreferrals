@@ -821,6 +821,9 @@ export default function OnboardingPage() {
       years_licensed: data.yearsLicensed,
       deals_per_year: data.referralsPerYear,
       avg_sale_price: data.avgSalePrice,
+      avg_referral_fee: data.avgReferralFee,
+      team_name: data.teamName.trim() || null,
+      is_on_team: data.isOnTeam,
       tags: data.specializations,
       polygon: [],
       territory_zips: data.primaryArea
