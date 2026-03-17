@@ -49,6 +49,8 @@ export default function AgentMap() {
   const [zipLoadCount, setZipLoadCount] = useState(0)
   const [showMyZips, setShowMyZips] = useState(false)
   const myZipLayersRef = useRef<L.Layer[]>([])
+  const myZipClusterRef = useRef<L.Layer | null>(null)
+  const renderMyZipLayersRef = useRef<() => void>(() => {})
   const zipBoundaryCache = useRef<Map<string, [number, number][]>>(new Map())
   const { hasFeature } = useFeatureGate()
   const { profile, refreshProfile } = useAuth()
@@ -294,6 +296,11 @@ export default function AgentMap() {
 
       // Store handler for cleanup
       ;(map as unknown as Record<string, unknown>)._zipClickHandler = handleMapClick
+
+      // Re-render cluster vs individual on zoom
+      const handleZoomEnd = () => renderMyZipLayersRef.current()
+      map.on('zoomend', handleZoomEnd)
+      ;(map as unknown as Record<string, unknown>)._zipZoomHandler = handleZoomEnd
     } else {
       // Remove WMS layers
       if (wmsLayerRef.current && map.hasLayer(wmsLayerRef.current)) {
@@ -310,6 +317,13 @@ export default function AgentMap() {
         delete (map as unknown as Record<string, unknown>)._zipClickHandler
       }
 
+      // Remove zoom handler
+      const zoomHandler = (map as unknown as Record<string, unknown>)._zipZoomHandler
+      if (zoomHandler) {
+        map.off('zoomend', zoomHandler as L.LeafletEventHandlerFn)
+        delete (map as unknown as Record<string, unknown>)._zipZoomHandler
+      }
+
       setZipAgentCount(null)
 
       // Re-render agents when leaving zip mode
@@ -324,6 +338,11 @@ export default function AgentMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showMyZips])
 
+  // Keep ref in sync with latest renderMyZipLayers
+  useEffect(() => {
+    renderMyZipLayersRef.current = renderMyZipLayers
+  }, [renderMyZipLayers])
+
   // Re-render zip layers when myZips changes
   useEffect(() => {
     if (!showMyZips || !mapInstance.current || !L) return
@@ -331,18 +350,59 @@ export default function AgentMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myZips])
 
+  const ZIP_CLUSTER_ZOOM = 10
+
   const renderMyZipLayers = useCallback(async () => {
     if (!mapInstance.current || !L) return
     const map = mapInstance.current
+    const zoom = map.getZoom()
 
-    // Clear existing selected zip layers (not WMS)
+    // Clear existing layers and cluster
     myZipLayersRef.current.forEach((l) => map.removeLayer(l))
     myZipLayersRef.current = []
+    if (myZipClusterRef.current) {
+      map.removeLayer(myZipClusterRef.current)
+      myZipClusterRef.current = null
+    }
 
+    if (myZips.length === 0) return
+
+    // Collect boundaries
+    const rings: Array<{ zip: string; ring: [number, number][] }> = []
     for (const zip of myZips) {
       const ring = await getZipBoundary(zip)
-      if (!ring || ring.length < 3) continue
+      if (ring && ring.length >= 3) rings.push({ zip, ring })
+    }
 
+    // Below threshold with multiple zips: show a cluster marker
+    if (zoom < ZIP_CLUSTER_ZOOM && myZips.length > 1) {
+      let totalLat = 0, totalLng = 0, count = 0
+      for (const { ring } of rings) {
+        const c = getCentroid(ring)
+        totalLat += c[0]; totalLng += c[1]; count++
+      }
+      if (count > 0) {
+        const icon = L!.divIcon({
+          className: '',
+          html: `<div style="background:#f59e0b;color:#fff;border-radius:50%;width:76px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:3px solid #fff;cursor:pointer;line-height:1.1"><span>${myZips.length}</span><span style="font-size:9px;font-weight:600;letter-spacing:0.05em;opacity:0.9">ZIP CODES</span></div>`,
+          iconSize: [76, 76],
+          iconAnchor: [38, 38],
+        })
+        const marker = L!.marker([totalLat / count, totalLng / count], { icon })
+        marker.bindTooltip(`${myZips.length} zip codes — zoom in to see boundaries`, { direction: 'top' })
+        marker.on('click', () => map.setZoom(ZIP_CLUSTER_ZOOM + 1))
+        marker.addTo(map)
+        myZipClusterRef.current = marker
+      }
+
+      // Ensure WMS stays visible
+      if (wmsLayerRef.current && !map.hasLayer(wmsLayerRef.current)) wmsLayerRef.current.addTo(map)
+      if (wmsLabelsRef.current && !map.hasLayer(wmsLabelsRef.current)) wmsLabelsRef.current.addTo(map)
+      return
+    }
+
+    // At or above threshold: show individual zip polygons with agent counts
+    for (const { zip, ring } of rings) {
       const poly = L!.polygon(ring as L.LatLngExpression[], {
         color: '#f59e0b',
         weight: 3,
@@ -350,7 +410,6 @@ export default function AgentMap() {
         fillOpacity: 0.3,
       }).addTo(map)
 
-      // Show zip code label, then fetch agent count
       poly.bindTooltip(`<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;opacity:0.5">loading...</div>`, { permanent: true, direction: 'center', className: 'zip-label' })
       fetch(`/api/zip-agents?zip=${zip}`)
         .then((r) => r.json())
@@ -369,12 +428,8 @@ export default function AgentMap() {
     }
 
     // Ensure WMS layers stay visible
-    if (wmsLayerRef.current && !map.hasLayer(wmsLayerRef.current)) {
-      wmsLayerRef.current.addTo(map)
-    }
-    if (wmsLabelsRef.current && !map.hasLayer(wmsLabelsRef.current)) {
-      wmsLabelsRef.current.addTo(map)
-    }
+    if (wmsLayerRef.current && !map.hasLayer(wmsLayerRef.current)) wmsLayerRef.current.addTo(map)
+    if (wmsLabelsRef.current && !map.hasLayer(wmsLabelsRef.current)) wmsLabelsRef.current.addTo(map)
   }, [myZips])
 
   const handleAddZip = useCallback(async () => {
