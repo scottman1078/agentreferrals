@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import BrokerageSwitcher from './brokerage-switcher'
 import SearchModal from '@/components/search/search-modal'
-import { Search, Command, LogOut } from 'lucide-react'
+import { Search, Command, LogOut, Gift } from 'lucide-react'
 import { AppLogo } from '@/components/ui/app-logo'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -84,6 +84,15 @@ export default function TopBar() {
             <Command className="w-2.5 h-2.5" />K
           </kbd>
         </button>
+
+        {/* Invite callout */}
+        <Link
+          href="/dashboard/invite"
+          className="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shrink-0"
+        >
+          <Gift className="w-3.5 h-3.5 text-primary" />
+          <span className="text-[11px] font-semibold text-primary">5 Invites Left</span>
+        </Link>
 
         <div className="flex-1" />
 
