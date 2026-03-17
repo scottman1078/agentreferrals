@@ -26,11 +26,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-
-const AgentProfileReviews = dynamic(() => import('./agent-profile-reviews').then(m => ({ default: m.AgentProfileReviews })), { ssr: false })
-const AgentProfileMap = dynamic(() => import('./agent-profile-map').then(m => ({ default: m.AgentProfileMap })), { ssr: false })
-const AgentNotesSection = dynamic(() => import('./agent-notes-section'), { ssr: false })
+import { ClientReviews, ClientMap, ClientNotes } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 
@@ -272,7 +268,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
         <section>
           <h2 className="text-lg font-bold mb-3">Referral Reviews</h2>
           <div className="p-5 rounded-xl border border-border bg-card">
-            <AgentProfileReviews agentId={agent.id} agentName={agent.name} />
+            <ClientReviews agentId={agent.id} agentName={agent.name} />
           </div>
         </section>
 
@@ -280,7 +276,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
         <section>
           <h2 className="text-lg font-bold mb-3">Coverage Area</h2>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <AgentProfileMap
+            <ClientMap
               polygon={agent.polygon}
               color={agent.color}
               name={agent.name}
@@ -291,7 +287,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
         {/* ═══ PRIVATE NOTES ═══ */}
         <section>
-          <AgentNotesSection agentId={agent.id} />
+          <ClientNotes agentId={agent.id} />
         </section>
 
         {/* ═══ CTA ═══ */}
