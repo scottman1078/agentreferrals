@@ -1,13 +1,13 @@
 'use client'
 
-import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight } from 'lucide-react'
+import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
 import { useBrokerage } from '@/contexts/brokerage-context'
-import { getConnectionPath } from '@/data/partnerships'
+import { getConnectionPath, getPartnerAgentIds, existingRequests } from '@/data/partnerships'
 import AgentNotes from '@/components/agent-notes'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import type { Agent } from '@/types'
@@ -17,6 +17,36 @@ interface AgentPeekCardProps {
   onClose: () => void
   onSendReferral?: (agent: Agent) => void
   onMessage?: (agent: Agent) => void
+}
+
+function getLastContactedLabel(agentId: string): string {
+  // Generate deterministic mock based on agent ID hash
+  let hash = 0
+  for (let i = 0; i < agentId.length; i++) {
+    hash = ((hash << 5) - hash) + agentId.charCodeAt(i)
+    hash |= 0
+  }
+  const options = ['Messaged 3 days ago', 'Messaged 1 week ago', 'Messaged 2 weeks ago', 'No messages yet']
+  return options[Math.abs(hash) % options.length]
+}
+
+function getActiveReferralsLabel(agentId: string, closedReferrals?: number): string {
+  // Mock based on closedReferrals count
+  if (closedReferrals && closedReferrals > 10) return '2 active referrals together'
+  if (closedReferrals && closedReferrals > 5) return '1 active referral together'
+  return 'No active referrals'
+}
+
+function getPartnershipDuration(agentId: string): string | null {
+  const partnership = existingRequests.find(
+    (r) =>
+      r.status === 'active' &&
+      ((r.requestingAgentId === 'jason' && r.receivingAgentId === agentId) ||
+        (r.receivingAgentId === 'jason' && r.requestingAgentId === agentId))
+  )
+  if (!partnership?.acceptedAt) return null
+  const date = new Date(partnership.acceptedAt)
+  return `Partners since ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
 }
 
 export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessage }: AgentPeekCardProps) {
@@ -32,10 +62,11 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
 
   // Connection path for degree-of-separation agents
-  const { scope, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { scope, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
   const { agents: allAgents } = useAppData()
   const isDegreeView = scope === '1-degree' || scope === '2-degree'
   const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
+  const isDirectPartner = partnerIds.includes(agent.id)
   const connectionPath = isDegreeView && isDegreeAgent ? getConnectionPath('jason', agent.id) : null
   const pathAgents = connectionPath
     ? connectionPath.map((id) => {
@@ -46,6 +77,19 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           : { id, name: id, color: '#6b7280', initials: '?' }
       })
     : null
+
+  // Network size for all agents
+  const networkSize = getPartnerAgentIds(agent.id).length
+
+  // Mutual connections for degree agents
+  const mutualCount = isDegreeAgent
+    ? partnerIds.filter((pid) => getPartnerAgentIds(agent.id).includes(pid)).length
+    : 0
+
+  // Partner stats for direct partners
+  const partnerDuration = isDirectPartner ? getPartnershipDuration(agent.id) : null
+  const lastContacted = isDirectPartner ? getLastContactedLabel(agent.id) : null
+  const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
     <div className="fixed bottom-[88px] left-4 right-4 max-w-lg mx-auto z-[450]">
@@ -160,6 +204,17 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             <span className="text-[11px] text-muted-foreground">
               {formatCurrency(agent.avgSalePrice)} avg
             </span>
+            {agent.yearsLicensed > 0 && (
+              <span className="text-[11px] text-muted-foreground">
+                {agent.yearsLicensed} yrs licensed
+              </span>
+            )}
+            {networkSize > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Users className="w-3 h-3" />
+                {networkSize} partners
+              </span>
+            )}
           </div>
 
           {/* Tags */}
@@ -175,18 +230,60 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             ))}
           </div>
 
+          {/* Direct partner stats */}
+          {isDirectPartner && (
+            <div className="mt-2.5 rounded-xl border border-border p-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-start gap-1.5">
+                  <CalendarClock className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-muted-foreground leading-tight">{lastContacted}</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-muted-foreground leading-tight">{activeReferrals}</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <Handshake className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-muted-foreground leading-tight">{partnerDuration ?? 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Degree agent stats */}
+          {isDegreeAgent && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[11px] text-muted-foreground">
+                  {mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Private notes */}
           <AgentNotes agentId={agent.id} authorId={profile?.id ?? null} variant="inline" />
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-3">
-            <button
-              onClick={() => onSendReferral?.(agent)}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Send Referral
-            </button>
+            {isDegreeAgent ? (
+              <button
+                onClick={() => onSendReferral?.(agent)}
+                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Request Intro
+              </button>
+            ) : (
+              <button
+                onClick={() => onSendReferral?.(agent)}
+                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Send Referral
+              </button>
+            )}
             <button
               onClick={() => onMessage?.(agent)}
               className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"

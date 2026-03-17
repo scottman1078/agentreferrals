@@ -17,16 +17,17 @@ import {
   FileText,
   Send,
   Star,
+  DollarSign,
 } from 'lucide-react'
 import type { Agent, PipelineStage } from '@/types'
 
-type PropertyType = 'Buyer' | 'Seller' | 'Both'
+type RepresentationType = 'Buyer' | 'Seller' | 'Both'
 
 interface ClientInfo {
   name: string
   email: string
   phone: string
-  propertyType: PropertyType
+  representation: RepresentationType
   budget: string
   notes: string
 }
@@ -37,6 +38,8 @@ interface ReferralTerms {
   estCloseDate: string
   agreementExpDays: number
   personalNote: string
+  estimatedPrice: number
+  commissionRate: number
 }
 
 interface CreateReferralModalProps {
@@ -47,6 +50,16 @@ interface CreateReferralModalProps {
 
 const STEPS = ['Client Info', 'Select Agent', 'Terms', 'Review & Send'] as const
 type Step = 0 | 1 | 2 | 3
+
+function formatNumberWithCommas(value: number): string {
+  if (!value) return ''
+  return value.toLocaleString('en-US')
+}
+
+function parseFormattedNumber(value: string): number {
+  const cleaned = value.replace(/[^0-9]/g, '')
+  return parseInt(cleaned) || 0
+}
 
 export default function CreateReferralModal({
   onClose,
@@ -62,7 +75,7 @@ export default function CreateReferralModal({
     name: '',
     email: '',
     phone: '',
-    propertyType: 'Buyer',
+    representation: 'Buyer',
     budget: '',
     notes: '',
   })
@@ -80,7 +93,12 @@ export default function CreateReferralModal({
     estCloseDate: '',
     agreementExpDays: 180,
     personalNote: '',
+    estimatedPrice: 0,
+    commissionRate: 3,
   })
+
+  // Display state for the price input (formatted with commas)
+  const [priceDisplay, setPriceDisplay] = useState('')
 
   // Derived
   const selectedAgent = useMemo(
@@ -101,6 +119,10 @@ export default function CreateReferralModal({
           a.tags.some((t) => t.toLowerCase().includes(q))
       )
   }, [searchQuery])
+
+  // Fee calculations
+  const commission = terms.estimatedPrice * (terms.commissionRate / 100)
+  const referralFee = commission * (terms.feePercent / 100)
 
   // Validation
   const canAdvance = (s: Step): boolean => {
@@ -141,6 +163,12 @@ export default function CreateReferralModal({
 
   function handleSelectAgent(agent: Agent) {
     setSelectedAgentId(agent.id)
+  }
+
+  function handlePriceChange(value: string) {
+    const num = parseFormattedNumber(value)
+    setTerms((p) => ({ ...p, estimatedPrice: num }))
+    setPriceDisplay(num > 0 ? formatNumberWithCommas(num) : '')
   }
 
   // ---------- Success State ----------
@@ -187,7 +215,7 @@ export default function CreateReferralModal({
                     name: '',
                     email: '',
                     phone: '',
-                    propertyType: 'Buyer',
+                    representation: 'Buyer',
                     budget: '',
                     notes: '',
                   })
@@ -199,7 +227,10 @@ export default function CreateReferralModal({
                     estCloseDate: '',
                     agreementExpDays: 180,
                     personalNote: '',
+                    estimatedPrice: 0,
+                    commissionRate: 3,
                   })
+                  setPriceDisplay('')
                 }}
                 className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
               >
@@ -324,18 +355,18 @@ export default function CreateReferralModal({
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Property Type *
+                  Agent Representation *
                 </label>
                 <div className="flex gap-2">
-                  {(['Buyer', 'Seller', 'Both'] as PropertyType[]).map(
+                  {(['Buyer', 'Seller', 'Both'] as RepresentationType[]).map(
                     (type) => (
                       <button
                         key={type}
                         onClick={() =>
-                          setClientInfo((p) => ({ ...p, propertyType: type }))
+                          setClientInfo((p) => ({ ...p, representation: type }))
                         }
                         className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-all border ${
-                          clientInfo.propertyType === type
+                          clientInfo.representation === type
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
                         }`}
@@ -497,7 +528,48 @@ export default function CreateReferralModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Estimated Sale Price
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={priceDisplay}
+                    onChange={(e) => handlePriceChange(e.target.value)}
+                    className="w-full h-10 pl-7 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="e.g. 450,000"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Commission %
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0.5}
+                      max={10}
+                      step={0.25}
+                      value={terms.commissionRate}
+                      onChange={(e) =>
+                        setTerms((p) => ({
+                          ...p,
+                          commissionRate: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      className="w-full h-10 px-3 pr-8 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      %
+                    </span>
+                  </div>
+                </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Referral Fee %
@@ -523,7 +595,7 @@ export default function CreateReferralModal({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    Estimated Close Date
+                    Est. Close Date
                   </label>
                   <input
                     type="date"
@@ -538,6 +610,33 @@ export default function CreateReferralModal({
                   />
                 </div>
               </div>
+
+              {/* Fee Calculator */}
+              {terms.estimatedPrice > 0 && (
+                <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2.5">
+                    Fee Calculator
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Commission ({terms.commissionRate}% of ${formatNumberWithCommas(terms.estimatedPrice)})
+                      </span>
+                      <span className="text-sm font-semibold">
+                        ${formatNumberWithCommas(Math.round(commission))}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Your Referral Fee ({terms.feePercent}% of commission)
+                      </span>
+                      <span className="text-sm font-bold text-primary">
+                        ${formatNumberWithCommas(Math.round(referralFee))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -593,7 +692,7 @@ export default function CreateReferralModal({
                 <div className="space-y-1.5">
                   <div className="font-semibold text-sm">{clientInfo.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {clientInfo.propertyType}
+                    {clientInfo.representation}
                     {clientInfo.budget ? ` \u00B7 ${clientInfo.budget}` : ''}
                   </div>
                   {clientInfo.email && (
@@ -673,12 +772,37 @@ export default function CreateReferralModal({
                     </div>
                     <div className="text-sm font-semibold">{terms.market}</div>
                   </div>
+                  {terms.estimatedPrice > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                        Est. Sale Price
+                      </div>
+                      <div className="text-sm font-semibold">
+                        ${formatNumberWithCommas(terms.estimatedPrice)}
+                      </div>
+                    </div>
+                  )}
+                  {terms.estimatedPrice > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                        Commission ({terms.commissionRate}%)
+                      </div>
+                      <div className="text-sm font-semibold">
+                        ${formatNumberWithCommas(Math.round(commission))}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
                       Referral Fee
                     </div>
                     <div className="text-sm font-semibold">
                       {terms.feePercent}%
+                      {terms.estimatedPrice > 0 && (
+                        <span className="text-primary ml-1">
+                          (${formatNumberWithCommas(Math.round(referralFee))})
+                        </span>
+                      )}
                     </div>
                   </div>
                   {terms.estCloseDate && (
