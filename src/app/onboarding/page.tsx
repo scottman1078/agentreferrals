@@ -38,6 +38,7 @@ interface OnboardingData {
   avgSalePrice: number | null
   avgReferralFee: number
   specializations: string[]
+  licenseNumber: string
   inviteEmails: string[]
   pastReferrals: PastReferralEntry[]
 }
@@ -45,8 +46,10 @@ interface OnboardingData {
 type InteractiveType =
   | { kind: 'chips'; options: string[]; selected?: string }
   | { kind: 'brokerage' }
+  | { kind: 'brokerageAutocomplete' }
   | { kind: 'multiSelect'; options: string[]; selected: string[] }
   | { kind: 'input'; placeholder: string; type?: string }
+  | { kind: 'licenseInput' }
   | { kind: 'dualInput'; fields: { key: string; placeholder: string; type?: string }[] }
   | { kind: 'emailList' }
   | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
@@ -74,6 +77,7 @@ type OnboardingStep =
   | 'avg_price'
   | 'referral_fee'
   | 'name_phone'
+  | 'license_number'
   | 'invites'
   | 'invite_emails'
   | 'past_referrals'
@@ -89,6 +93,7 @@ const PROGRESS_STEPS = [
   { key: 'specializations', label: 'Specializations' },
   { key: 'avg_price', label: 'Pricing' },
   { key: 'name_phone', label: 'Profile' },
+  { key: 'license_number', label: 'License' },
   { key: 'invites', label: 'Invites' },
   { key: 'past_referrals', label: 'Referrals' },
   { key: 'summary', label: 'Review' },
@@ -107,11 +112,26 @@ const STEP_ORDER: OnboardingStep[] = [
   'avg_price',
   'referral_fee',
   'name_phone',
+  'license_number',
   'invites',
   'invite_emails',
   'past_referrals',
   'past_referral_form',
   'complete',
+]
+
+const ALL_BROKERAGES = [
+  'Real Broker LLC', 'eXp Realty', 'Compass', 'Keller Williams',
+  'Berkshire Hathaway HomeServices', 'RE/MAX', "Sotheby's International Realty",
+  'Coldwell Banker', 'Century 21', 'EXIT Realty', 'HomeSmart',
+  'Fathom Realty', 'United Real Estate', 'Redfin', 'Douglas Elliman',
+  'Howard Hanna', 'Weichert Realtors', 'Long & Foster', 'Windermere',
+  'Baird & Warner', 'William Raveis', 'Engel & Völkers', 'Side Inc',
+  'The Agency', 'Brown Harris Stevens', 'Corcoran Group', 'Alain Pinel',
+  'Better Homes and Gardens RE', 'ERA Real Estate', 'NextHome',
+  // Canadian
+  'Royal LePage', 'Sutton Group', 'Right at Home Realty', 'RE/MAX Canada',
+  'Century 21 Canada', 'Keller Williams Canada',
 ]
 
 const STORAGE_KEY = 'ar_onboarding_state'
@@ -130,12 +150,13 @@ function getProgressIndex(step: OnboardingStep): number {
     avg_price: 5,
     referral_fee: 5,
     name_phone: 6,
-    invites: 7,
-    invite_emails: 7,
-    past_referrals: 8,
-    past_referral_form: 8,
-    summary: 9,
-    complete: 10,
+    license_number: 7,
+    invites: 8,
+    invite_emails: 8,
+    past_referrals: 9,
+    past_referral_form: 9,
+    summary: 10,
+    complete: 11,
   }
   return map[step] ?? -1
 }
@@ -185,6 +206,7 @@ export default function OnboardingPage() {
     avgSalePrice: null,
     avgReferralFee: 25,
     specializations: [],
+    licenseNumber: '',
     inviteEmails: [],
     pastReferrals: [],
   })
@@ -197,6 +219,10 @@ export default function OnboardingPage() {
   const [pendingDualInput, setPendingDualInput] = useState<Record<string, string>>({})
   // For text input
   const [inputValue, setInputValue] = useState('')
+  // For brokerage autocomplete search
+  const [brokerageSearch, setBrokerageSearch] = useState('')
+  // For zip code validation error
+  const [zipError, setZipError] = useState('')
   // For past referral form
   const [prDirection, setPrDirection] = useState<'sent' | 'received'>('sent')
   const [prPartnerName, setPrPartnerName] = useState('')
@@ -357,7 +383,7 @@ export default function OnboardingPage() {
           setTimeout(() => {
             addNoraMessage(
               "What's the name of your brokerage?",
-              { kind: 'input', placeholder: 'Enter your brokerage name' },
+              { kind: 'brokerageAutocomplete' },
               'custom_brokerage'
             )
           }, 200)
@@ -429,8 +455,8 @@ export default function OnboardingPage() {
 
         setTimeout(() => {
           addNoraMessage(
-            'What zip codes or areas do you serve? You can list multiple separated by commas.',
-            { kind: 'input', placeholder: 'e.g. 90210, Beverly Hills, CA' },
+            "What's your primary zip code? This is the main area where you work.",
+            { kind: 'input', placeholder: 'e.g. 90210', type: 'text' },
             'service_area'
           )
         }, 200)
@@ -604,8 +630,8 @@ export default function OnboardingPage() {
 
           setTimeout(() => {
             addNoraMessage(
-              'What zip codes or areas do you serve? You can list multiple separated by commas.',
-              { kind: 'input', placeholder: 'e.g. 90210, Beverly Hills, CA' },
+              "What's your primary zip code? This is the main area where you work.",
+              { kind: 'input', placeholder: 'e.g. 90210', type: 'text' },
               'service_area'
             )
           }, 200)
@@ -614,12 +640,18 @@ export default function OnboardingPage() {
       }
 
       case 'service_area': {
-        updateData({ primaryArea: value.trim() })
-        addUserMessage(value.trim())
+        const zip = value.trim()
+        if (!/^\d{5}$/.test(zip)) {
+          setZipError('Please enter a valid 5-digit zip code.')
+          return
+        }
+        setZipError('')
+        updateData({ primaryArea: zip })
+        addUserMessage(zip)
 
         setTimeout(() => {
           addNoraMessage(
-            'What types of properties do you specialize in? Select all that apply.',
+            "You can add more service areas later from your Settings.\n\nWhat types of properties do you specialize in? Select all that apply.",
             { kind: 'multiSelect', options: ALL_TAGS, selected: [] },
             'specializations'
           )
@@ -654,6 +686,14 @@ export default function OnboardingPage() {
         break
       }
 
+      case 'license_number': {
+        const license = value.trim()
+        updateData({ licenseNumber: license })
+        addUserMessage(license)
+        proceedToInvites()
+        break
+      }
+
       default:
         break
     }
@@ -675,6 +715,21 @@ export default function OnboardingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // ── Proceed to invites step ──
+  const proceedToInvites = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        `You're all set! AgentReferrals is invite-only during our founding member period. You have 5 invite codes to share with agents you trust. Want to send some now, or skip for later?`,
+        { kind: 'buttons', options: [
+          { label: 'Send Invites', value: 'send', primary: true },
+          { label: 'Skip for Now', value: 'skip' },
+        ]},
+        'invites'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Handle dual input submission ──
   const handleDualInputSubmit = useCallback(() => {
     const name = pendingDualInput.fullName?.trim() || data.fullName
@@ -687,12 +742,9 @@ export default function OnboardingPage() {
 
     setTimeout(() => {
       addNoraMessage(
-        `You're all set! AgentReferrals is invite-only during our founding member period. You have 5 invite codes to share with agents you trust. Want to send some now, or skip for later?`,
-        { kind: 'buttons', options: [
-          { label: 'Send Invites', value: 'send', primary: true },
-          { label: 'Skip for Now', value: 'skip' },
-        ]},
-        'invites'
+        "What's your real estate license number? This helps us verify your credentials and adds a trust badge to your profile.",
+        { kind: 'licenseInput' },
+        'license_number'
       )
     }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -840,6 +892,7 @@ export default function OnboardingPage() {
       avg_referral_fee: data.avgReferralFee,
       team_name: data.teamName.trim() || null,
       is_on_team: data.isOnTeam,
+      license_number: data.licenseNumber.trim() || null,
       tags: data.specializations,
       polygon: [],
       territory_zips: data.primaryArea
@@ -861,6 +914,20 @@ export default function OnboardingPage() {
 
     if (error) {
       console.error('[Onboarding] Profile upsert failed:', error.message)
+    }
+
+    // ── Fire-and-forget license verification ──
+    if (data.licenseNumber.trim()) {
+      fetch('/api/verify-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          licenseNumber: data.licenseNumber.trim(),
+          licenseState: '', // We don't ask for state separately in onboarding
+          fullName: data.fullName.trim(),
+        }),
+      }).catch(() => {})
     }
 
     // ── Hub registration ──
@@ -977,62 +1044,193 @@ export default function OnboardingPage() {
           </div>
         )
 
-      case 'buttons':
+      case 'buttons': {
+        const skippableSteps: OnboardingStep[] = ['invites', 'past_referrals']
+        const isSkippable = skippableSteps.includes(currentStep)
         return (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {interactive.options.map((opt) => (
+          <div className="mt-3">
+            <div className="flex flex-wrap gap-2">
+              {interactive.options.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    if (opt.value === 'dashboard') {
+                      handleComplete()
+                    } else {
+                      handleChipSelect(opt.value)
+                    }
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    opt.primary !== false
+                      ? 'bg-primary text-primary-foreground hover:opacity-90'
+                      : 'border border-border bg-card hover:bg-accent'
+                  }`}
+                >
+                  {opt.value === 'dashboard' && isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {opt.label}
+                      {opt.value === 'dashboard' && <ArrowRight className="w-4 h-4" />}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            {isSkippable && (
               <button
-                key={opt.value}
                 onClick={() => {
-                  if (opt.value === 'dashboard') {
-                    handleComplete()
-                  } else {
-                    handleChipSelect(opt.value)
+                  addUserMessage("I'll do this later")
+                  if (currentStep === 'invites') {
+                    proceedToPastReferrals()
+                  } else if (currentStep === 'past_referrals') {
+                    showSummary()
                   }
                 }}
-                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  opt.primary !== false
-                    ? 'bg-primary text-primary-foreground hover:opacity-90'
-                    : 'border border-border bg-card hover:bg-accent'
-                }`}
+                className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
               >
-                {opt.value === 'dashboard' && isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    {opt.label}
-                    {opt.value === 'dashboard' && <ArrowRight className="w-4 h-4" />}
-                  </span>
-                )}
+                Do this later
               </button>
-            ))}
+            )}
           </div>
         )
+      }
 
       case 'input':
         return (
-          <div className="mt-3 flex gap-2 max-w-md">
-            <input
-              type={interactive.type || 'text'}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleInputSubmit(inputValue)
-                }
-              }}
-              placeholder={interactive.placeholder}
-              className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              autoFocus
-            />
+          <div className="mt-3 max-w-md">
+            <div className="flex gap-2">
+              <input
+                type={interactive.type || 'text'}
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value)
+                  if (currentStep === 'service_area') setZipError('')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleInputSubmit(inputValue)
+                  }
+                }}
+                placeholder={interactive.placeholder}
+                className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus
+              />
+              <button
+                onClick={() => handleInputSubmit(inputValue)}
+                className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+            {currentStep === 'service_area' && zipError && (
+              <p className="text-xs text-red-500 mt-1.5">{zipError}</p>
+            )}
+          </div>
+        )
+
+      case 'brokerageAutocomplete': {
+        const filtered = brokerageSearch.trim().length > 0
+          ? ALL_BROKERAGES.filter((b) =>
+              b.toLowerCase().includes(brokerageSearch.toLowerCase())
+            ).slice(0, 5)
+          : []
+        const hasMatches = filtered.length > 0
+        return (
+          <div className="mt-3 max-w-md space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={brokerageSearch}
+                onChange={(e) => setBrokerageSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && brokerageSearch.trim()) {
+                    handleInputSubmit(brokerageSearch.trim())
+                    setBrokerageSearch('')
+                  }
+                }}
+                placeholder="Start typing..."
+                className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (brokerageSearch.trim()) {
+                    handleInputSubmit(brokerageSearch.trim())
+                    setBrokerageSearch('')
+                  }
+                }}
+                className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+            {brokerageSearch.trim().length > 0 && (
+              <>
+                {hasMatches ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {filtered.map((name) => (
+                      <button
+                        key={name}
+                        onClick={() => {
+                          handleInputSubmit(name)
+                          setBrokerageSearch('')
+                        }}
+                        className="px-3 py-1.5 rounded-full border border-border bg-card text-xs font-medium hover:bg-accent hover:border-primary/30 transition-all"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {"Can't find your brokerage? Just type the name and hit enter."}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )
+      }
+
+      case 'licenseInput':
+        return (
+          <div className="mt-3 max-w-md">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && inputValue.trim()) {
+                    handleInputSubmit(inputValue)
+                  }
+                }}
+                placeholder="e.g. 6501234567"
+                className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (inputValue.trim()) handleInputSubmit(inputValue)
+                }}
+                className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
             <button
-              onClick={() => handleInputSubmit(inputValue)}
-              className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+              onClick={() => {
+                addUserMessage("I'll do this later")
+                setInputValue('')
+                proceedToInvites()
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
             >
-              <Send className="w-4 h-4" />
+              Do this later
             </button>
           </div>
         )
@@ -1150,6 +1348,16 @@ export default function OnboardingPage() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+            <button
+              onClick={() => {
+                addUserMessage("I'll do this later")
+                setPendingEmails([''])
+                proceedToPastReferrals()
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
+            >
+              Do this later
+            </button>
           </div>
         )
 
@@ -1261,6 +1469,15 @@ export default function OnboardingPage() {
               Add Referral
               <ArrowRight className="w-4 h-4" />
             </button>
+            <button
+              onClick={() => {
+                addUserMessage("I'll do this later")
+                showSummary()
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
+            >
+              Do this later
+            </button>
           </div>
         )
 
@@ -1302,6 +1519,12 @@ export default function OnboardingPage() {
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Referral Fee</div>
                   <div className="text-sm font-semibold mt-0.5">{data.avgReferralFee}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">License Number</div>
+                  <div className={`text-sm font-semibold mt-0.5 ${!data.licenseNumber ? 'text-muted-foreground' : ''}`}>
+                    {data.licenseNumber || 'Not provided'}
+                  </div>
                 </div>
               </div>
               <div>
