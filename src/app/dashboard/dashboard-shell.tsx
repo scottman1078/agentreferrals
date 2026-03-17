@@ -85,11 +85,25 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   // Debounced by 400ms so rapid profile re-fetches (auth state change firing twice)
   // don't cause a flash where the wizard shows then immediately disappears.
   useEffect(() => {
+    console.log('[SetupWizard] effect', {
+      isLoading,
+      isAuthenticated,
+      hasProfile: !!profile,
+      needsOnboarding,
+      primary_area: profile?.primary_area,
+      territory_zips: profile?.territory_zips,
+      polygon: profile?.polygon,
+      wizardCompleted: typeof window !== 'undefined' ? localStorage.getItem('ar_setup_wizard_completed') : 'ssr',
+    })
+
     if (isLoading || !isAuthenticated || !profile) return
     if (needsOnboarding || !profile.primary_area) return // still needs onboarding
 
     // Don't show if already completed the setup wizard
-    if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
+    if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) {
+      console.log('[SetupWizard] skipped — localStorage flag set')
+      return
+    }
 
     // If the user already has a real service area (more than just the onboarding zip),
     // they've completed setup — mark the flag and skip the wizard
@@ -97,17 +111,27 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       (Array.isArray(profile.territory_zips) && profile.territory_zips.length > 1) ||
       (Array.isArray(profile.polygon) && profile.polygon.length > 0)
 
+    console.log('[SetupWizard] hasRealServiceArea:', hasRealServiceArea)
+
     if (hasRealServiceArea) {
       if (typeof window !== 'undefined') {
         localStorage.setItem('ar_setup_wizard_completed', 'true')
+        console.log('[SetupWizard] auto-completed — user already has service area')
       }
       return
     }
 
     // Delay showing so a second profile fetch (onAuthStateChange) can cancel this
     // before the wizard ever renders
-    const timer = setTimeout(() => setShowSetupWizard(true), 400)
-    return () => clearTimeout(timer)
+    console.log('[SetupWizard] scheduling show in 400ms...')
+    const timer = setTimeout(() => {
+      console.log('[SetupWizard] showing wizard')
+      setShowSetupWizard(true)
+    }, 400)
+    return () => {
+      console.log('[SetupWizard] timer cancelled (profile updated before 400ms)')
+      clearTimeout(timer)
+    }
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
 
   if (isLoading) {

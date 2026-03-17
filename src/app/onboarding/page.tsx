@@ -2144,7 +2144,7 @@ export default function OnboardingPage() {
       <div className="h-12 flex items-center justify-center border-t border-border bg-card/50">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span>Powered by <span className="font-semibold text-foreground">NORA</span> AI</span>
+          <span>Powered by <span className="font-semibold text-foreground">NORA</span></span>
         </div>
       </div>
     </div>
