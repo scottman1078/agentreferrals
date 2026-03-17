@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
         inviteId: invite.id,
         inviterName: inviterProfile?.full_name || 'An AgentReferrals member',
         inviterEmail: inviterProfile?.email || null,
+        inviteeEmail: invite.invitee_email?.includes('@pending.invite') ? null : invite.invitee_email,
+        inviteeName: invite.invitee_name || null,
       })
     }
 
