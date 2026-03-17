@@ -6,9 +6,10 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles, MapPin, Search, X, Loader2, Send } from 'lucide-react'
+import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles, MapPin, Search, X, Loader2, Send, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 import AgentHoverCard from '@/components/map/agent-hover-card'
 import AgentPeekCard from '@/components/map/agent-peek-card'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
@@ -49,6 +50,7 @@ export default function AgentMap() {
   const [showMyZips, setShowMyZips] = useState(false)
   const myZipLayersRef = useRef<L.Layer[]>([])
   const zipBoundaryCache = useRef<Map<string, [number, number][]>>(new Map())
+  const { hasFeature } = useFeatureGate()
   const { profile, refreshProfile } = useAuth()
   const [myZips, setMyZips] = useState<string[]>([])
   const [zipInput, setZipInput] = useState('')
@@ -843,6 +845,30 @@ export default function AgentMap() {
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* Blur overlay for locked degree tabs */}
+      {((scope === '1-degree' && !hasFeature('networkDegree1')) ||
+        (scope === '2-degree' && !hasFeature('networkDegree2'))) && (
+        <div className="absolute inset-0 z-[100] backdrop-blur-md bg-background/30 flex items-center justify-center">
+          <div className="max-w-sm text-center p-6 bg-card rounded-2xl border border-border shadow-2xl">
+            <Lock className="w-8 h-8 text-primary mx-auto mb-3" />
+            <h3 className="font-bold text-lg mb-2">
+              {scope === '1-degree' ? oneDegreeIds.length : twoDegreeIds.length} agents are{' '}
+              {scope === '1-degree' ? '1 degree' : '2 degrees'} away from your network
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upgrade to see who&apos;s connected to your referral partners and request introductions.
+            </p>
+            <a
+              href="/dashboard/billing"
+              className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="w-4 h-4" />
+              Upgrade to Unlock
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Hover preview card */}
       {hoveredAgent && !selectedAgent && (

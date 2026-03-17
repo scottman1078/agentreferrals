@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FeatureGate } from '@/components/ui/feature-gate'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
@@ -24,6 +24,9 @@ import {
   ArrowRight,
   UserSearch,
   MessageSquare,
+  Lock,
+  Info,
+  Sparkles,
 } from 'lucide-react'
 
 type Tab = 'need-you' | 'your-gaps'
@@ -58,15 +61,9 @@ function PartnershipsSkeleton() {
   )
 }
 
-export default function PartnershipsPageGated() {
-  return (
-    <FeatureGate feature="partnershipRequests">
-      <PartnershipsPage />
-    </FeatureGate>
-  )
-}
-
-function PartnershipsPage() {
+export default function PartnershipsPage() {
+  const { hasFeature } = useFeatureGate()
+  const canPartner = hasFeature('partnershipRequests')
   const { agentsNeedingPartner, coverageGapOpportunities, agentsLoading } = useAppData()
   const [activeTab, setActiveTab] = useState<Tab>('need-you')
   const [offeredIds, setOfferedIds] = useState<Set<string>>(new Set())
@@ -146,6 +143,24 @@ function PartnershipsPage() {
             </div>
           </div>
         </div>
+
+        {/* Upgrade banner for free tier */}
+        {!canPartner && (
+          <div className="mx-4 sm:mx-6 mb-3 flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5">
+            <Info className="w-4 h-4 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground flex-1">
+              <span className="font-semibold text-foreground">Partnership features are available on the Growth plan and above.</span>{' '}
+              Upgrade to offer partnerships and message agents.
+            </p>
+            <a
+              href="/dashboard/billing"
+              className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Upgrade
+            </a>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex px-4 sm:px-6 gap-1 overflow-x-auto">
@@ -294,35 +309,54 @@ function PartnershipsPage() {
 
                     {/* Action buttons */}
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleOffer(agent.id)}
-                        disabled={isOffered}
-                        className={`flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                          isOffered
-                            ? 'bg-emerald-500/10 text-emerald-500'
-                            : 'bg-primary text-primary-foreground hover:opacity-90'
-                        }`}
-                      >
-                        {isOffered ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Offered
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-3.5 h-3.5" />
-                            Offer Partnership
-                          </>
-                        )}
-                      </button>
-                      <Link
-                        href={`/dashboard/messages?agent=${agent.id}`}
-                        className="h-9 w-9 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
-                        title={`Message ${agent.name}`}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </Link>
-                      {isOffered && (
+                      {canPartner ? (
+                        <button
+                          onClick={() => handleOffer(agent.id)}
+                          disabled={isOffered}
+                          className={`flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            isOffered
+                              ? 'bg-emerald-500/10 text-emerald-500'
+                              : 'bg-primary text-primary-foreground hover:opacity-90'
+                          }`}
+                        >
+                          {isOffered ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Offered
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              Offer Partnership
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <a
+                          href="/dashboard/billing"
+                          className="flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-primary/10 text-primary opacity-50 cursor-not-allowed"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          Upgrade to Partner
+                        </a>
+                      )}
+                      {canPartner ? (
+                        <Link
+                          href={`/dashboard/messages?agent=${agent.id}`}
+                          className="h-9 w-9 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+                          title={`Message ${agent.name}`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </Link>
+                      ) : (
+                        <span
+                          className="h-9 w-9 rounded-lg flex items-center justify-center border border-border text-muted-foreground opacity-50 cursor-not-allowed shrink-0"
+                          title="Upgrade to message agents"
+                        >
+                          <Lock className="w-3 h-3" />
+                        </span>
+                      )}
+                      {isOffered && canPartner && (
                         <button
                           onClick={() => setReferralAgentId(agent.id)}
                           className="flex-1 h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-primary text-primary hover:bg-primary/10"
@@ -465,27 +499,37 @@ function PartnershipsPage() {
                                 </div>
 
                                 {/* Action */}
-                                <button
-                                  onClick={() => handleRequest(agent.id)}
-                                  disabled={isRequested}
-                                  className={`w-full h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                                    isRequested
-                                      ? 'bg-emerald-500/10 text-emerald-500'
-                                      : 'border border-border hover:bg-accent text-foreground'
-                                  }`}
-                                >
-                                  {isRequested ? (
-                                    <>
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
-                                      Request Sent
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Handshake className="w-3.5 h-3.5" />
-                                      Request Partner
-                                    </>
-                                  )}
-                                </button>
+                                {canPartner ? (
+                                  <button
+                                    onClick={() => handleRequest(agent.id)}
+                                    disabled={isRequested}
+                                    className={`w-full h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                      isRequested
+                                        ? 'bg-emerald-500/10 text-emerald-500'
+                                        : 'border border-border hover:bg-accent text-foreground'
+                                    }`}
+                                  >
+                                    {isRequested ? (
+                                      <>
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        Request Sent
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Handshake className="w-3.5 h-3.5" />
+                                        Request Partner
+                                      </>
+                                    )}
+                                  </button>
+                                ) : (
+                                  <a
+                                    href="/dashboard/billing"
+                                    className="w-full h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-primary/10 text-primary opacity-50 cursor-not-allowed"
+                                  >
+                                    <Lock className="w-3.5 h-3.5" />
+                                    Upgrade to Partner
+                                  </a>
+                                )}
                               </div>
                             )
                           })}

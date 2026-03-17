@@ -78,10 +78,6 @@ export default function BrokerageSwitcher() {
   const pathname = usePathname()
 
   const handleTabClick = (tab: ScopeTab) => {
-    if (tab.locked) {
-      router.push('/dashboard/billing')
-      return
-    }
     setScope(tab.id)
     if (pathname !== '/dashboard') {
       router.push('/dashboard')
