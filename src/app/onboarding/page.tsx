@@ -98,11 +98,10 @@ const PROGRESS_STEPS = [
   { key: 'service_area', label: 'Area' },
   { key: 'specializations', label: 'Specializations' },
   { key: 'avg_price', label: 'Pricing' },
-  { key: 'name_phone', label: 'Profile' },
   { key: 'license_number', label: 'License' },
-  { key: 'phone_verify', label: 'Phone' },
   { key: 'invites', label: 'Invites' },
   { key: 'past_referrals', label: 'Referrals' },
+  { key: 'phone_verify', label: 'Verify' },
   { key: 'summary', label: 'Review' },
 ]
 
@@ -120,12 +119,12 @@ const STEP_ORDER: OnboardingStep[] = [
   'referral_fee',
   'name_phone',
   'license_number',
-  'phone_verify',
-  'phone_code',
   'invites',
   'invite_emails',
   'past_referrals',
   'past_referral_form',
+  'phone_verify',
+  'phone_code',
   'summary',
   'complete',
 ]
@@ -159,16 +158,16 @@ function getProgressIndex(step: OnboardingStep): number {
     specializations: 4,
     avg_price: 5,
     referral_fee: 5,
-    name_phone: 6,
-    license_number: 7,
-    phone_verify: 8,
-    phone_code: 8,
-    invites: 9,
-    invite_emails: 9,
-    past_referrals: 10,
-    past_referral_form: 10,
-    summary: 11,
-    complete: 12,
+    name_phone: 5,
+    license_number: 6,
+    invites: 7,
+    invite_emails: 7,
+    past_referrals: 8,
+    past_referral_form: 8,
+    phone_verify: 9,
+    phone_code: 9,
+    summary: 10,
+    complete: 11,
   }
   return map[step] ?? -1
 }
@@ -567,7 +566,7 @@ export default function OnboardingPage() {
             )
           }, 200)
         } else {
-          showSummary()
+          proceedToPhoneVerify()
         }
         break
       }
@@ -592,7 +591,7 @@ export default function OnboardingPage() {
           }, 200)
         } else {
           addUserMessage('Continue')
-          showSummary()
+          proceedToPhoneVerify()
         }
         break
       }
@@ -725,7 +724,7 @@ export default function OnboardingPage() {
         const license = value.trim()
         updateData({ licenseNumber: license })
         addUserMessage(license)
-        proceedToPhoneVerify()
+        proceedToInvites()
         break
       }
 
@@ -842,7 +841,7 @@ export default function OnboardingPage() {
             'phone_code'
           )
           setTimeout(() => {
-            proceedToInvites()
+            showSummary()
           }, 400)
         }, 200)
       } else {
@@ -1254,7 +1253,7 @@ export default function OnboardingPage() {
                   if (currentStep === 'invites') {
                     proceedToPastReferrals()
                   } else if (currentStep === 'past_referrals') {
-                    showSummary()
+                    proceedToPhoneVerify()
                   }
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
@@ -1393,7 +1392,7 @@ export default function OnboardingPage() {
               onClick={() => {
                 addUserMessage("I'll do this later")
                 setInputValue('')
-                proceedToPhoneVerify()
+                proceedToInvites()
               }}
               className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
             >
@@ -1639,7 +1638,7 @@ export default function OnboardingPage() {
             <button
               onClick={() => {
                 addUserMessage("I'll do this later")
-                showSummary()
+                proceedToPhoneVerify()
               }}
               className="text-xs text-muted-foreground hover:text-foreground mt-2 underline underline-offset-2"
             >
