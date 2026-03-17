@@ -51,6 +51,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const countyLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
+  const zipClusterLayerRef = useRef<L.Layer | null>(null)
   const drawnLayerRef = useRef<L.Layer | null>(null)
   const drawControlRef = useRef<L.Control.Draw | null>(null)
 
@@ -631,24 +632,72 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady, activeTab, value.selectedZips.length])
 
-  // Render zip boundary layers on the map
+  // Render zip boundary layers on the map — clusters when zoomed out, individual when zoomed in
+  const ZIP_CLUSTER_ZOOM = 9
   useEffect(() => {
     if (!mapInstance.current || !L) return
     const map = mapInstance.current
 
-    // Remove old zip layers
+    // Remove old zip layers and cluster marker
     zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
     zipLayersRef.current.clear()
+    if (zipClusterLayerRef.current) {
+      map.removeLayer(zipClusterLayerRef.current)
+      zipClusterLayerRef.current = null
+    }
 
-    if (activeTab !== 'zip') return
+    if (activeTab !== 'zip' || value.selectedZips.length === 0) return
 
-    // Add zip boundary layers and fit bounds
+    // Collect bounds for all loaded zip boundaries
     const allBounds: L.LatLngBounds[] = []
     for (const zip of value.selectedZips) {
       const ring = zipBoundariesRef.current.get(zip)
       if (!ring) continue
+      const poly = L.polygon(ring as L.LatLngExpression[])
+      allBounds.push(poly.getBounds())
+    }
 
-      const layer = L.polygon(ring as L.LatLngExpression[], {
+    // Fit map to show all selected zips (only when zips change, not on zoom)
+    if (allBounds.length > 0 && zipLoadTrigger >= 0) {
+      let combined = allBounds[0]
+      for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
+      // Only auto-fit when zip list changes, not on every zoom
+      if (zipLayersRef.current.size === 0 && zipClusterLayerRef.current === null) {
+        map.fitBounds(combined, { padding: [40, 40], maxZoom: ZIP_CLUSTER_ZOOM })
+      }
+    }
+
+    // Below threshold: show a single cluster marker
+    if (mapZoom < ZIP_CLUSTER_ZOOM && value.selectedZips.length > 1) {
+      let totalLat = 0, totalLng = 0, count = 0
+      for (const zip of value.selectedZips) {
+        const ring = zipBoundariesRef.current.get(zip)
+        if (!ring) continue
+        const c = getCentroid(ring)
+        totalLat += c[0]; totalLng += c[1]; count++
+      }
+      if (count > 0) {
+        const clusterIcon = L!.divIcon({
+          className: '',
+          html: `<div style="background:#f59e0b;color:#fff;border-radius:50%;width:76px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:3px solid #fff;cursor:pointer;line-height:1.1"><span>${value.selectedZips.length}</span><span style="font-size:9px;font-weight:600;letter-spacing:0.05em;opacity:0.9">ZIP CODES</span></div>`,
+          iconSize: [76, 76],
+          iconAnchor: [38, 38],
+        })
+        const marker = L!.marker([totalLat / count, totalLng / count], { icon: clusterIcon })
+        marker.bindTooltip(`${value.selectedZips.length} zip codes — zoom in to see boundaries`, { direction: 'top' })
+        marker.on('click', () => map.setZoom(ZIP_CLUSTER_ZOOM + 1))
+        marker.addTo(map)
+        zipClusterLayerRef.current = marker
+      }
+      return
+    }
+
+    // At or above threshold: show individual zip boundaries
+    for (const zip of value.selectedZips) {
+      const ring = zipBoundariesRef.current.get(zip)
+      if (!ring) continue
+
+      const layer = L!.polygon(ring as L.LatLngExpression[], {
         color: '#f59e0b',
         weight: 2.5,
         fillColor: '#f59e0b',
@@ -659,19 +708,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       layer.on('click', () => removeZip(zip))
       layer.addTo(map)
       zipLayersRef.current.set(zip, layer)
-      allBounds.push(layer.getBounds())
-    }
-
-    // Fit map to show all selected zips
-    if (allBounds.length > 0) {
-      let combined = allBounds[0]
-      for (let i = 1; i < allBounds.length; i++) {
-        combined = combined.extend(allBounds[i])
-      }
-      map.fitBounds(combined, { padding: [40, 40], maxZoom: 10 })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.selectedZips, activeTab, zipLoadTrigger])
+  }, [value.selectedZips, activeTab, zipLoadTrigger, mapZoom])
 
   // Click-to-add zip codes: click anywhere on the map in zip mode to look up + add that zip
   useEffect(() => {
