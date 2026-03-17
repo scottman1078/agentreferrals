@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createHubClient } from '@/lib/supabase/hub'
-import { createClient } from '@/lib/supabase/client'
 
 export default function MagicLinkPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'verifying' | 'signing-in' | 'error' | 'success'>('verifying')
+  const [status, setStatus] = useState<'verifying' | 'error'>('verifying')
   const [errorMessage, setErrorMessage] = useState('')
   const [debugLogs, setDebugLogs] = useState<string[]>([])
 
@@ -28,9 +26,9 @@ export default function MagicLinkPage() {
 
     log(`Token found: ${token.slice(0, 8)}...`)
 
-    async function verifyAndSignIn() {
+    async function verifyAndRedirect() {
       try {
-        // 1. Verify our custom token and get session tokens
+        // 1. Verify our custom token and get session tokens from server
         log('Step 1: Verifying token...')
         const res = await fetch('/api/auth/magic-link/verify', {
           method: 'POST',
@@ -38,7 +36,7 @@ export default function MagicLinkPage() {
           body: JSON.stringify({ token }),
         })
         const data = await res.json()
-        log(`Step 1: valid=${data.valid}, email=${data.email || 'none'}, hasAccessToken=${!!data.access_token}, error=${data.error || 'none'}`)
+        log(`Step 1: valid=${data.valid}, hasAccessToken=${!!data.access_token}, error=${data.error || 'none'}`)
 
         if (!data.valid || !data.access_token) {
           setStatus('error')
@@ -46,59 +44,20 @@ export default function MagicLinkPage() {
           return
         }
 
-        setStatus('signing-in')
+        // 2. Redirect to auth/callback with tokens in the URL hash
+        // This mimics Supabase's implicit auth flow — the callback page
+        // and the Hub client will pick up the tokens from the hash
+        log('Step 2: Redirecting to callback with session tokens...')
 
-        // 2. Set the session on the Hub client using the returned tokens
-        log('Step 2: Setting session on Hub client...')
-        const hub = createHubClient()
-
-        if (!hub) {
-          log('ERROR: Hub client is null')
-          setStatus('error')
-          setErrorMessage('Hub client not available')
-          return
-        }
-
-        const { data: sessionData, error: sessionError } = await hub.auth.setSession({
+        const hashParams = new URLSearchParams({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
+          expires_in: String(data.expires_in || 3600),
+          token_type: 'bearer',
+          type: 'magiclink',
         })
 
-        log(`Step 2 result: session=${!!sessionData?.session}, userId=${sessionData?.user?.id?.slice(0, 8) || 'none'}, error=${sessionError?.message || 'none'}`)
-
-        if (sessionError || !sessionData?.session) {
-          setStatus('error')
-          setErrorMessage(`Failed to set session: ${sessionError?.message || 'Unknown error'}`)
-          return
-        }
-
-        // 3. Session established!
-        log(`Step 3: Session OK! User: ${sessionData.session.user.id}`)
-        setStatus('success')
-
-        // 4. Check if user needs onboarding
-        log('Step 4: Checking ar_profiles...')
-        const product = createClient()
-        try {
-          const { data: arProfile, error: profileError } = await product
-            .from('ar_profiles')
-            .select('id, primary_area')
-            .eq('id', sessionData.session.user.id)
-            .single()
-
-          log(`Step 4: profile=${!!arProfile}, area=${arProfile?.primary_area || 'null'}, error=${profileError?.message || 'none'}`)
-
-          if (arProfile && arProfile.primary_area) {
-            log('Routing to /dashboard')
-            window.location.href = '/dashboard'
-          } else {
-            log('Routing to /onboarding')
-            window.location.href = '/onboarding'
-          }
-        } catch (err) {
-          log(`Step 4 error: ${err}. Routing to /onboarding`)
-          window.location.href = '/onboarding'
-        }
+        window.location.href = `/auth/callback#${hashParams.toString()}`
       } catch (err) {
         log(`Fatal error: ${err}`)
         setStatus('error')
@@ -106,46 +65,45 @@ export default function MagicLinkPage() {
       }
     }
 
-    verifyAndSignIn()
+    verifyAndRedirect()
   }, [searchParams, router])
+
+  if (status === 'error') {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center max-w-lg mx-auto px-4">
+          <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 className="font-bold text-lg mb-2 text-foreground">Sign-in failed</h2>
+          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="h-10 px-6 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+          >
+            Request a new link
+          </button>
+
+          {debugLogs.length > 0 && (
+            <div className="mt-6 p-3 rounded-lg bg-card border border-border text-left max-h-60 overflow-y-auto">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Debug Log</p>
+              {debugLogs.map((l, i) => (
+                <p key={i} className="text-[11px] text-muted-foreground font-mono leading-relaxed">{l}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-background">
-      <div className="text-center max-w-lg mx-auto px-4">
-        {status === 'error' ? (
-          <>
-            <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <h2 className="font-bold text-lg mb-2 text-foreground">Sign-in failed</h2>
-            <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
-            <button
-              onClick={() => router.push('/')}
-              className="h-10 px-6 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
-            >
-              Request a new link
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="w-10 h-10 rounded-lg bg-primary mx-auto mb-4 animate-pulse" />
-            <p className="text-sm text-muted-foreground">
-              {status === 'verifying' ? 'Verifying your link...' : status === 'success' ? 'Success! Redirecting...' : 'Signing you in...'}
-            </p>
-          </>
-        )}
-
-        {/* Debug logs */}
-        {debugLogs.length > 0 && (
-          <div className="mt-6 p-3 rounded-lg bg-card border border-border text-left max-h-60 overflow-y-auto">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Debug Log</p>
-            {debugLogs.map((l, i) => (
-              <p key={i} className="text-[11px] text-muted-foreground font-mono leading-relaxed">{l}</p>
-            ))}
-          </div>
-        )}
+      <div className="text-center">
+        <div className="w-10 h-10 rounded-lg bg-primary mx-auto mb-4 animate-pulse" />
+        <p className="text-sm text-muted-foreground">Verifying your link...</p>
       </div>
     </div>
   )
