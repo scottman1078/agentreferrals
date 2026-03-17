@@ -524,9 +524,24 @@ export default function LandingPage() {
             )}
 
             {signupSuccess && (
-              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
-                <p className="font-bold mb-1">Check your email!</p>
-                <p className="text-xs">We sent a confirmation link to <span className="font-semibold">{email}</span>. Click it to activate your account, then come back to sign in.</p>
+              <div className="flex flex-col items-center text-center py-8 px-4">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
+                  <svg className="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                </div>
+                <h3 className="font-bold text-lg mb-1">Check your email</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We sent a confirmation link to<br />
+                  <span className="font-semibold text-foreground">{email}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Click the link to activate your account, then come back to sign in.
+                </p>
+                <button
+                  onClick={() => { setSignupSuccess(false); setAuthMode('signin') }}
+                  className="mt-6 h-10 px-6 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-accent transition-colors"
+                >
+                  Back to Sign In
+                </button>
               </div>
             )}
 
