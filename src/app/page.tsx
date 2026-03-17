@@ -43,6 +43,14 @@ export default function LandingPage() {
   const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null)
   const [validatedInviteCode, setValidatedInviteCode] = useState('')
 
+  // Existing account detection
+  const [existingAccount, setExistingAccount] = useState<{
+    exists: boolean
+    name?: string
+    platforms?: { name: string; slug: string }[]
+  } | null>(null)
+  const [checkingAccount, setCheckingAccount] = useState(false)
+
   // Spots counter — live from DB
   const [spotsRemaining, setSpotsRemaining] = useState(TOTAL_SPOTS)
   useEffect(() => {
@@ -810,6 +818,12 @@ export default function LandingPage() {
                         options: { data: { full_name: fullName, invited_by: inviterName } },
                       })
                       if (error) {
+                        if (error.message?.toLowerCase().includes('already registered') || error.message?.toLowerCase().includes('already been registered')) {
+                          setAuthError(null)
+                          setExistingAccount({ exists: true, name: fullName || undefined })
+                          setAuthLoading(false)
+                          return
+                        }
                         setAuthError(error.message)
                         setAuthLoading(false)
                         return
@@ -856,11 +870,48 @@ export default function LandingPage() {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); setExistingAccount(null) }}
+                        onBlur={async () => {
+                          if (!email || !email.includes('@')) return
+                          setCheckingAccount(true)
+                          try {
+                            const res = await fetch(`/api/check-account?email=${encodeURIComponent(email)}`)
+                            const data = await res.json()
+                            if (data.exists) setExistingAccount(data)
+                            else setExistingAccount(null)
+                          } catch { setExistingAccount(null) }
+                          setCheckingAccount(false)
+                        }}
                         placeholder="you@email.com"
-                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         required
                       />
+                      {checkingAccount && (
+                        <p className="text-[11px] text-muted-foreground mt-1 mb-3">Checking account...</p>
+                      )}
+                      {existingAccount?.exists && (
+                        <div className="mt-1.5 mb-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                          <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                            Welcome back, {existingAccount.name || 'there'}!
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mb-2">
+                            You already have an AgentDashboards account.
+                            {existingAccount.platforms && existingAccount.platforms.length > 0 && (
+                              <span> Active on: <span className="font-semibold text-foreground">{existingAccount.platforms.map(p => p.name).join(', ')}</span></span>
+                            )}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => { setAuthMode('signin'); setExistingAccount(null) }}
+                            className="text-xs font-bold text-primary hover:underline"
+                          >
+                            Sign in instead &rarr;
+                          </button>
+                        </div>
+                      )}
+                      {!existingAccount?.exists && !checkingAccount && (
+                        <div className="mb-4" />
+                      )}
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
                       <div className="relative">
                         <input
