@@ -59,13 +59,8 @@ export default function MagicLinkPage() {
 
         log(`Step 2: session=${!!signInData?.session}, userId=${signInData?.user?.id?.slice(0, 8) || 'none'}, error=${signInError?.message || 'none'}`)
 
-        // 3. Immediately tell server to rotate the temp password
-        log('Step 3: Cleaning up temp credentials...')
-        fetch('/api/auth/magic-link/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phase: 'cleanup', userId: data.userId }),
-        }).catch(() => {}) // fire and forget
+        // Note: NOT rotating the temp password — doing so invalidates the session.
+        // The temp password is a 256-bit random hex string, cryptographically secure.
 
         if (signInError || !signInData?.session) {
           setStatus('error')
