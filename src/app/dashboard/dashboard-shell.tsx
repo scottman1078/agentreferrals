@@ -81,7 +81,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAuthenticated, needsOnboarding, profile, router])
 
-  // Show setup wizard if user completed onboarding but has no territory
+  // Show setup wizard if user completed onboarding but has no territory.
+  // Debounced by 400ms so rapid profile re-fetches (auth state change firing twice)
+  // don't cause a flash where the wizard shows then immediately disappears.
   useEffect(() => {
     if (isLoading || !isAuthenticated || !profile) return
     if (needsOnboarding || !profile.primary_area) return // still needs onboarding
@@ -102,8 +104,10 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Show for new users who haven't defined their full service area yet
-    setShowSetupWizard(true)
+    // Delay showing so a second profile fetch (onAuthStateChange) can cancel this
+    // before the wizard ever renders
+    const timer = setTimeout(() => setShowSetupWizard(true), 400)
+    return () => clearTimeout(timer)
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
 
   if (isLoading) {
