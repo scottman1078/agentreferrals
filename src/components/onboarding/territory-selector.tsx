@@ -17,8 +17,8 @@ export interface TerritoryData {
   selectedCounties: string[]
   /** Selected zip code strings (for zip mode) */
   selectedZips: string[]
-  /** Custom drawn polygon coordinates [lat, lng][] (for draw mode) */
-  drawnPolygon: LatLng[]
+  /** Custom drawn polygon coordinates — array of shapes, each shape is [lat, lng][] */
+  drawnPolygon: LatLng[][]
   /** Combined polygon(s) for storage — array of rings, each ring is [lat, lng][] */
   polygon: LatLng[][]
 }
@@ -268,17 +268,19 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       const drawnItems = new L.FeatureGroup()
       map.addLayer(drawnItems)
 
-      // Add existing drawn polygon back
-      if (value.drawnPolygon.length >= 3) {
-        const poly = L.polygon(value.drawnPolygon as L.LatLngExpression[], {
-          color: '#f59e0b',
-          weight: 2.5,
-          fillColor: '#f59e0b',
-          fillOpacity: 0.25,
-        })
-        drawnItems.addLayer(poly)
-        drawnLayerRef.current = poly
+      // Add existing drawn polygons back
+      for (const coords of value.drawnPolygon) {
+        if (coords.length >= 3) {
+          const poly = L.polygon(coords as L.LatLngExpression[], {
+            color: '#f59e0b',
+            weight: 2.5,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.25,
+          })
+          drawnItems.addLayer(poly)
+        }
       }
+      drawnLayerRef.current = drawnItems
 
       const drawControl = new L.Control.Draw({
         position: 'topright',
@@ -310,38 +312,46 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.on('draw:created', (e: any) => {
         const event = e as { layer: L.Polygon }
-        // Clear previous
-        drawnItems.clearLayers()
-        if (drawnLayerRef.current) {
-          map.removeLayer(drawnLayerRef.current)
-        }
-
         const drawnLayer = event.layer
         drawnItems.addLayer(drawnLayer)
-        drawnLayerRef.current = drawnLayer
 
-        // Extract coordinates
+        // Extract coordinates and append to existing polygons
         const latLngs = drawnLayer.getLatLngs()[0] as L.LatLng[]
         const coords: LatLng[] = latLngs.map((ll) => [ll.lat, ll.lng])
+        const newDrawnPolygons = [...value.drawnPolygon, coords]
 
         onChange({
           ...value,
           mode: 'draw',
-          drawnPolygon: coords,
-          polygon: [coords],
+          drawnPolygon: newDrawnPolygons,
+          polygon: newDrawnPolygons,
         })
 
-        // Resolve which zip codes intersect the drawn polygon
+        // Resolve which zip codes intersect the newly drawn polygon
         resolvePolygonToZips(coords)
       })
 
       map.on('draw:deleted', () => {
-        drawnLayerRef.current = null
+        // Read whatever remains in drawnItems after the deletion
+        const remainingPolygons: LatLng[][] = []
+        drawnItems.getLayers().forEach((layer) => {
+          const poly = layer as L.Polygon
+          const rings = poly.getLatLngs()
+          if (rings.length > 0) {
+            const lls = rings[0] as L.LatLng[]
+            remainingPolygons.push(lls.map((ll) => [ll.lat, ll.lng]))
+          }
+        })
+
+        if (remainingPolygons.length === 0) {
+          drawnLayerRef.current = null
+        }
+
         onChange({
           ...value,
           mode: 'draw',
-          drawnPolygon: [],
-          polygon: [],
+          drawnPolygon: remainingPolygons,
+          polygon: remainingPolygons,
         })
       })
     })
@@ -379,16 +389,21 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       }
     }
 
-    // Show drawn polygon if switching back to draw mode
-    if (activeTab === 'draw' && value.drawnPolygon.length >= 3 && !drawnLayerRef.current) {
-      const poly = L.polygon(value.drawnPolygon as L.LatLngExpression[], {
-        color: '#f59e0b',
-        weight: 2.5,
-        fillColor: '#f59e0b',
-        fillOpacity: 0.25,
-      })
-      poly.addTo(map)
-      drawnLayerRef.current = poly
+    // Show drawn polygons if switching back to draw mode
+    if (activeTab === 'draw' && value.drawnPolygon.length > 0 && !drawnLayerRef.current) {
+      const group = L.featureGroup()
+      for (const coords of value.drawnPolygon) {
+        if (coords.length >= 3) {
+          L.polygon(coords as L.LatLngExpression[], {
+            color: '#f59e0b',
+            weight: 2.5,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.25,
+          }).addTo(group)
+        }
+      }
+      group.addTo(map)
+      drawnLayerRef.current = group
     }
 
     onChange({ ...value, mode: activeTab })
@@ -564,12 +579,15 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         if (ring) polygonRings.push(ring)
       }
 
+      // Append the newly drawn shape to existing polygons (value is stale but consistent with draw:created)
+      const newDrawnPolygons = [...value.drawnPolygon, coords]
+
       onChange({
         ...value,
         mode: 'draw',
-        drawnPolygon: coords,
+        drawnPolygon: newDrawnPolygons,
         selectedZips: mergedZips,
-        polygon: polygonRings.length > 0 ? polygonRings : [coords],
+        polygon: polygonRings.length > 0 ? polygonRings : newDrawnPolygons,
       })
 
       // Trigger zip layer re-render
@@ -655,7 +673,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   }
 
   const territoryCount = activeTab === 'draw'
-    ? (value.drawnPolygon.length >= 3 ? 1 : 0)
+    ? value.drawnPolygon.length
     : activeTab === 'zip'
       ? value.selectedZips.length
       : value.selectedCounties.length
@@ -804,11 +822,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         </div>
       )}
 
-      {activeTab === 'draw' && value.drawnPolygon.length >= 3 && (
+      {activeTab === 'draw' && value.drawnPolygon.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-primary font-medium">
             <MapPin className="w-4 h-4" />
-            Custom boundary drawn ({value.drawnPolygon.length} points)
+            {value.drawnPolygon.length} custom shape{value.drawnPolygon.length !== 1 ? 's' : ''} drawn
           </div>
 
           {/* Polygon-to-zip loading / results */}
