@@ -10,6 +10,8 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'AgentReferrals — AI-Powered Referral Network',
   description: 'AI-powered referral network for real estate agents. Find, match, and manage referrals across brokerages.',
