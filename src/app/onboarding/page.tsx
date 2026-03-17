@@ -126,6 +126,7 @@ const STEP_ORDER: OnboardingStep[] = [
   'invite_emails',
   'past_referrals',
   'past_referral_form',
+  'summary',
   'complete',
 ]
 
