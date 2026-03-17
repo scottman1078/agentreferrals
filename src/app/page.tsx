@@ -29,6 +29,8 @@ export default function LandingPage() {
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [signInMethod, setSignInMethod] = useState<'magic' | 'password'>('magic')
+  const [magicLinkSent, setMagicLinkSent] = useState(false)
 
   // Invite-only sign-up state
   const [signupPath, setSignupPath] = useState<'invite' | 'waitlist' | null>(null)
@@ -588,74 +590,167 @@ export default function LandingPage() {
                   Continue with Google
                 </button>
 
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground font-medium">or continue with email</span>
-                  <div className="flex-1 h-px bg-border" />
+                {/* Sign-in method toggle */}
+                <div className="flex rounded-lg border border-border bg-background p-0.5 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setSignInMethod('magic')}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${
+                      signInMethod === 'magic'
+                        ? 'bg-background shadow-sm text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Magic Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSignInMethod('password')}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${
+                      signInMethod === 'password'
+                        ? 'bg-background shadow-sm text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Password
+                  </button>
                 </div>
 
-                <form onSubmit={async (e) => {
-                  e.preventDefault()
-                  setAuthLoading(true)
-                  setAuthError(null)
-                  const hub = createHubClient()
-                  const { error } = await hub.auth.signInWithPassword({ email, password })
-                  if (error) {
-                    setAuthError(error.message)
+                {signInMethod === 'magic' && !magicLinkSent && (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault()
+                    setAuthLoading(true)
+                    setAuthError(null)
+                    const hub = createHubClient()
+                    const isDev = window.location.hostname === 'localhost'
+                    const redirectTo = isDev
+                      ? 'http://localhost:5500/auth/callback'
+                      : 'https://agentreferrals.ai/auth/callback'
+                    const { error } = await hub.auth.signInWithOtp({
+                      email,
+                      options: { emailRedirectTo: redirectTo },
+                    })
+                    if (error) {
+                      setAuthError(error.message)
+                      setAuthLoading(false)
+                      return
+                    }
+                    setMagicLinkSent(true)
                     setAuthLoading(false)
-                    return
-                  }
-                  const params = new URLSearchParams(window.location.search)
-                  const redirect = params.get('redirect') || '/dashboard'
-                  window.location.href = redirect
-                }}>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    required
-                  />
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
-                  <div className="relative">
+                  }}>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
                     <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
                       required
                     />
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={-1}
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {authLoading ? 'Sending...' : 'Send Magic Link'}
                     </button>
-                  </div>
-                  <div className="mb-2" />
-                  <div className="text-right mb-4">
+                    <p className="text-center text-xs text-muted-foreground mt-3">
+                      We&apos;ll email you a sign-in link — no password needed.
+                    </p>
+                  </form>
+                )}
+
+                {signInMethod === 'magic' && magicLinkSent && (
+                  <div className="flex flex-col items-center text-center py-6 px-4">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                    </div>
+                    <h3 className="font-bold text-lg mb-1">Check your email</h3>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      We sent a magic link to
+                    </p>
+                    <p className="text-sm font-semibold text-foreground mb-4">{email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Click the link to sign in instantly.
+                    </p>
                     <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email); setResetMessage(null); setResetError(null) }}
-                      className="text-xs text-primary hover:underline font-medium"
+                      onClick={() => setMagicLinkSent(false)}
+                      className="mt-5 text-xs text-primary hover:underline font-medium"
                     >
-                      Forgot password?
+                      Send again or try a different email
                     </button>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    {authLoading ? 'Please wait...' : 'Sign In'}
-                  </button>
-                </form>
-                <p className="text-center text-xs text-muted-foreground mt-5">
-                  Demo credentials pre-filled — <span className="text-primary font-medium cursor-pointer">click Sign In</span>
-                </p>
+                )}
+
+                {signInMethod === 'password' && (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground font-medium">sign in with email</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    <form onSubmit={async (e) => {
+                      e.preventDefault()
+                      setAuthLoading(true)
+                      setAuthError(null)
+                      const hub = createHubClient()
+                      const { error } = await hub.auth.signInWithPassword({ email, password })
+                      if (error) {
+                        setAuthError(error.message)
+                        setAuthLoading(false)
+                        return
+                      }
+                      const params = new URLSearchParams(window.location.search)
+                      const redirect = params.get('redirect') || '/dashboard'
+                      window.location.href = redirect
+                    }}>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        required
+                      />
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="mb-2" />
+                      <div className="text-right mb-4">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email); setResetMessage(null); setResetError(null) }}
+                          className="text-xs text-primary hover:underline font-medium"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        {authLoading ? 'Please wait...' : 'Sign In'}
+                      </button>
+                    </form>
+                  </>
+                )}
               </>
             )}
 
