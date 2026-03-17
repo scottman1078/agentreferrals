@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Super admin bypass codes
-    if (code === 'ADMIN-2026' || code === '847293') {
+    if (code === 'ADMIN-2026' || code === '847293' || code === 'SCOTT-2026-INVITE') {
       return NextResponse.json({
         valid: true,
         inviteId: 'admin-bypass',
