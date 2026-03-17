@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const MAX_INVITES_REGULAR = 3
-const MAX_INVITES_ELITE = 5
+const MAX_INVITES_STARTER = 10
+const MAX_INVITES_GROWTH = 25
+const MAX_INVITES_PRO = 100
+const MAX_INVITES_ELITE = 100
 
 // GET /api/invites/mine?userId=xxx
 // Returns the user's invite codes and remaining count
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     const tier = profile?.subscription_tier || 'free'
-    const maxInvites = tier === 'elite' ? MAX_INVITES_ELITE : MAX_INVITES_REGULAR
+    const maxInvites = tier === 'elite' ? MAX_INVITES_ELITE : tier === 'pro' ? MAX_INVITES_PRO : tier === 'growth' ? MAX_INVITES_GROWTH : MAX_INVITES_STARTER
 
     // Get existing invite codes for this user
     const { data: invites, error } = await supabase
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     const tier = profile?.subscription_tier || 'free'
-    const maxInvites = tier === 'elite' ? MAX_INVITES_ELITE : MAX_INVITES_REGULAR
+    const maxInvites = tier === 'elite' ? MAX_INVITES_ELITE : tier === 'pro' ? MAX_INVITES_PRO : tier === 'growth' ? MAX_INVITES_GROWTH : MAX_INVITES_STARTER
     const name = profile?.full_name || 'Agent'
 
     // Check how many they already have
