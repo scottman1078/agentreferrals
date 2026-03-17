@@ -1088,16 +1088,50 @@ export default function OnboardingPage() {
       upsertPayload.territory_zips = null as unknown as string[]
     }
 
-    const { error } = await supabase
-      .from('ar_profiles')
-      .upsert(upsertPayload, { onConflict: 'id' })
+    // Save via API route (uses admin client to bypass RLS)
+    const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())
+    const city = areaParts[0] || ''
+    const state = areaParts[1] || ''
 
-    if (error) {
-      console.error('[Onboarding] Profile upsert failed:', error.message)
+    const saveRes = await fetch('/api/onboarding/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile: upsertPayload,
+        hubData: {
+          agent: {
+            profile_id: userId,
+            email: userEmail,
+            first_name: data.fullName.split(' ')[0] || '',
+            last_name: data.fullName.split(' ').slice(1).join(' ') || '',
+            phone: data.phone.trim() || null,
+            city,
+            state,
+            is_agent: true,
+            is_active: true,
+            metadata: {
+              source_platform: 'agentreferrals',
+              years_licensed: data.yearsLicensed,
+              deals_per_year: data.referralsPerYear,
+              avg_sale_price: data.avgSalePrice,
+              specializations: data.specializations,
+              avg_referral_fee: data.avgReferralFee,
+              team_name: data.teamName || null,
+              is_on_team: data.isOnTeam,
+            },
+          },
+          platform: true,
+        },
+      }),
+    })
+
+    const saveData = await saveRes.json()
+
+    if (!saveRes.ok || saveData.error) {
+      console.error('[Onboarding] Save failed:', saveData.error)
       setIsSubmitting(false)
-      // Show error in the chat
       addNoraMessage(
-        `Something went wrong saving your profile: "${error.message}". Please try again or contact support.`,
+        `Something went wrong saving your profile: "${saveData.error || 'Unknown error'}". Please try again.`,
         { kind: 'buttons', options: [
           { label: 'Try Again', value: 'dashboard', primary: true },
         ]},
@@ -1114,57 +1148,10 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           userId,
           licenseNumber: data.licenseNumber.trim(),
-          licenseState: '', // We don't ask for state separately in onboarding
+          licenseState: '',
           fullName: data.fullName.trim(),
         }),
       }).catch(() => {})
-    }
-
-    // ── Hub registration ──
-    try {
-      const hubClient = createHubClient()
-      const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())
-      const city = areaParts[0] || ''
-      const state = areaParts[1] || ''
-
-      await hubClient.from('agents').upsert({
-        profile_id: userId,
-        email: userEmail,
-        first_name: data.fullName.split(' ')[0] || '',
-        last_name: data.fullName.split(' ').slice(1).join(' ') || '',
-        phone: data.phone.trim() || null,
-        city,
-        state,
-        is_agent: true,
-        is_active: true,
-        metadata: {
-          source_platform: 'agentreferrals',
-          years_licensed: data.yearsLicensed,
-          deals_per_year: data.referralsPerYear,
-          avg_sale_price: data.avgSalePrice,
-          specializations: data.specializations,
-          avg_referral_fee: data.avgReferralFee,
-          team_name: data.teamName || null,
-          is_on_team: data.isOnTeam,
-        },
-      }, { onConflict: 'profile_id' })
-
-      const { data: platform } = await hubClient
-        .from('platforms')
-        .select('id')
-        .eq('slug', 'agentreferrals')
-        .single()
-
-      if (platform) {
-        await hubClient.from('user_products').upsert({
-          profile_id: userId,
-          product_id: platform.id,
-          status: 'active',
-          tier: 'free',
-        }, { onConflict: 'profile_id,product_id' })
-      }
-    } catch (hubError) {
-      console.error('[Onboarding] Hub registration failed:', hubError)
     }
 
     // Generate invite codes for this user
@@ -1181,7 +1168,7 @@ export default function OnboardingPage() {
 
     router.push('/dashboard')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, userEmail, data, phoneVerified, supabase, router])
+  }, [userId, userEmail, data, phoneVerified, router])
 
   // ── Render interactive elements ──
   const renderInteractive = (msg: ChatMessage) => {
