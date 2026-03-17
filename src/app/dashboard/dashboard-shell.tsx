@@ -86,13 +86,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     if (isLoading || !isAuthenticated || !profile) return
     if (needsOnboarding || !profile.primary_area) return // still needs onboarding
 
-    // Don't show if already completed
+    // Don't show if already completed the setup wizard
     if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
-    const hasZips = Array.isArray(profile.territory_zips) && profile.territory_zips.length > 0
-    const hasPolygon = Array.isArray(profile.polygon) && profile.polygon.length > 0
-
-    if (!hasZips && !hasPolygon) {
+    // Show for any user who hasn't completed the setup wizard yet
+    // (even if they have a primary zip from onboarding — they still need to define their full service area)
+    {
       setShowSetupWizard(true)
     }
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
