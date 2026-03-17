@@ -1094,6 +1094,16 @@ export default function OnboardingPage() {
 
     if (error) {
       console.error('[Onboarding] Profile upsert failed:', error.message)
+      setIsSubmitting(false)
+      // Show error in the chat
+      addNoraMessage(
+        `Something went wrong saving your profile: "${error.message}". Please try again or contact support.`,
+        { kind: 'buttons', options: [
+          { label: 'Try Again', value: 'dashboard', primary: true },
+        ]},
+        'complete'
+      )
+      return
     }
 
     // ── Fire-and-forget license verification ──
