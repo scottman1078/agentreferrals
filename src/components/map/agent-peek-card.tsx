@@ -1,12 +1,13 @@
 'use client'
 
-import { X, Send, MessageSquare, Star, Clock, GripHorizontal, User } from 'lucide-react'
+import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
 import AgentNotes from '@/components/agent-notes'
+import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import type { Agent } from '@/types'
 
 interface AgentPeekCardProps {
@@ -25,6 +26,8 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const score = agent.referNetScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
+  const commScore = getCommScore(agent.id)
+  const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
 
   return (
     <div className="fixed bottom-[88px] left-4 right-4 max-w-lg mx-auto z-[450]">
@@ -59,6 +62,12 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                 {score > 0 && (
                   <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${scoreColor}`}>
                     {score}
+                  </span>
+                )}
+                {commScore && (
+                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${commScoreColor}`}>
+                    <MessageSquareMore className="w-2.5 h-2.5" />
+                    {commScore.overall}
                   </span>
                 )}
               </div>

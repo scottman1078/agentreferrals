@@ -8,7 +8,8 @@ import TopBar from '@/components/layout/top-bar'
 import PillNav from '@/components/layout/pill-nav'
 import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
-import NudgeBanner from '@/components/nudges/nudge-banner'
+import { AdminTierProvider } from '@/contexts/admin-tier-context'
+import AdminTierSwitcher from '@/components/admin/tier-switcher'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
 
@@ -76,6 +77,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+
+        {/* Admin-only tier switcher */}
+        <AdminTierSwitcher />
       </div>
     </BrokerageProvider>
   )
@@ -84,7 +88,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <DashboardShell>{children}</DashboardShell>
+      <AdminTierProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </AdminTierProvider>
     </AuthProvider>
   )
 }

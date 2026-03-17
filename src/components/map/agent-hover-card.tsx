@@ -5,7 +5,8 @@ import { getInitials } from '@/lib/utils'
 import { getConnectionPath } from '@/data/partnerships'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, MessageSquare } from 'lucide-react'
+import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import type { Agent } from '@/types'
 
 interface AgentHoverCardProps {
@@ -18,6 +19,8 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const score = agent.referNetScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
+  const commScore = getCommScore(agent.id)
+  const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
 
   // Connection path for degree-of-separation agents
   const { scope, oneDegreeIds, twoDegreeIds } = useBrokerage()
@@ -55,6 +58,12 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
               {score > 0 && (
                 <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${scoreColor}`}>
                   {score}
+                </span>
+              )}
+              {commScore && (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5 rounded-full ${commScoreColor}`}>
+                  <MessageSquare className="w-2 h-2" />
+                  {commScore.overall}
                 </span>
               )}
             </div>

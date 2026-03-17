@@ -15,6 +15,7 @@ import {
 import type { Conversation, Message } from '@/data/messages'
 import {
   MessageSquare,
+  MessageSquareMore,
   Send,
   Search,
   X,
@@ -26,6 +27,7 @@ import {
 } from 'lucide-react'
 import SuggestedOutreach from '@/components/nudges/suggested-outreach'
 import { nudges as initialNudges } from '@/data/nudges'
+import { getCommNudges } from '@/data/comm-nudges'
 import type { Nudge } from '@/data/nudges'
 
 // ─── New Message Modal (supports single + group) ───
@@ -578,6 +580,22 @@ export default function MessagesPage() {
           />
         </div>
       </div>
+
+      {/* Partners waiting on updates banner */}
+      {(() => {
+        const commNudges = getCommNudges('jason').filter((n) => n.agentId !== 'jason')
+        if (commNudges.length === 0) return null
+        return (
+          <div className="border-b border-border px-4 py-2.5">
+            <div className="flex items-center gap-2 text-xs">
+              <MessageSquareMore className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                {commNudges.length} partner{commNudges.length !== 1 ? 's' : ''} waiting on updates
+              </span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Suggested Outreach from NORA */}
       <SuggestedOutreach

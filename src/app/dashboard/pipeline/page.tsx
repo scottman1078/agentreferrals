@@ -9,7 +9,9 @@ import CreateReferralModal from '@/components/referral/create-referral-modal'
 import AgreementBuilder from '@/components/agreements/agreement-builder'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Plus, GitPullRequestArrow, FileSignature } from 'lucide-react'
+import { Plus, GitPullRequestArrow, FileSignature, MessageSquareMore, ChevronDown, ChevronUp, X as XIcon } from 'lucide-react'
+import { getCommNudges } from '@/data/comm-nudges'
+import type { CommNudge } from '@/data/comm-nudges'
 import type { PipelineStage, Referral } from '@/types'
 
 function PipelineSkeleton() {
@@ -36,6 +38,88 @@ function PipelineSkeleton() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function CommNudgeBanner() {
+  const [collapsed, setCollapsed] = useState(true)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+
+  const allNudges = getCommNudges('jason')
+  const nudges = allNudges.filter((n) => !dismissed.has(n.id))
+
+  if (nudges.length === 0) return null
+
+  const visibleNudges = collapsed ? [] : nudges.slice(0, 3)
+  const hasMore = nudges.length > 3
+
+  const priorityDot = (priority: CommNudge['priority']) => {
+    switch (priority) {
+      case 'high': return 'bg-red-500'
+      case 'medium': return 'bg-amber-500'
+      case 'low': return 'bg-blue-500'
+    }
+  }
+
+  return (
+    <div className="border-b border-border bg-card">
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center gap-2.5 px-4 sm:px-6 py-3 hover:bg-accent/50 transition-colors"
+      >
+        <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center shrink-0">
+          <MessageSquareMore className="w-3.5 h-3.5 text-amber-500" />
+        </div>
+        <span className="text-xs font-bold">Communication Reminders</span>
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+          {nudges.length}
+        </span>
+        <div className="flex-1" />
+        {collapsed ? (
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+        ) : (
+          <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+        )}
+      </button>
+
+      {!collapsed && (
+        <div className="px-4 sm:px-6 pb-3 space-y-2">
+          {visibleNudges.map((nudge) => (
+            <div
+              key={nudge.id}
+              className="flex items-start gap-3 p-3 rounded-lg border border-border bg-background"
+            >
+              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${priorityDot(nudge.priority)}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-foreground leading-relaxed">{nudge.message}</p>
+                {nudge.suggestedMessage && (
+                  <a
+                    href={`/dashboard/messages?agent=${nudge.agentId}`}
+                    className="inline-flex items-center gap-1 mt-2 h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-[11px] font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    <MessageSquareMore className="w-3 h-3" />
+                    Send Update
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={() => setDismissed((prev) => new Set(prev).add(nudge.id))}
+                className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {hasMore && (
+            <div className="text-center py-1">
+              <span className="text-[10px] text-muted-foreground">
+                +{nudges.length - 3} more reminder{nudges.length - 3 !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -136,6 +220,8 @@ function PipelinePage() {
           </div>
         </div>
       </div>
+
+      <CommNudgeBanner />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 flex-1 items-start">
         {PIPELINE_STAGES.map((stage) => {

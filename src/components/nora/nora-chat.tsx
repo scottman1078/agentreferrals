@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2 } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { nudges, getActiveNudges } from '@/data/nudges'
+import { getCommNudges } from '@/data/comm-nudges'
 import type { Agent, NoraMessage } from '@/types'
 
 // ── Pattern-matching fallback (used when no API key) ──────────────────
@@ -63,11 +64,18 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const inactiveCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
 
+  const highPriorityCommNudges = getCommNudges('jason').filter((n) => n.priority === 'high')
+
   const buildWelcomeMessage = useCallback(() => {
     const greetings: string[] = []
 
     // Personalized greeting
     greetings.push(`Hey ${firstName}! 👋`)
+
+    // Communication nudges — high priority
+    if (highPriorityCommNudges.length > 0) {
+      greetings.push(`You have ${highPriorityCommNudges.length} partner${highPriorityCommNudges.length > 1 ? 's' : ''} waiting on updates — want me to help draft messages?`)
+    }
 
     // Inactive partners nudge
     if (inactiveCount > 0) {
@@ -86,7 +94,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
     }
 
     return greetings.join('\n\n')
-  }, [firstName, inactiveCount, agents])
+  }, [firstName, inactiveCount, agents, highPriorityCommNudges.length])
 
   const [messages, setMessages] = useState<NoraMessage[]>([
     { id: 'welcome', role: 'assistant', content: buildWelcomeMessage(), timestamp: new Date() },

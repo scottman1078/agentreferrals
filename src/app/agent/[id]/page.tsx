@@ -19,6 +19,7 @@ import {
   Send,
   Users,
   MessageCircle,
+  MessageSquareMore,
   MapPin,
   Building2,
   ArrowLeft,
@@ -29,6 +30,7 @@ import { AgentProfileReviews } from './agent-profile-reviews'
 import { AgentProfileMap } from './agent-profile-map'
 import AgentNotesSection from './agent-notes-section'
 import { getMentorProfile } from '@/data/mentoring'
+import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 
 // --------------- Static params ---------------
 export function generateStaticParams() {
@@ -66,6 +68,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
   const stats = getAgentReviewStats(agent.id)
   const isElite = (agent.referNetScore ?? 0) >= 90
   const mentorProfile = getMentorProfile(agent.id)
+  const commScore = getCommScore(agent.id)
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,37 +171,49 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
       <div className="max-w-4xl mx-auto px-6 pb-16 space-y-10">
         {/* ═══ QUICK STATS ═══ */}
-        <section className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <section className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
             {
               icon: Home,
               label: 'Deals / Year',
               value: agent.dealsPerYear.toString(),
               color: 'text-blue-500',
+              sublabel: undefined as string | undefined,
             },
             {
               icon: Calendar,
               label: 'Years Licensed',
               value: agent.yearsLicensed.toString(),
               color: 'text-emerald-500',
+              sublabel: undefined as string | undefined,
             },
             {
               icon: DollarSign,
               label: 'Avg Sale Price',
               value: formatCurrency(agent.avgSalePrice),
               color: 'text-amber-500',
+              sublabel: undefined as string | undefined,
             },
             {
               icon: Handshake,
               label: 'Closed Referrals',
               value: (agent.closedReferrals ?? 0).toString(),
               color: 'text-violet-500',
+              sublabel: undefined as string | undefined,
             },
             {
               icon: Users,
               label: 'Network Size',
               value: getPartnerAgentIds(agent.id).length.toString(),
               color: 'text-primary',
+              sublabel: undefined as string | undefined,
+            },
+            {
+              icon: MessageSquareMore,
+              label: 'Comm Score',
+              value: commScore ? commScore.overall.toString() : '—',
+              color: commScore ? getCommScoreColor(commScore.overall).split(' ')[0] : 'text-muted-foreground',
+              sublabel: commScore?.label,
             },
           ].map((stat) => (
             <div
@@ -208,6 +223,9 @@ export default async function AgentProfilePage({ params }: PageProps) {
               <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
               <div className="text-2xl font-extrabold">{stat.value}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+              {stat.sublabel && (
+                <div className="text-[10px] text-muted-foreground mt-0.5">{stat.sublabel}</div>
+              )}
             </div>
           ))}
         </section>
