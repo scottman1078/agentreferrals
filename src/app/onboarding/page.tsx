@@ -1881,12 +1881,34 @@ export default function OnboardingPage() {
             <span className="text-muted-foreground text-xs font-medium">.ai</span>
           </span>
         </a>
-        <a
-          href="/dashboard"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip for now &rarr;
-        </a>
+        <div className="flex items-center gap-4">
+          {messages.length > 1 && (
+            <button
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY)
+                setMessages([])
+                setCurrentStep('welcome')
+                setData({
+                  brokerageId: null, customBrokerage: '', teamName: '', isOnTeam: false,
+                  fullName: userName || '', phone: '', yearsLicensed: null, referralsPerYear: null,
+                  primaryArea: '', avgSalePrice: null, avgReferralFee: 25, specializations: [],
+                  licenseNumber: '', inviteEmails: [], pastReferrals: [],
+                })
+                setPendingSpecializations([])
+                setNeedsWelcome(true)
+              }}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Start over
+            </button>
+          )}
+          <a
+            href="/dashboard"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Skip for now &rarr;
+          </a>
+        </div>
       </div>
 
       {/* Progress bar */}
