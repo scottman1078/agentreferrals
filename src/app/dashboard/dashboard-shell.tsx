@@ -89,11 +89,21 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     // Don't show if already completed the setup wizard
     if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
-    // Show for any user who hasn't completed the setup wizard yet
-    // (even if they have a primary zip from onboarding — they still need to define their full service area)
-    {
-      setShowSetupWizard(true)
+    // If the user already has a real service area (more than just the onboarding zip),
+    // they've completed setup — mark the flag and skip the wizard
+    const hasRealServiceArea =
+      (Array.isArray(profile.territory_zips) && profile.territory_zips.length > 1) ||
+      (Array.isArray(profile.polygon) && profile.polygon.length > 0)
+
+    if (hasRealServiceArea) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ar_setup_wizard_completed', 'true')
+      }
+      return
     }
+
+    // Show for new users who haven't defined their full service area yet
+    setShowSetupWizard(true)
   }, [isLoading, isAuthenticated, needsOnboarding, profile])
 
   if (isLoading) {
