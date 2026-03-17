@@ -22,7 +22,7 @@ const BrokerageContext = createContext<BrokerageContextType | null>(null)
 export function BrokerageProvider({ children }: { children: ReactNode }) {
   const { agents, brokerages } = useAppData()
   const [currentBrokerageId, setCurrentBrokerageId] = useState('real')
-  const [scope, setScope] = useState<BrokerageScope>('my-brokerage')
+  const [scope, setScope] = useState<BrokerageScope>('my-network')
 
   const currentBrokerage = brokerages.find((b) => b.id === currentBrokerageId) || brokerages[0]
 
