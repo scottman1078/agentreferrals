@@ -51,6 +51,7 @@ type InteractiveType =
   | { kind: 'emailList' }
   | { kind: 'buttons'; options: { label: string; value: string; primary?: boolean }[] }
   | { kind: 'pastReferralForm' }
+  | { kind: 'profileSummary' }
 
 interface ChatMessage {
   id: string
@@ -77,6 +78,7 @@ type OnboardingStep =
   | 'invite_emails'
   | 'past_referrals'
   | 'past_referral_form'
+  | 'summary'
   | 'complete'
 
 const PROGRESS_STEPS = [
@@ -89,6 +91,7 @@ const PROGRESS_STEPS = [
   { key: 'name_phone', label: 'Profile' },
   { key: 'invites', label: 'Invites' },
   { key: 'past_referrals', label: 'Referrals' },
+  { key: 'summary', label: 'Review' },
 ]
 
 const STEP_ORDER: OnboardingStep[] = [
@@ -131,7 +134,8 @@ function getProgressIndex(step: OnboardingStep): number {
     invite_emails: 7,
     past_referrals: 8,
     past_referral_form: 8,
-    complete: 9,
+    summary: 9,
+    complete: 10,
   }
   return map[step] ?? -1
 }
@@ -502,7 +506,7 @@ export default function OnboardingPage() {
             )
           }, 200)
         } else {
-          completeOnboarding()
+          showSummary()
         }
         break
       }
@@ -527,7 +531,7 @@ export default function OnboardingPage() {
           }, 200)
         } else {
           addUserMessage('Continue')
-          completeOnboarding()
+          showSummary()
         }
         break
       }
@@ -776,6 +780,18 @@ export default function OnboardingPage() {
     }, 200)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prDirection, prPartnerName, prPartnerEmail, prMarket, prSalePrice, prCloseYear])
+
+  // ── Show summary for review ──
+  const showSummary = useCallback(() => {
+    setTimeout(() => {
+      addNoraMessage(
+        "Here's a summary of your profile. Everything look right?",
+        { kind: 'profileSummary' },
+        'summary'
+      )
+    }, 200)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Complete onboarding ──
   const completeOnboarding = useCallback(() => {
@@ -1247,6 +1263,106 @@ export default function OnboardingPage() {
             </button>
           </div>
         )
+
+      case 'profileSummary': {
+        const brokerageName = getBrokerageName(data.brokerageId)
+        const priceLabel = data.avgSalePrice ? `$${data.avgSalePrice.toLocaleString()}` : 'Not set'
+        return (
+          <div className="mt-3 max-w-lg space-y-3">
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Name</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.fullName || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.phone || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Brokerage</div>
+                  <div className="text-sm font-semibold mt-0.5">{brokerageName}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Team</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.isOnTeam ? data.teamName || 'Yes' : 'Independent'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Years Licensed</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.yearsLicensed ?? '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Referrals / Year</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.referralsPerYear ?? '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg Sale Price</div>
+                  <div className="text-sm font-semibold mt-0.5">{priceLabel}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Referral Fee</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.avgReferralFee}%</div>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Service Area</div>
+                <div className="text-sm font-semibold mt-0.5">{data.primaryArea || '—'}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Specializations</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {data.specializations.length > 0 ? data.specializations.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                      style={{ background: TAG_COLORS[tag] || '#6b7280' }}
+                    >
+                      {tag}
+                    </span>
+                  )) : <span className="text-sm text-muted-foreground">—</span>}
+                </div>
+              </div>
+              {data.pastReferrals.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Past Referrals</div>
+                  <div className="text-sm font-semibold mt-0.5">{data.pastReferrals.length} submitted for verification</div>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  addUserMessage('Looks good!')
+                  completeOnboarding()
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+              >
+                <Check className="w-4 h-4" />
+                Looks Good!
+              </button>
+              <button
+                onClick={() => {
+                  addUserMessage('I want to make changes')
+                  // Reset to beginning — clear messages and restart
+                  setMessages([])
+                  setCurrentStep('welcome')
+                  localStorage.removeItem(STORAGE_KEY)
+                  setTimeout(() => {
+                    addNoraMessage(
+                      "No problem! Let's go through it again. What brokerage are you with?",
+                      { kind: 'brokerage' },
+                      'brokerage'
+                    )
+                  }, 200)
+                }}
+                className="px-5 py-2.5 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-accent transition-colors"
+              >
+                Make Changes
+              </button>
+            </div>
+          </div>
+        )
+      }
 
       default:
         return null
