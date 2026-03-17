@@ -7,8 +7,11 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
   ArrowRight, Star, ChevronRight, Sparkles, Globe, Building2,
-  MessageSquare, BarChart3, Search, Eye, EyeOff
+  MessageSquare, BarChart3, Search, Eye, EyeOff, Lock, Mail,
+  CheckCircle2, Loader2, KeyRound, Clock
 } from 'lucide-react'
+
+const TOTAL_SPOTS = 5000
 
 export default function LandingPage() {
   const router = useRouter()
@@ -27,6 +30,42 @@ export default function LandingPage() {
   const [resetError, setResetError] = useState<string | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
 
+  // Invite-only sign-up state
+  const [signupPath, setSignupPath] = useState<'invite' | 'waitlist' | null>(null)
+  const [inviteCode, setInviteCode] = useState('')
+  const [inviteVerifying, setInviteVerifying] = useState(false)
+  const [inviteValid, setInviteValid] = useState(false)
+  const [inviterName, setInviterName] = useState('')
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [waitlistEmail, setWaitlistEmail] = useState('')
+  const [waitlistLoading, setWaitlistLoading] = useState(false)
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false)
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null)
+  const [validatedInviteCode, setValidatedInviteCode] = useState('')
+
+  // Spots counter — live from DB
+  const [spotsRemaining, setSpotsRemaining] = useState(TOTAL_SPOTS)
+  useEffect(() => {
+    fetch('/api/spots')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.remaining != null) setSpotsRemaining(data.remaining)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Read invite code from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const inviteParam = params.get('invite') || params.get('ref')
+    if (inviteParam) {
+      setInviteCode(inviteParam)
+      setShowLogin(true)
+      setAuthMode('signup')
+      setSignupPath('invite')
+    }
+  }, [])
+
   // If user is already authenticated, redirect to dashboard
   useEffect(() => {
     const hub = createHubClient()
@@ -37,9 +76,69 @@ export default function LandingPage() {
     })
   }, [router])
 
+  async function verifyInviteCode() {
+    if (!inviteCode.trim()) return
+    setInviteVerifying(true)
+    setInviteError(null)
+    try {
+      const res = await fetch(`/api/invite/validate?code=${encodeURIComponent(inviteCode.trim())}`)
+      const data = await res.json()
+      if (data.valid) {
+        setInviteValid(true)
+        setInviterName(data.inviterName || 'An AgentReferrals member')
+        setValidatedInviteCode(inviteCode.trim())
+        setEmail('')
+        setPassword('')
+      } else {
+        setInviteError('Invalid or expired invite code')
+      }
+    } catch {
+      setInviteError('Failed to verify code. Please try again.')
+    } finally {
+      setInviteVerifying(false)
+    }
+  }
+
+  async function submitWaitlist() {
+    if (!waitlistEmail.trim()) return
+    setWaitlistLoading(true)
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: waitlistEmail.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setWaitlistSuccess(true)
+        setWaitlistPosition(data.position)
+      }
+    } catch {
+      // Silently handle — show generic success
+      setWaitlistSuccess(true)
+      setWaitlistPosition(4847)
+    } finally {
+      setWaitlistLoading(false)
+    }
+  }
+
+  function resetSignupState() {
+    setSignupPath(null)
+    setInviteCode('')
+    setInviteVerifying(false)
+    setInviteValid(false)
+    setInviterName('')
+    setInviteError(null)
+    setValidatedInviteCode('')
+    setWaitlistEmail('')
+    setWaitlistLoading(false)
+    setWaitlistSuccess(false)
+    setWaitlistPosition(null)
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ═══ NAV ═══ */}
+      {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -59,22 +158,22 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <button
-              onClick={() => setShowLogin(true)}
+              onClick={() => { setShowLogin(true); setAuthMode('signin') }}
               className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Sign In
             </button>
             <button
-              onClick={() => setShowLogin(true)}
+              onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
               className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold font-bold hover:opacity-90 transition-opacity"
             >
-              Get Started
+              Get Access
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ═══ HERO ═══ */}
+      {/* HERO */}
       <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6">
         {/* Gradient bg */}
         <div className="absolute inset-0 overflow-hidden">
@@ -82,27 +181,53 @@ export default function LandingPage() {
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-8">
-            <Sparkles className="w-3.5 h-3.5" />
-            Powered by NORA AI
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-6">
+            <Lock className="w-3.5 h-3.5" />
+            Invite-Only Access
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             Save Time.<br />
             <span className="text-primary">Make More Money.</span><br />
             Close More Referrals.
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
-            AgentReferrals replaces chaotic brokerage Facebook groups with an AI-powered platform that instantly matches your clients with verified agents — across any brokerage, any market.
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
+            The industry&apos;s first AI-driven agent referral network.<br className="hidden sm:block" />
+            We connect agents to agents — across any brokerage, any market — so you can send and receive referrals with confidence.
           </p>
+
+          {/* Spots counter */}
+          <div className="inline-flex flex-col items-center gap-2 mb-8">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-primary/20 bg-card shadow-lg">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+                </span>
+                <span className="font-extrabold text-2xl sm:text-3xl tracking-tight tabular-nums">
+                  {spotsRemaining.toLocaleString()}
+                </span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                of {TOTAL_SPOTS.toLocaleString()} founding spots remaining
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Join agents from <span className="font-semibold text-foreground">Real Broker</span>, <span className="font-semibold text-foreground">Compass</span>, <span className="font-semibold text-foreground">Keller Williams</span>, and more
+            </p>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => setShowLogin(true)}
+              onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
               className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
             >
-              Start Free Trial <ArrowRight className="w-4 h-4" />
+              Request Access <ArrowRight className="w-4 h-4" />
             </button>
-            <button className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all flex items-center gap-2">
-              Watch Demo <ChevronRight className="w-4 h-4" />
+            <button
+              onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('invite') }}
+              className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all flex items-center gap-2"
+            >
+              I Have an Invite Code <KeyRound className="w-4 h-4" />
             </button>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10 text-xs sm:text-sm text-muted-foreground">
@@ -113,7 +238,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ SOCIAL PROOF ═══ */}
+      {/* SOCIAL PROOF */}
       <section className="py-8 sm:py-12 border-y border-border bg-card/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <p className="text-center text-sm text-muted-foreground mb-8 font-medium">Trusted by agents at leading brokerages</p>
@@ -122,58 +247,42 @@ export default function LandingPage() {
               <span key={b} className="font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ═══ PROBLEM / SOLUTION ═══ */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-destructive">The Problem</span>
-              <h2 className="font-extrabold text-2xl sm:text-3xl mt-3 mb-4">3,000 agents. One Facebook group. Zero structure.</h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                Every day, agents post &quot;Looking for someone in [city]!&quot; into brokerage Facebook groups. Replies get buried. There&apos;s no vetting, no tracking, no accountability. Referral fees get lost. Clients fall through the cracks.
-              </p>
-              <div className="space-y-3">
-                {[
-                  'Posts get buried in minutes — no way to search',
-                  'No agent vetting or performance data',
-                  'Manual agreements, no tracking',
-                  'Zero visibility into referral outcomes',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <span className="text-destructive mt-0.5">✕</span>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">The Solution</span>
-              <h2 className="font-extrabold text-2xl sm:text-3xl mt-3 mb-4">AI-matched referrals in seconds. Not hours.</h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                Tell NORA your client&apos;s needs. She instantly surfaces verified agents matched by market, price point, specialization, and track record — with one-click referral agreements.
-              </p>
-              <div className="space-y-3">
-                {[
-                  'NORA AI matches agents in seconds',
-                  'ReferNet Score verifies every agent',
-                  'Auto-generated agreements with e-sign',
-                  'Full lifecycle tracking to close',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 text-sm">
-                    <span className="text-primary mt-0.5">✓</span>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="flex items-center justify-center gap-8 mt-6 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary" /> <span className="font-semibold text-foreground">27</span> markets covered</span>
+            <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> <span className="font-semibold text-foreground">150+</span> referral partners connected</span>
           </div>
         </div>
       </section>
 
-      {/* ═══ FEATURES ═══ */}
+      {/* WHY AGENTREFERRALS */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">Why AgentReferrals</span>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Built by agents, for agents</h2>
+            <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
+              Stop losing referral fees to broken processes.<br className="hidden sm:block" />
+              AgentReferrals gives you a trusted network of verified agents, AI-powered matching, and full pipeline visibility from agreement to close.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { value: '5,000', label: 'Founding Spots', desc: 'Exclusive invite-only network for top-producing agents' },
+              { value: '92', label: 'Avg ReferNet Score', desc: 'Every agent is vetted with performance data' },
+              { value: '< 1hr', label: 'Avg Response Time', desc: 'Partners who communicate and close deals' },
+              { value: '25%', label: 'Referral Fee Standard', desc: 'Transparent agreements with e-signature' },
+            ].map((stat) => (
+              <div key={stat.label} className="p-6 rounded-xl border border-border bg-card text-center">
+                <div className="font-extrabold text-3xl text-primary mb-1">{stat.value}</div>
+                <div className="font-bold text-sm mb-2">{stat.label}</div>
+                <p className="text-xs text-muted-foreground">{stat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
       <section id="features" className="py-24 px-6 bg-card/50 border-y border-border">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -182,7 +291,7 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { icon: Sparkles, title: 'NORA AI Assistant', desc: 'Describe your client\'s needs in natural language. NORA finds the perfect agent match across your entire network.', color: 'text-primary' },
+              { icon: Sparkles, title: 'NORA AI Assistant', desc: 'Tell NORA the market you need a partner in. She finds verified agents across your entire network in seconds.', color: 'text-primary' },
               { icon: MapPin, title: 'Network Map', desc: 'Visualize agent territories, identify coverage gaps, and spot market opportunities with an interactive map.', color: 'text-blue-500' },
               { icon: Building2, title: 'Multi-Brokerage', desc: 'Search within your brokerage first, then expand to the full network. Every brokerage gets their own space.', color: 'text-purple-500' },
               { icon: BarChart3, title: 'Pipeline Tracking', desc: 'Kanban board tracks every referral from agreement to close. Never lose track of a deal again.', color: 'text-emerald-500' },
@@ -202,7 +311,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ HOW IT WORKS ═══ */}
+      {/* HOW IT WORKS */}
       <section id="how-it-works" className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
@@ -211,8 +320,8 @@ export default function LandingPage() {
           </div>
           <div className="space-y-12">
             {[
-              { step: '01', title: 'Tell NORA about your client', desc: '"I have a family relocating to Nashville, $600k budget, great schools." NORA searches your brokerage first, then the full network.' },
-              { step: '02', title: 'Review matched agents', desc: 'See agent profiles with ReferNet Score, response time, closed referrals, specializations, and reviews. Pick your partner.' },
+              { step: '01', title: 'Tell NORA the market you need', desc: '"I need a referral partner in Nashville who does luxury and relocation." NORA searches your brokerage first, then the full network.' },
+              { step: '02', title: 'Review matched agents', desc: 'See agent profiles with ReferNet Score, Communication Score, closed referrals, specializations, and reviews. Pick your partner.' },
               { step: '03', title: 'Send agreement & track to close', desc: 'One-click referral agreement with auto-filled terms. Track the referral through every stage — from introduction to fee received.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-6 items-start">
@@ -229,7 +338,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ BROKERAGES ═══ */}
+      {/* BROKERAGES */}
       <section id="brokerages" className="py-24 px-6 bg-card/50 border-y border-border">
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Multi-Brokerage</span>
@@ -260,7 +369,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ PRICING ═══ */}
+      {/* PRICING */}
       <section id="pricing" className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -307,7 +416,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
                   className={`w-full h-11 rounded-lg font-bold text-sm transition-all ${
                     plan.highlight
                       ? 'bg-primary text-primary-foreground hover:opacity-90'
@@ -319,7 +428,7 @@ export default function LandingPage() {
                 <div className="mt-6 space-y-3">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-center gap-2 text-sm">
-                      <span className="text-primary">✓</span>
+                      <span className="text-primary">&#10003;</span>
                       {f}
                     </div>
                   ))}
@@ -333,21 +442,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ CTA ═══ */}
+      {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mb-4">Ready to modernize your referral network?</h2>
           <p className="text-muted-foreground text-lg mb-8">Join 17,000+ agents who&apos;ve upgraded from Facebook groups to AI-powered referrals.</p>
-          <button
-            onClick={() => setShowLogin(true)}
-            className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-primary/20"
-          >
-            Get Started Free
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('invite') }}
+              className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+            >
+              Enter Invite Code
+            </button>
+            <button
+              onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('waitlist') }}
+              className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all"
+            >
+              Join the Waitlist
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ═══ FOOTER ═══ */}
+      {/* FOOTER */}
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
@@ -359,17 +476,17 @@ export default function LandingPage() {
             <a href="#" className="hover:text-foreground transition-colors">Terms</a>
             <a href="#" className="hover:text-foreground transition-colors">Contact</a>
           </div>
-          <p className="text-xs text-muted-foreground">© 2025 AgentReferrals. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">&copy; 2025 AgentReferrals. All rights reserved.</p>
         </div>
       </footer>
 
-      {/* ═══ LOGIN MODAL ═══ */}
+      {/* LOGIN MODAL */}
       {showLogin && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) { setShowLogin(false); setAuthError(null) } }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowLogin(false); setAuthError(null); resetSignupState() } }}
         >
-          <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
               <span className="font-extrabold text-xl tracking-tight">
@@ -377,13 +494,13 @@ export default function LandingPage() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              {authMode === 'signin' ? 'Sign in to your referral network' : 'Create your account'}
+              {authMode === 'signin' ? 'Sign in to your referral network' : 'Join the invite-only referral network'}
             </p>
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 rounded-lg bg-muted mb-6">
               <button
-                onClick={() => { setAuthMode('signin'); setAuthError(null) }}
+                onClick={() => { setAuthMode('signin'); setAuthError(null); resetSignupState() }}
                 className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
                   authMode === 'signin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -391,7 +508,7 @@ export default function LandingPage() {
                 Sign In
               </button>
               <button
-                onClick={() => { setAuthMode('signup'); setAuthError(null) }}
+                onClick={() => { setAuthMode('signup'); setAuthError(null); resetSignupState() }}
                 className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
                   authMode === 'signup' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -413,161 +530,446 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Google OAuth */}
-            <button
-              type="button"
-              onClick={async () => {
-                setAuthLoading(true)
-                setAuthError(null)
-                const hub = createHubClient()
-                const isDev = window.location.hostname === 'localhost'
-                const redirectTo = isDev
-                  ? 'http://localhost:5500/auth/callback'
-                  : 'https://agentreferrals.ai/auth/callback'
-                const { error } = await hub.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: { redirectTo },
-                })
-                if (error) {
-                  setAuthError(error.message)
-                  setAuthLoading(false)
-                }
-              }}
-              disabled={authLoading}
-              className="w-full h-11 rounded-lg border border-border bg-card text-foreground font-semibold text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 mb-4 disabled:opacity-50"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                <path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
-                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </button>
+            {/* ═══ SIGN IN MODE ═══ */}
+            {authMode === 'signin' && (
+              <>
+                {/* Google OAuth */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setAuthLoading(true)
+                    setAuthError(null)
+                    const hub = createHubClient()
+                    const isDev = window.location.hostname === 'localhost'
+                    const redirectTo = isDev
+                      ? 'http://localhost:5500/auth/callback'
+                      : 'https://agentreferrals.ai/auth/callback'
+                    const { error } = await hub.auth.signInWithOAuth({
+                      provider: 'google',
+                      options: { redirectTo },
+                    })
+                    if (error) {
+                      setAuthError(error.message)
+                      setAuthLoading(false)
+                    }
+                  }}
+                  disabled={authLoading}
+                  className="w-full h-11 rounded-lg border border-border bg-card text-foreground font-semibold text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 mb-4 disabled:opacity-50"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                    <path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                  </svg>
+                  Continue with Google
+                </button>
 
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground font-medium">or continue with email</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground font-medium">or continue with email</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
 
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              setAuthLoading(true)
-              setAuthError(null)
-              const hub = createHubClient()
-
-              if (authMode === 'signin') {
-                const { error } = await hub.auth.signInWithPassword({ email, password })
-                if (error) {
-                  setAuthError(error.message)
-                  setAuthLoading(false)
-                  return
-                }
-              } else {
-                const { data: signUpData, error } = await hub.auth.signUp({
-                  email,
-                  password,
-                  options: { data: { full_name: fullName } },
-                })
-                if (error) {
-                  setAuthError(error.message)
-                  setAuthLoading(false)
-                  return
-                }
-
-                // Send welcome email (fire-and-forget)
-                const referralCode = signUpData?.user?.id
-                  ? 'AR-' + signUpData.user.id.substring(0, 8).toUpperCase()
-                  : 'WELCOME'
-                fetch('/api/welcome', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email, name: fullName, referralCode }),
-                }).catch(() => {})
-
-                // If no session was created, email confirmation is required
-                if (!signUpData?.session) {
-                  setSignupSuccess(true)
-                  setAuthLoading(false)
-                  return
-                }
-              }
-
-              const params = new URLSearchParams(window.location.search)
-              const defaultRedirect = authMode === 'signup' ? '/onboarding' : '/dashboard'
-              const redirect = params.get('redirect') || defaultRedirect
-              // Use window.location for full page load so auth cookie is picked up
-              window.location.href = redirect
-            }}>
-              {authMode === 'signup' && (
-                <>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Full Name</label>
+                <form onSubmit={async (e) => {
+                  e.preventDefault()
+                  setAuthLoading(true)
+                  setAuthError(null)
+                  const hub = createHubClient()
+                  const { error } = await hub.auth.signInWithPassword({ email, password })
+                  if (error) {
+                    setAuthError(error.message)
+                    setAuthLoading(false)
+                    return
+                  }
+                  const params = new URLSearchParams(window.location.search)
+                  const redirect = params.get('redirect') || '/dashboard'
+                  window.location.href = redirect
+                }}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
                   <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
                   />
-                </>
-              )}
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                required
-              />
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <div className="mb-2" />
-              {authMode === 'signin' && (
-                <div className="text-right mb-4">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="mb-2" />
+                  <div className="text-right mb-4">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email); setResetMessage(null); setResetError(null) }}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email); setResetMessage(null); setResetError(null) }}
-                    className="text-xs text-primary hover:underline font-medium"
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
-                    Forgot password?
+                    {authLoading ? 'Please wait...' : 'Sign In'}
                   </button>
-                </div>
-              )}
-              {authMode === 'signup' && <div className="mb-4" />}
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {authLoading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
-              </button>
-            </form>
-            <p className="text-center text-xs text-muted-foreground mt-5">
-              Demo credentials pre-filled — <span className="text-primary font-medium cursor-pointer">click Sign In</span>
-            </p>
+                </form>
+                <p className="text-center text-xs text-muted-foreground mt-5">
+                  Demo credentials pre-filled — <span className="text-primary font-medium cursor-pointer">click Sign In</span>
+                </p>
+              </>
+            )}
+
+            {/* ═══ SIGN UP MODE ═══ */}
+            {authMode === 'signup' && (
+              <>
+                {/* Path selection */}
+                {!signupPath && !signupSuccess && (
+                  <div className="space-y-3">
+                    {/* Path A: Invite Code */}
+                    <button
+                      onClick={() => setSignupPath('invite')}
+                      className="w-full p-4 rounded-xl border-2 border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-3 mb-1.5">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <KeyRound className="w-4.5 h-4.5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm">I Have an Invite Code</div>
+                          <div className="text-xs text-muted-foreground">Enter your code to claim your spot</div>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Path B: Waitlist */}
+                    <button
+                      onClick={() => setSignupPath('waitlist')}
+                      className="w-full p-4 rounded-xl border border-border bg-card hover:border-border hover:bg-accent/50 transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-3 mb-1.5">
+                        <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+                          <Clock className="w-4.5 h-4.5 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-muted-foreground">Request Access</div>
+                          <div className="text-xs text-muted-foreground">Join the waitlist — no code needed</div>
+                        </div>
+                      </div>
+                    </button>
+
+                    <p className="text-center text-xs text-muted-foreground pt-2">
+                      Invite-only during our founding member period.
+                    </p>
+                  </div>
+                )}
+
+                {/* Path A: Invite Code Entry */}
+                {signupPath === 'invite' && !inviteValid && !signupSuccess && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setSignupPath(null)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                    >
+                      &larr; Back
+                    </button>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Invite Code</label>
+                      <input
+                        type="text"
+                        value={inviteCode}
+                        onChange={(e) => { setInviteCode(e.target.value.toUpperCase()); setInviteError(null) }}
+                        placeholder="AR-XXXXXXXX"
+                        className="w-full h-12 px-4 rounded-lg border-2 border-primary/30 bg-background text-base font-mono tracking-wider text-center focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                        autoFocus
+                      />
+                    </div>
+
+                    {inviteError && (
+                      <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                        {inviteError}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={verifyInviteCode}
+                      disabled={inviteVerifying || !inviteCode.trim()}
+                      className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {inviteVerifying ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
+                      ) : (
+                        <><KeyRound className="w-4 h-4" /> Verify Code</>
+                      )}
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground">no code?</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    <button
+                      onClick={() => setSignupPath('waitlist')}
+                      className="w-full h-10 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+                    >
+                      Join the Waitlist Instead
+                    </button>
+                  </div>
+                )}
+
+                {/* Path A: Invite Verified — Show Sign-Up Form */}
+                {signupPath === 'invite' && inviteValid && !signupSuccess && (
+                  <div className="space-y-4">
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        Invite verified! Invited by <span className="font-bold">{inviterName}</span>
+                      </span>
+                    </div>
+
+                    {/* Google OAuth */}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setAuthLoading(true)
+                        setAuthError(null)
+                        const hub = createHubClient()
+                        const isDev = window.location.hostname === 'localhost'
+                        const redirectTo = isDev
+                          ? 'http://localhost:5500/auth/callback'
+                          : 'https://agentreferrals.ai/auth/callback'
+                        const { error } = await hub.auth.signInWithOAuth({
+                          provider: 'google',
+                          options: { redirectTo },
+                        })
+                        if (error) {
+                          setAuthError(error.message)
+                          setAuthLoading(false)
+                        }
+                      }}
+                      disabled={authLoading}
+                      className="w-full h-11 rounded-lg border border-border bg-card text-foreground font-semibold text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                        <path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                      </svg>
+                      Continue with Google
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground font-medium">or continue with email</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    <form onSubmit={async (e) => {
+                      e.preventDefault()
+                      setAuthLoading(true)
+                      setAuthError(null)
+                      const hub = createHubClient()
+
+                      const { data: signUpData, error } = await hub.auth.signUp({
+                        email,
+                        password,
+                        options: { data: { full_name: fullName, invited_by: inviterName } },
+                      })
+                      if (error) {
+                        setAuthError(error.message)
+                        setAuthLoading(false)
+                        return
+                      }
+
+                      // Send welcome email (fire-and-forget)
+                      const referralCode = signUpData?.user?.id
+                        ? 'AR-' + signUpData.user.id.substring(0, 8).toUpperCase()
+                        : 'WELCOME'
+                      fetch('/api/welcome', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, name: fullName, referralCode }),
+                      }).catch(() => {})
+
+                      // Mark invite code as used (fire-and-forget)
+                      if (validatedInviteCode && signUpData?.user?.id) {
+                        fetch('/api/invite/use', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ code: validatedInviteCode, userId: signUpData.user.id }),
+                        }).catch(() => {})
+                      }
+
+                      // If no session was created, email confirmation is required
+                      if (!signUpData?.session) {
+                        setSignupSuccess(true)
+                        setAuthLoading(false)
+                        return
+                      }
+
+                      window.location.href = '/onboarding'
+                    }}>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Full Name</label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Your full name"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        required
+                      />
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@email.com"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        required
+                      />
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Create a password"
+                          className="w-full h-10 px-3 pr-10 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="mb-4" />
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        {authLoading ? 'Please wait...' : 'Create Account'}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* Path B: Waitlist */}
+                {signupPath === 'waitlist' && !waitlistSuccess && !signupSuccess && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setSignupPath(null)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                    >
+                      &larr; Back
+                    </button>
+
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
+                      <Mail className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-semibold mb-1">Join the Waitlist</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        AgentReferrals is currently invite-only. Leave your email and we&apos;ll notify you when a spot opens up.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email Address</label>
+                      <input
+                        type="email"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        placeholder="you@email.com"
+                        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        autoFocus
+                      />
+                    </div>
+
+                    <button
+                      onClick={submitWaitlist}
+                      disabled={waitlistLoading || !waitlistEmail.trim()}
+                      className="w-full h-11 rounded-lg bg-foreground text-background font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {waitlistLoading ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Joining...</>
+                      ) : (
+                        'Join Waitlist'
+                      )}
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground">have a code?</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    <button
+                      onClick={() => setSignupPath('invite')}
+                      className="w-full h-10 rounded-lg border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 transition-all"
+                    >
+                      Enter Invite Code
+                    </button>
+                  </div>
+                )}
+
+                {/* Waitlist Success */}
+                {signupPath === 'waitlist' && waitlistSuccess && (
+                  <div className="text-center py-4 space-y-4">
+                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg mb-1">You&apos;re on the list!</p>
+                      <p className="text-sm text-muted-foreground">
+                        We&apos;ll notify you when a spot opens up.
+                      </p>
+                    </div>
+                    {waitlistPosition && (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-sm">
+                        <span className="text-muted-foreground">Your position:</span>
+                        <span className="font-bold">#{waitlistPosition.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Know someone on AgentReferrals? Ask them for an invite code to skip the line.
+                    </p>
+                    <button
+                      onClick={() => { setShowLogin(false); resetSignupState() }}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* ═══ FORGOT PASSWORD MODAL ═══ */}
+      {/* FORGOT PASSWORD MODAL */}
       {showForgotPassword && (
         <div
           className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"

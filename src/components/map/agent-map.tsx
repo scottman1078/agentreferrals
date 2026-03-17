@@ -349,14 +349,14 @@ export default function AgentMap() {
       }).addTo(map)
 
       // Show zip code label, then fetch agent count
-      poly.bindTooltip(`<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;color:#999">loading...</div>`, { permanent: true, direction: 'center', className: 'zip-label' })
+      poly.bindTooltip(`<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;opacity:0.5">loading...</div>`, { permanent: true, direction: 'center', className: 'zip-label' })
       fetch(`/api/zip-agents?zip=${zip}`)
         .then((r) => r.json())
         .then((data) => {
           const count = data.count ?? 0
           poly.unbindTooltip()
           poly.bindTooltip(
-            `<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;color:#666">${count} agent${count !== 1 ? 's' : ''}</div>`,
+            `<div style="text-align:center;font-weight:700;font-size:13px">${zip}</div><div style="text-align:center;font-size:10px;opacity:0.6">${count} agent${count !== 1 ? 's' : ''}</div>`,
             { permanent: true, direction: 'center', className: 'zip-label' }
           )
         })

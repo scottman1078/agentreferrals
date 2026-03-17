@@ -76,6 +76,86 @@ const COMM_SCORES: Record<string, CommScore> = {
   mark_n: { overall: 68, pipelineActivity: 62, messageFrequency: 66, responseTime: 78, checkInConsistency: 62, label: 'Needs Improvement', trend: 'down' },
   connor_d: { overall: 72, pipelineActivity: 68, messageFrequency: 74, responseTime: 78, checkInConsistency: 64, label: 'Responsive', trend: 'stable' },
   preet_s: { overall: 84, pipelineActivity: 82, messageFrequency: 86, responseTime: 88, checkInConsistency: 76, label: 'Responsive', trend: 'up' },
+  // ══════════════════════════════════════
+  // ADDITIONAL AGENTS — expanded network
+  // ══════════════════════════════════════
+  // Real Broker LLC — Florida
+  real_mia1: { overall: 86, pipelineActivity: 84, messageFrequency: 88, responseTime: 90, checkInConsistency: 78, label: 'Responsive', trend: 'up' },
+  real_mia2: { overall: 93, pipelineActivity: 94, messageFrequency: 92, responseTime: 96, checkInConsistency: 86, label: 'Highly Responsive', trend: 'up' },
+  real_tpa1: { overall: 78, pipelineActivity: 75, messageFrequency: 80, responseTime: 82, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_tpa2: { overall: 82, pipelineActivity: 80, messageFrequency: 84, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'stable' },
+  real_jax: { overall: 72, pipelineActivity: 68, messageFrequency: 74, responseTime: 78, checkInConsistency: 64, label: 'Responsive', trend: 'down' },
+  real_nap: { overall: 90, pipelineActivity: 91, messageFrequency: 88, responseTime: 94, checkInConsistency: 84, label: 'Highly Responsive', trend: 'up' },
+  // Real Broker LLC — Texas
+  real_hou1: { overall: 85, pipelineActivity: 83, messageFrequency: 86, responseTime: 90, checkInConsistency: 78, label: 'Responsive', trend: 'stable' },
+  real_hou2: { overall: 88, pipelineActivity: 86, messageFrequency: 90, responseTime: 92, checkInConsistency: 80, label: 'Responsive', trend: 'up' },
+  real_aus1: { overall: 92, pipelineActivity: 93, messageFrequency: 90, responseTime: 95, checkInConsistency: 86, label: 'Highly Responsive', trend: 'up' },
+  real_aus2: { overall: 79, pipelineActivity: 76, messageFrequency: 80, responseTime: 84, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_sat2: { overall: 75, pipelineActivity: 72, messageFrequency: 76, responseTime: 80, checkInConsistency: 68, label: 'Responsive', trend: 'stable' },
+  real_ftw: { overall: 80, pipelineActivity: 78, messageFrequency: 82, responseTime: 84, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — California
+  real_sac: { overall: 83, pipelineActivity: 80, messageFrequency: 85, responseTime: 88, checkInConsistency: 76, label: 'Responsive', trend: 'up' },
+  real_sj: { overall: 89, pipelineActivity: 90, messageFrequency: 87, responseTime: 92, checkInConsistency: 84, label: 'Responsive', trend: 'up' },
+  real_oc: { overall: 94, pipelineActivity: 95, messageFrequency: 93, responseTime: 97, checkInConsistency: 88, label: 'Highly Responsive', trend: 'stable' },
+  // Real Broker LLC — Arizona
+  real_phx1: { overall: 77, pipelineActivity: 74, messageFrequency: 78, responseTime: 82, checkInConsistency: 70, label: 'Responsive', trend: 'stable' },
+  real_phx2: { overall: 86, pipelineActivity: 84, messageFrequency: 88, responseTime: 90, checkInConsistency: 78, label: 'Responsive', trend: 'up' },
+  real_tuc: { overall: 70, pipelineActivity: 66, messageFrequency: 72, responseTime: 76, checkInConsistency: 62, label: 'Responsive', trend: 'down' },
+  real_mesa: { overall: 74, pipelineActivity: 70, messageFrequency: 76, responseTime: 80, checkInConsistency: 66, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Colorado
+  real_den2: { overall: 81, pipelineActivity: 78, messageFrequency: 82, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'stable' },
+  real_cos: { overall: 76, pipelineActivity: 72, messageFrequency: 78, responseTime: 82, checkInConsistency: 68, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Georgia
+  real_atl1: { overall: 84, pipelineActivity: 82, messageFrequency: 86, responseTime: 88, checkInConsistency: 76, label: 'Responsive', trend: 'up' },
+  real_atl2: { overall: 91, pipelineActivity: 92, messageFrequency: 90, responseTime: 94, checkInConsistency: 84, label: 'Highly Responsive', trend: 'stable' },
+  real_sav: { overall: 68, pipelineActivity: 64, messageFrequency: 70, responseTime: 74, checkInConsistency: 60, label: 'Needs Improvement', trend: 'down' },
+  // Real Broker LLC — North Carolina
+  real_clt1: { overall: 87, pipelineActivity: 86, messageFrequency: 88, responseTime: 92, checkInConsistency: 80, label: 'Responsive', trend: 'up' },
+  real_clt2: { overall: 78, pipelineActivity: 74, messageFrequency: 80, responseTime: 82, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_ral: { overall: 82, pipelineActivity: 80, messageFrequency: 84, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Tennessee
+  real_nas2: { overall: 84, pipelineActivity: 82, messageFrequency: 86, responseTime: 88, checkInConsistency: 76, label: 'Responsive', trend: 'stable' },
+  real_mem: { overall: 66, pipelineActivity: 60, messageFrequency: 64, responseTime: 76, checkInConsistency: 60, label: 'Needs Improvement', trend: 'down' },
+  real_knx: { overall: 73, pipelineActivity: 70, messageFrequency: 74, responseTime: 78, checkInConsistency: 66, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Michigan (additional)
+  real_det: { overall: 64, pipelineActivity: 58, messageFrequency: 62, responseTime: 74, checkInConsistency: 58, label: 'Needs Improvement', trend: 'down' },
+  real_aa: { overall: 80, pipelineActivity: 78, messageFrequency: 82, responseTime: 84, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_gr: { overall: 77, pipelineActivity: 74, messageFrequency: 78, responseTime: 82, checkInConsistency: 70, label: 'Responsive', trend: 'up' },
+  // Real Broker LLC — Nevada
+  real_lv2: { overall: 85, pipelineActivity: 84, messageFrequency: 86, responseTime: 88, checkInConsistency: 78, label: 'Responsive', trend: 'stable' },
+  real_rno: { overall: 72, pipelineActivity: 68, messageFrequency: 74, responseTime: 78, checkInConsistency: 64, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Oregon
+  real_pdx: { overall: 82, pipelineActivity: 80, messageFrequency: 84, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'up' },
+  // Real Broker LLC — Washington
+  real_sea: { overall: 89, pipelineActivity: 90, messageFrequency: 88, responseTime: 92, checkInConsistency: 82, label: 'Responsive', trend: 'up' },
+  real_tac: { overall: 71, pipelineActivity: 68, messageFrequency: 72, responseTime: 78, checkInConsistency: 62, label: 'Responsive', trend: 'stable' },
+  // Real Broker LLC — Virginia
+  real_rva: { overall: 80, pipelineActivity: 78, messageFrequency: 82, responseTime: 84, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_nova: { overall: 93, pipelineActivity: 94, messageFrequency: 92, responseTime: 96, checkInConsistency: 86, label: 'Highly Responsive', trend: 'up' },
+  // Real Broker LLC — Maryland
+  real_bal: { overall: 75, pipelineActivity: 72, messageFrequency: 76, responseTime: 80, checkInConsistency: 68, label: 'Responsive', trend: 'stable' },
+  real_beth: { overall: 88, pipelineActivity: 86, messageFrequency: 90, responseTime: 92, checkInConsistency: 80, label: 'Responsive', trend: 'up' },
+  // Real Broker LLC — Additional markets
+  real_min: { overall: 78, pipelineActivity: 75, messageFrequency: 80, responseTime: 82, checkInConsistency: 72, label: 'Responsive', trend: 'stable' },
+  real_ind: { overall: 73, pipelineActivity: 70, messageFrequency: 74, responseTime: 78, checkInConsistency: 66, label: 'Responsive', trend: 'down' },
+  real_kc: { overall: 76, pipelineActivity: 72, messageFrequency: 78, responseTime: 82, checkInConsistency: 68, label: 'Responsive', trend: 'stable' },
+  real_stl: { overall: 63, pipelineActivity: 56, messageFrequency: 60, responseTime: 74, checkInConsistency: 58, label: 'Needs Improvement', trend: 'down' },
+  real_slc: { overall: 83, pipelineActivity: 80, messageFrequency: 85, responseTime: 88, checkInConsistency: 76, label: 'Responsive', trend: 'stable' },
+  real_orl: { overall: 82, pipelineActivity: 80, messageFrequency: 84, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'up' },
+  real_pit: { overall: 74, pipelineActivity: 70, messageFrequency: 76, responseTime: 80, checkInConsistency: 66, label: 'Responsive', trend: 'stable' },
+  real_chs: { overall: 86, pipelineActivity: 84, messageFrequency: 88, responseTime: 90, checkInConsistency: 78, label: 'Responsive', trend: 'up' },
+  real_boi: { overall: 77, pipelineActivity: 74, messageFrequency: 78, responseTime: 82, checkInConsistency: 70, label: 'Responsive', trend: 'stable' },
+  real_abq: { overall: 69, pipelineActivity: 64, messageFrequency: 68, responseTime: 78, checkInConsistency: 62, label: 'Needs Improvement', trend: 'down' },
+  real_okc: { overall: 71, pipelineActivity: 68, messageFrequency: 72, responseTime: 78, checkInConsistency: 62, label: 'Responsive', trend: 'stable' },
+  real_oma: { overall: 60, pipelineActivity: 54, messageFrequency: 58, responseTime: 72, checkInConsistency: 52, label: 'Needs Improvement', trend: 'down' },
+  real_wil: { overall: 70, pipelineActivity: 66, messageFrequency: 72, responseTime: 76, checkInConsistency: 62, label: 'Responsive', trend: 'stable' },
+  real_lex: { overall: 74, pipelineActivity: 70, messageFrequency: 76, responseTime: 80, checkInConsistency: 66, label: 'Responsive', trend: 'up' },
+  real_tul: { overall: 62, pipelineActivity: 56, messageFrequency: 60, responseTime: 74, checkInConsistency: 54, label: 'Needs Improvement', trend: 'down' },
+  // Additional non-Real agents
+  exp_nash: { overall: 85, pipelineActivity: 84, messageFrequency: 86, responseTime: 88, checkInConsistency: 78, label: 'Responsive', trend: 'stable' },
+  kw_den: { overall: 88, pipelineActivity: 86, messageFrequency: 90, responseTime: 92, checkInConsistency: 80, label: 'Responsive', trend: 'up' },
+  comp_atl: { overall: 91, pipelineActivity: 92, messageFrequency: 90, responseTime: 94, checkInConsistency: 84, label: 'Highly Responsive', trend: 'up' },
+  remax_phx: { overall: 82, pipelineActivity: 80, messageFrequency: 84, responseTime: 86, checkInConsistency: 74, label: 'Responsive', trend: 'stable' },
 }
 
 /** Get the Communication Score for an agent */

@@ -9,11 +9,19 @@ import type { Invite } from '@/data/invites'
 import {
   Copy, Check, Send, Link2, Mail, MessageSquare, UserPlus,
   Users, Gift, TrendingUp, Clock, Eye, UserCheck, Sparkles,
-  X, Share2, Loader2, MailPlus
+  X, Share2, Loader2, MailPlus, Lock, KeyRound
 } from 'lucide-react'
 
+const INVITE_LIMITS: Record<string, number> = {
+  STARTER: 3,
+  GROWTH: 3,
+  PRO: 3,
+  ELITE: 5,
+  PREMIERE: 5,
+}
+
 const STATUS_CONFIG: Record<Invite['status'], { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'text-muted-foreground', bg: 'bg-secondary', icon: Clock },
+  pending: { label: 'Available', color: 'text-muted-foreground', bg: 'bg-secondary', icon: Clock },
   opened: { label: 'Opened', color: 'text-blue-500', bg: 'bg-blue-500/10', icon: Eye },
   signed_up: { label: 'Signed Up', color: 'text-amber-500', bg: 'bg-amber-500/10', icon: UserPlus },
   active: { label: 'Active', color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: UserCheck },
@@ -57,6 +65,8 @@ export default function InvitePage() {
     setInviteList(initialInvites)
   }, [initialInvites])
   const [copied, setCopied] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [copiedShareMsg, setCopiedShareMsg] = useState<string | null>(null)
   const [showBulkInvite, setShowBulkInvite] = useState(false)
   const [showSingleInvite, setShowSingleInvite] = useState(false)
   const [singleForm, setSingleForm] = useState({ name: '', email: '', brokerage: '', market: '' })
@@ -65,6 +75,17 @@ export default function InvitePage() {
   const [sendingInvite, setSendingInvite] = useState(false)
   const [sendingBulk, setSendingBulk] = useState(false)
   const [inviteError, setInviteError] = useState('')
+
+  const tier = (profile?.subscription_tier || 'STARTER').toUpperCase()
+  const maxInvites = INVITE_LIMITS[tier] || 3
+  const usedInvites = inviteList.filter((i) => i.status === 'signed_up' || i.status === 'active').length
+  const remainingInvites = Math.max(0, maxInvites - usedInvites)
+
+  // Generate invite codes from referral code
+  const inviteCodes = Array.from({ length: maxInvites }, (_, i) => {
+    const base = REFERRAL_CODE || `AR-${(user?.id || 'DEMO').substring(0, 8).toUpperCase()}`
+    return `${base}-${(i + 1).toString().padStart(2, '0')}`
+  })
 
   const stats = {
     totalSent: inviteList.length,
@@ -78,6 +99,26 @@ export default function InvitePage() {
     navigator.clipboard.writeText(REFERRAL_LINK)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function copyInviteCode(code: string) {
+    navigator.clipboard.writeText(code)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 2000)
+  }
+
+  function copyInviteLink(code: string) {
+    const link = `https://agentreferrals.ai/?invite=${code}`
+    navigator.clipboard.writeText(link)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 2000)
+  }
+
+  function shareInvite(code: string) {
+    const message = `Hey! I have an invite for you to join AgentReferrals — the invite-only referral network for real estate agents. Use my code: ${code}\n\nOr sign up here: https://agentreferrals.ai/?invite=${code}`
+    navigator.clipboard.writeText(message)
+    setCopiedShareMsg(code)
+    setTimeout(() => setCopiedShareMsg(null), 2000)
   }
 
   async function callInviteApi(inviteeEmail: string, inviteeName: string, inviteeBrokerage: string, inviteeMarket: string) {
@@ -182,24 +223,89 @@ export default function InvitePage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="font-bold text-2xl mb-1">Grow Your Network</h1>
-            <p className="text-sm text-muted-foreground">Invite agents from any brokerage to join AgentReferrals</p>
+            <div className="flex items-center gap-2 mb-1">
+              <Lock className="w-5 h-5 text-primary" />
+              <h1 className="font-bold text-2xl">Your Invites</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              AgentReferrals is invite-only. Share your codes with agents you trust.
+            </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowSingleInvite(true)}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              <UserPlus className="w-4 h-4" />
-              Invite Agent
-            </button>
-            <button
-              onClick={() => setShowBulkInvite(true)}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
-            >
-              <Users className="w-4 h-4" />
-              Bulk Invite
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
+              <KeyRound className="w-3.5 h-3.5 text-primary" />
+              <span className="text-sm font-semibold">
+                <span className="text-primary">{remainingInvites}</span>
+                <span className="text-muted-foreground"> of {maxInvites} invites remaining</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Invite Codes Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <KeyRound className="w-4 h-4 text-primary" />
+            <h2 className="font-bold text-sm">Your Invite Codes</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {inviteCodes.map((code, idx) => {
+              const isUsed = idx < usedInvites
+              const usedByInvite = isUsed && inviteList[idx] ? inviteList[idx] : null
+              return (
+                <div
+                  key={code}
+                  className={`p-4 rounded-xl border ${isUsed ? 'border-border bg-muted/50' : 'border-primary/20 bg-card'} transition-all`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`font-mono text-sm font-bold tracking-wider ${isUsed ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      {code}
+                    </span>
+                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                      isUsed
+                        ? 'bg-emerald-500/10 text-emerald-500'
+                        : 'bg-primary/10 text-primary'
+                    }`}>
+                      {isUsed ? 'Used' : 'Available'}
+                    </span>
+                  </div>
+                  {isUsed && usedByInvite ? (
+                    <p className="text-xs text-muted-foreground">
+                      Used by <span className="font-semibold">{usedByInvite.name}</span>
+                    </p>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => copyInviteLink(code)}
+                        className={`flex-1 h-8 rounded-md text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                          copiedCode === code
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-primary/10 text-primary hover:bg-primary/20'
+                        }`}
+                      >
+                        {copiedCode === code ? <><Check className="w-3 h-3" /> Copied!</> : <><Link2 className="w-3 h-3" /> Copy Link</>}
+                      </button>
+                      <button
+                        onClick={() => copyInviteCode(code)}
+                        className="h-8 px-2.5 rounded-md border border-border text-xs font-semibold flex items-center justify-center gap-1 hover:bg-accent transition-colors"
+                        title="Copy code only"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => shareInvite(code)}
+                        className={`h-8 px-2.5 rounded-md border border-border text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                          copiedShareMsg === code ? 'bg-emerald-500 text-white border-emerald-500' : 'hover:bg-accent'
+                        }`}
+                        title="Copy share message"
+                      >
+                        {copiedShareMsg === code ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -257,12 +363,16 @@ export default function InvitePage() {
           </div>
           <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
             <span>Referral code: <span className="font-semibold text-foreground">{REFERRAL_CODE}</span></span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>{stats.signedUp + stats.active} agents joined via your link</span>
           </div>
         </div>
 
-        {/* Quick Invite Methods */}
+        {/* Send an Invite Methods */}
+        <div className="mb-4 flex items-center gap-2">
+          <Send className="w-4 h-4 text-primary" />
+          <h2 className="font-bold text-sm">Send an Invite</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
           <button
             onClick={() => setShowSingleInvite(true)}
@@ -315,7 +425,7 @@ export default function InvitePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold">{invite.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{invite.brokerage} · {invite.market}</div>
+                    <div className="text-xs text-muted-foreground truncate">{invite.brokerage} &middot; {invite.market}</div>
                   </div>
                   <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
                     {invite.method === 'email' && <Mail className="w-3 h-3" />}
@@ -339,7 +449,7 @@ export default function InvitePage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowSingleInvite(false) }}>
           <div className="w-full max-w-[480px] rounded-2xl border border-border bg-card shadow-2xl">
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-              <div className="font-bold text-lg">Invite an Agent</div>
+              <div className="font-bold text-lg">Send an Invite</div>
               <button onClick={() => setShowSingleInvite(false)} className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:bg-accent"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-5 space-y-4">

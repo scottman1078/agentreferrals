@@ -34,8 +34,8 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
   const filteredAgents = useMemo(() => {
     if (scope === 'all-network') return agents
     if (scope === 'my-network') return agents.filter((a) => partnerIds.includes(a.id))
-    if (scope === '1-degree') return agents.filter((a) => partnerIds.includes(a.id) || oneDegreeIds.includes(a.id))
-    if (scope === '2-degree') return agents.filter((a) => partnerIds.includes(a.id) || oneDegreeIds.includes(a.id) || twoDegreeIds.includes(a.id))
+    if (scope === '1-degree') return agents.filter((a) => oneDegreeIds.includes(a.id))
+    if (scope === '2-degree') return agents.filter((a) => twoDegreeIds.includes(a.id))
     if (scope === 'my-brokerage') return agents.filter((a) => a.brokerageId === currentBrokerageId)
     return agents
   }, [scope, currentBrokerageId, agents, partnerIds, oneDegreeIds, twoDegreeIds])

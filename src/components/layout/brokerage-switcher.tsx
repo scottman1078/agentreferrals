@@ -6,7 +6,7 @@ import { useAppData } from '@/lib/data-provider'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { getPartnerAgentIds, get1DegreeAgentIds, get2DegreeAgentIds } from '@/data/partnerships'
 import { ChevronDown, Check, Lock } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import type { BrokerageScope } from '@/types'
 
 interface ScopeTab {
@@ -75,12 +75,17 @@ export default function BrokerageSwitcher() {
     }
   }, [showDropdown])
 
+  const pathname = usePathname()
+
   const handleTabClick = (tab: ScopeTab) => {
     if (tab.locked) {
       router.push('/dashboard/billing')
       return
     }
     setScope(tab.id)
+    if (pathname !== '/dashboard') {
+      router.push('/dashboard')
+    }
   }
 
   return (
