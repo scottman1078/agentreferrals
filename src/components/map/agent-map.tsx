@@ -33,6 +33,7 @@ export default function AgentMap() {
   const searchLayersRef = useRef<L.Layer[]>([])
   const POLYGON_ZOOM_THRESHOLD = 7
   const [activeTag, setActiveTag] = useState('all')
+  const [scopeLoading, setScopeLoading] = useState(false)
   const [showVoids, setShowVoids] = useState(false)
   const [showMigration, setShowMigration] = useState(false)
   const [leafletLoaded, setLeafletLoaded] = useState(false)
@@ -234,10 +235,13 @@ export default function AgentMap() {
   // Filter agents by tag AND brokerage scope — always refit bounds
   useEffect(() => {
     if (!mapInstance.current || !L) return
+    setScopeLoading(true)
     const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
     renderAgents(filtered, mapInstance.current, true)
     setSelectedAgent(null)
     setHoveredAgent(null)
+    // Brief delay to let Leaflet render markers before hiding loader
+    setTimeout(() => setScopeLoading(false), 400)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTag, filteredAgents, scope, countyLoadCount, zipLoadCount])
 
@@ -936,6 +940,16 @@ export default function AgentMap() {
               <AppMark size="lg" />
             </div>
             <p className="text-sm font-semibold text-muted-foreground">Loading your referral network...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Scope change loading overlay */}
+      {agentsReady && scopeLoading && (
+        <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+          <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-5 py-3 shadow-lg">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-sm font-semibold text-muted-foreground">Updating map...</span>
           </div>
         </div>
       )}
