@@ -440,3 +440,70 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     return { success: false, reason: 'send_failed', error }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIRM EMAIL — branded email confirmation for password signup
+// ═══════════════════════════════════════════════════════════════
+
+export interface ConfirmEmailData {
+  toEmail: string
+  firstName: string
+  confirmUrl: string
+}
+
+export async function sendConfirmEmail(data: ConfirmEmailData) {
+  if (!client) {
+    console.log('[Postmark] No token — skipping confirm email to', data.toEmail)
+    return { success: false, reason: 'no_token' }
+  }
+
+  const greeting = data.firstName && data.firstName !== 'there'
+    ? `Hi ${data.firstName},`
+    : 'Hi there,'
+
+  const htmlBody = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+  <!-- Header -->
+  <tr><td style="background:#1a1a1a;padding:24px 32px;">
+    <span style="color:#f59e0b;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
+  </td></tr>
+  <!-- Body -->
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">${greeting}</p>
+    <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.6;">Thanks for signing up for AgentReferrals! Please confirm your email address to get started.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to verify your email and activate your account.</p>
+    <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+      <a href="${data.confirmUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Confirm My Email</a>
+    </td></tr></table>
+    <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center;">AgentReferrals — The AI-powered agent referral network</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  try {
+    const result = await client.sendEmail({
+      From: `${FROM_NAME} <${FROM_EMAIL}>`,
+      To: data.toEmail,
+      Subject: 'Confirm your AgentReferrals account',
+      HtmlBody: htmlBody,
+      TextBody: `${greeting}\n\nThanks for signing up for AgentReferrals! Please confirm your email:\n\n${data.confirmUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create an account, you can safely ignore this email.\n\n— AgentReferrals`,
+      MessageStream: 'outbound',
+    })
+    return { success: true, messageId: result.MessageID }
+  } catch (error) {
+    console.error('[Postmark] Send confirm email failed:', error)
+    return { success: false, reason: 'send_failed', error }
+  }
+}

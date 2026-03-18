@@ -1063,7 +1063,13 @@ export default function LandingPage() {
                       }
 
                       // If no session was created, email confirmation is required
+                      // Send our own branded confirmation email via Postmark
                       if (!signUpData?.session) {
+                        fetch('/api/auth/confirm-email', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email, firstName: fullName.split(' ')[0] }),
+                        }).catch(() => {})
                         setSignupSuccess(true)
                         setAuthLoading(false)
                         return
