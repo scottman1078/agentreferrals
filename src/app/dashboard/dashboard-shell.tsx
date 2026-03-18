@@ -44,7 +44,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const [newPartners, setNewPartners] = useState<NewPartnerNotification[]>([])
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
-  const { isDemoMode } = useDemo()
+  const { isDemoMode, disableDemo } = useDemo()
   const router = useRouter()
   const pathname = usePathname()
   const isMapPage = pathname === '/dashboard'
@@ -87,9 +87,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   // If a real user is authenticated, auto-clear demo mode
   useEffect(() => {
     if (isAuthenticated && isDemoMode) {
-      sessionStorage.removeItem('ar_demo_mode')
+      disableDemo()
     }
-  }, [isAuthenticated, isDemoMode])
+  }, [isAuthenticated, isDemoMode, disableDemo])
 
   // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode)
   useEffect(() => {

@@ -94,7 +94,7 @@ export default function AgentMap() {
     preloadAgentCounties(filteredAgents).then((map) => {
       countyPolygonsRef.current = map
       console.log(`[CountyBoundaries] Loaded ${map.size}/${filteredAgents.length} agent counties`)
-      setCountyLoadCount((c) => c + 1) // increment to force re-render
+      setCountyLoadCount((c) => c + 1)
     })
   }, [filteredAgents])
 
@@ -103,14 +103,10 @@ export default function AgentMap() {
     const loadZipBoundaries = async () => {
       let loaded = 0
       for (const agent of filteredAgents) {
-        // Skip agents that already have polygon data or county polygons
         if (agent.polygon && agent.polygon.length >= 3) continue
         if (agentZipPolygonsRef.current.has(agent.id)) continue
-
-        // Extract first zip from area field
         const firstZip = agent.area?.match(/\b(\d{5})\b/)?.[1]
         if (!firstZip) continue
-
         const ring = await getZipBoundary(firstZip)
         if (ring) {
           agentZipPolygonsRef.current.set(agent.id, ring)
@@ -273,7 +269,12 @@ export default function AgentMap() {
   // Initialize myZips from profile
   useEffect(() => {
     if (profile?.territory_zips && Array.isArray(profile.territory_zips)) {
-      setMyZips(profile.territory_zips as string[])
+      const profileZips = profile.territory_zips as string[]
+      setMyZips((prev) => {
+        // Only update if actually different to avoid triggering auto-save loop
+        if (prev.length === profileZips.length && prev.every((z, i) => z === profileZips[i])) return prev
+        return profileZips
+      })
     }
   }, [profile])
 
