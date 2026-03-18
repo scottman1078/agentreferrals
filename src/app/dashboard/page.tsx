@@ -10,7 +10,7 @@ function MapLoader() {
         <div className="animate-pulse">
           <AppMark size="lg" />
         </div>
-        <p className="text-xs font-semibold text-muted-foreground">Loading your referral network...</p>
+        <p className="text-sm font-semibold text-muted-foreground">Loading your referral network...</p>
       </div>
     </div>
   )

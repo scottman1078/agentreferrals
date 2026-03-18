@@ -182,7 +182,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center animate-pulse">
             <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg>
           </div>
-          <p className="text-sm text-muted-foreground">Loading your referral network...</p>
+          <p className="text-sm font-semibold text-muted-foreground">Loading your referral network...</p>
         </div>
       </div>
     )

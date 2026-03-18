@@ -585,44 +585,41 @@ export default function AgentMap() {
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
       const markerSize = 32
-      const photoContent = scopeLocked
-        ? initials
-        : agent.photoUrl
-          ? `<img src="${agent.photoUrl}" alt="${agent.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
-          : initials
+      // Partners: show photo if available, colored background with white text
+      // Non-partners: always show initials with colored background
       const markerHtml = isPartner
         ? `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.photoUrl ? 'transparent' : agent.color};
-            border:2px solid ${agent.color};
+            background:${agent.color};
+            border:2px solid white;
             box-shadow:0 2px 8px rgba(0,0,0,0.3);
             display:flex;align-items:center;justify-content:center;
             font-size:11px;font-weight:700;color:white;
             font-family:var(--font-dm-sans),system-ui,sans-serif;
             cursor:pointer;overflow:hidden;
-          ">${photoContent}</div>`
+          ">${agent.photoUrl && !scopeLocked ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />` : initials}</div>`
         : isDegreeAgent
           ? `<div style="
               width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-              background:white;
-              border:2.5px dashed ${agent.color};
+              background:${agent.color};
+              border:2.5px dashed white;
               box-shadow:0 2px 8px rgba(0,0,0,0.15);
               display:flex;align-items:center;justify-content:center;
-              font-size:11px;font-weight:700;color:${agent.color};
+              font-size:10px;font-weight:700;color:white;
               opacity:0.85;
               font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;overflow:hidden;
-            ">${photoContent}</div>`
+              cursor:pointer;
+            ">${initials}</div>`
           : `<div style="
               width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-              background:white;
-              border:2.5px solid ${agent.color};
+              background:${agent.color};
+              border:2.5px solid white;
               box-shadow:0 2px 8px rgba(0,0,0,0.15);
               display:flex;align-items:center;justify-content:center;
-              font-size:11px;font-weight:700;color:${agent.color};
+              font-size:10px;font-weight:700;color:white;
               font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;overflow:hidden;
-            ">${photoContent}</div>`
+              cursor:pointer;
+            ">${initials}</div>`
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
         html: markerHtml,
@@ -938,7 +935,7 @@ export default function AgentMap() {
             <div className="animate-pulse">
               <AppMark size="lg" />
             </div>
-            <p className="text-xs font-semibold text-muted-foreground">Loading your referral network...</p>
+            <p className="text-sm font-semibold text-muted-foreground">Loading your referral network...</p>
           </div>
         </div>
       )}

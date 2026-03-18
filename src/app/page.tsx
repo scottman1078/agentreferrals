@@ -258,7 +258,7 @@ export default function LandingPage() {
             <p className="text-xs text-muted-foreground font-medium mb-3">Trusted by agents at</p>
             <div className="flex items-center justify-center gap-6 sm:gap-8">
               {[
-                { name: 'Real Broker', src: '/logos/real.svg' },
+                { name: 'Real Broker', src: '/logos/real.png' },
                 { name: 'eXp Realty', src: '/logos/exp.png' },
                 { name: 'Compass', src: '/logos/compass.png' },
                 { name: 'KW', src: '/logos/kw.png' },
