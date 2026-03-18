@@ -343,6 +343,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-3">
             {isDegreeAgent ? (
+              /* Non-partner degree agent: Request Intro only, no direct message for free tier */
               <button
                 onClick={() => onSendReferral?.(agent)}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors"
@@ -359,13 +360,16 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                 Send Referral
               </button>
             )}
-            <button
-              onClick={() => onMessage?.(agent)}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Message
-            </button>
+            {/* Message button: only for direct partners, not for degree agents */}
+            {isDirectPartner && (
+              <button
+                onClick={() => onMessage?.(agent)}
+                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Message
+              </button>
+            )}
             <button
               onClick={() => router.push(`/agent/${agent.id}`)}
               className="h-9 px-3 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors shrink-0"
