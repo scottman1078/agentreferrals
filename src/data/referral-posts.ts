@@ -27,6 +27,8 @@ export interface ReferralPost {
   status: PostStatus
   postedAt: string
   expiresAt: string
+  decisionDeadline: string       // when the posting agent will choose — visible to bidders
+  earlyAccessUntil: string       // paid members see it first; after this time it's public
   bidsCount: number
   viewCount: number
   awardedBidId?: string
@@ -79,6 +81,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'open',
     postedAt: '2026-03-15T10:00:00Z',
     expiresAt: '2026-03-29T10:00:00Z',
+    decisionDeadline: '2026-03-21T17:00:00Z',
+    earlyAccessUntil: '2026-03-15T12:00:00Z',
     bidsCount: 3,
     viewCount: 42,
   },
@@ -102,6 +106,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'open',
     postedAt: '2026-03-14T14:00:00Z',
     expiresAt: '2026-03-28T14:00:00Z',
+    decisionDeadline: '2026-03-24T17:00:00Z',
+    earlyAccessUntil: '2026-03-14T16:00:00Z',
     bidsCount: 2,
     viewCount: 31,
   },
@@ -125,6 +131,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'open',
     postedAt: '2026-03-16T09:00:00Z',
     expiresAt: '2026-03-30T09:00:00Z',
+    decisionDeadline: '2026-03-20T12:00:00Z',
+    earlyAccessUntil: '2026-03-16T11:00:00Z',
     bidsCount: 4,
     viewCount: 56,
   },
@@ -148,6 +156,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'open',
     postedAt: '2026-03-16T11:00:00Z',
     expiresAt: '2026-03-30T11:00:00Z',
+    decisionDeadline: '2026-03-19T17:00:00Z',
+    earlyAccessUntil: '2026-03-16T13:00:00Z',
     bidsCount: 2,
     viewCount: 28,
   },
@@ -171,6 +181,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'open',
     postedAt: '2026-03-13T16:00:00Z',
     expiresAt: '2026-04-13T16:00:00Z',
+    decisionDeadline: '2026-03-25T17:00:00Z',
+    earlyAccessUntil: '2026-03-13T18:00:00Z',
     bidsCount: 5,
     viewCount: 89,
   },
@@ -195,6 +207,8 @@ export const referralPosts: ReferralPost[] = [
     status: 'awarded',
     postedAt: '2026-02-20T10:00:00Z',
     expiresAt: '2026-03-06T10:00:00Z',
+    decisionDeadline: '2026-02-22T17:00:00Z',
+    earlyAccessUntil: '2026-02-20T12:00:00Z',
     bidsCount: 4,
     viewCount: 67,
     awardedBidId: 'bid-6a',
@@ -398,6 +412,35 @@ export function getMyBidsOnPost(postId: string, agentId: string): ReferralBid | 
 export function getAwardedBid(post: ReferralPost): ReferralBid | null {
   if (!post.awardedBidId) return null
   return referralBids.find((b) => b.id === post.awardedBidId) ?? null
+}
+
+/** Check if a post is still in its early access window (paid members only) */
+export function isEarlyAccess(post: ReferralPost): boolean {
+  return Date.now() < new Date(post.earlyAccessUntil).getTime()
+}
+
+/** Get early access countdown (returns null if expired) */
+export function getEarlyAccessCountdown(post: ReferralPost): string | null {
+  const remaining = new Date(post.earlyAccessUntil).getTime() - Date.now()
+  if (remaining <= 0) return null
+  const mins = Math.floor(remaining / (1000 * 60))
+  const hrs = Math.floor(mins / 60)
+  if (hrs > 0) return `${hrs}h ${mins % 60}m`
+  return `${mins}m`
+}
+
+/** Get urgency info for decision deadline */
+export function getDeadlineUrgency(deadlineStr: string): { label: string; color: string; isUrgent: boolean } {
+  const now = Date.now()
+  const deadline = new Date(deadlineStr).getTime()
+  const hoursLeft = Math.max(0, Math.floor((deadline - now) / (1000 * 60 * 60)))
+  const daysLeft = Math.floor(hoursLeft / 24)
+
+  if (hoursLeft <= 0) return { label: 'Deadline passed', color: 'text-red-500 bg-red-500/10', isUrgent: true }
+  if (hoursLeft <= 24) return { label: `${hoursLeft}h left to decide`, color: 'text-red-500 bg-red-500/10', isUrgent: true }
+  if (daysLeft <= 2) return { label: `${daysLeft}d ${hoursLeft % 24}h left`, color: 'text-amber-500 bg-amber-500/10', isUrgent: true }
+  if (daysLeft <= 5) return { label: `${daysLeft} days left`, color: 'text-amber-500 bg-amber-500/10', isUrgent: false }
+  return { label: `${daysLeft} days left`, color: 'text-muted-foreground bg-secondary', isUrgent: false }
 }
 
 /** Format relative time ago */

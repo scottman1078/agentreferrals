@@ -7,6 +7,9 @@ import {
   getBidsForPost,
   getBidsByAgent,
   getAwardedBid,
+  getDeadlineUrgency,
+  isEarlyAccess,
+  getEarlyAccessCountdown,
   timeAgo,
 } from '@/data/referral-posts'
 import type { ReferralPost, ReferralBid } from '@/data/referral-posts'
@@ -35,6 +38,7 @@ import {
   Search,
   Upload,
   Handshake,
+  Timer,
 } from 'lucide-react'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
 
@@ -59,7 +63,7 @@ export default function MarketplacePage() {
     : openPosts
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-0">
       <BackToDashboard />
 
       {/* Header */}
@@ -224,6 +228,15 @@ function PostCard({
                   Awarded
                 </span>
               )}
+              {!isAwarded && isEarlyAccess(post) && (() => {
+                const countdown = getEarlyAccessCountdown(post)
+                return countdown ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-500 animate-pulse">
+                    <Star className="w-3 h-3" />
+                    Early Access — {countdown}
+                  </span>
+                ) : null
+              })()}
             </div>
 
             {/* Market + details */}
@@ -263,6 +276,17 @@ function PostCard({
                 </span>
               )}
             </div>
+
+            {/* Decision deadline */}
+            {post.status === 'open' && post.decisionDeadline && (() => {
+              const urgency = getDeadlineUrgency(post.decisionDeadline)
+              return (
+                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${urgency.color} mb-1.5`}>
+                  <Timer className={`w-3 h-3 ${urgency.isUrgent ? 'animate-pulse' : ''}`} />
+                  {urgency.label}
+                </div>
+              )
+            })()}
 
             {/* Stats row */}
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -687,6 +711,7 @@ function PostReferralButton() {
     representation: 'Buyer' as 'Buyer' | 'Seller' | 'Both',
     budgetRange: '',
     timeline: '90 days',
+    decisionDeadline: '',
     description: '',
     clientNeeds: '',
     feePercent: 25,
@@ -780,7 +805,7 @@ function PostReferralButton() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Budget Range</label>
               <input
@@ -798,6 +823,19 @@ function PostReferralButton() {
                 className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="90 days"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Decision Deadline *</label>
+              <input
+                type="date"
+                value={form.decisionDeadline}
+                onChange={(e) => setForm((p) => ({ ...p, decisionDeadline: e.target.value }))}
+                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">When you&apos;ll choose an agent — creates urgency for bidders</p>
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Referral Fee %</label>

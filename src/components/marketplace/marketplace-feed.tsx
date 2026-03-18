@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getOpenPosts, timeAgo } from '@/data/referral-posts'
+import { getOpenPosts, getDeadlineUrgency, isEarlyAccess, getEarlyAccessCountdown, timeAgo } from '@/data/referral-posts'
 import type { ReferralPost } from '@/data/referral-posts'
 import { getInitials } from '@/lib/utils'
 import {
@@ -17,6 +17,8 @@ import {
   X,
   Flame,
   Handshake,
+  Timer,
+  Star,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -57,7 +59,7 @@ export default function MarketplaceFeed() {
   }
 
   return (
-    <div className="fixed left-4 z-[400] w-[320px] max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden" style={{ top: 120 }}>
+    <div className="fixed left-2 right-2 sm:left-4 sm:right-auto sm:w-[320px] z-[400] max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden" style={{ top: 120 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
@@ -168,6 +170,28 @@ function FeedPostCard({ post, isMyArea }: { post: ReferralPost; isMyArea: boolea
           <div className="flex items-center gap-1 mb-1">
             <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{post.budgetRange}</span>
+          </div>
+
+          {/* Deadline + early access badges */}
+          <div className="flex flex-wrap items-center gap-1 mb-1">
+            {post.decisionDeadline && (() => {
+              const urgency = getDeadlineUrgency(post.decisionDeadline)
+              return (
+                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${urgency.color}`}>
+                  <Timer className={`w-2.5 h-2.5 ${urgency.isUrgent ? 'animate-pulse' : ''}`} />
+                  {urgency.label}
+                </span>
+              )
+            })()}
+            {isEarlyAccess(post) && (() => {
+              const countdown = getEarlyAccessCountdown(post)
+              return countdown ? (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-violet-500/10 text-violet-500">
+                  <Star className="w-2.5 h-2.5" />
+                  Early Access — {countdown}
+                </span>
+              ) : null
+            })()}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-muted-foreground">
