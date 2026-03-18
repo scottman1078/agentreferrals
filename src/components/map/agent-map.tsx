@@ -7,6 +7,7 @@ import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles, MapPin, Search, X, Loader2, Send, Lock } from 'lucide-react'
+import { AppMark } from '@/components/ui/app-logo'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
@@ -36,6 +37,7 @@ export default function AgentMap() {
   const [showMigration, setShowMigration] = useState(false)
   const [leafletLoaded, setLeafletLoaded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [agentsReady, setAgentsReady] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [hoveredAgent, setHoveredAgent] = useState<{ agent: Agent; position: { x: number; y: number } } | null>(null)
   const [referralAgent, setReferralAgent] = useState<Agent | null>(null)
@@ -65,6 +67,27 @@ export default function AgentMap() {
   const showMyZipsRef = useRef(false)
 
   useEffect(() => setMounted(true), [])
+
+  // Poll for map tiles AND agent markers to appear, then hide the loader
+  useEffect(() => {
+    if (agentsReady) return
+    const interval = setInterval(() => {
+      // Need both tiles and marker images loaded
+      const tiles = document.querySelectorAll('.leaflet-tile-loaded')
+      const imgs = document.querySelectorAll('.agent-marker img')
+      if (tiles.length >= 10 && imgs.length >= 3) {
+        let loadedCount = 0
+        imgs.forEach((img) => { if ((img as HTMLImageElement).complete) loadedCount++ })
+        if (loadedCount >= 3) {
+          setAgentsReady(true)
+          clearInterval(interval)
+        }
+      }
+    }, 200)
+    // Fallback: always show after 8s
+    const fallback = setTimeout(() => { setAgentsReady(true); clearInterval(interval) }, 8000)
+    return () => { clearInterval(interval); clearTimeout(fallback) }
+  }, [agentsReady])
 
   // Preload real county boundaries for all agents
   useEffect(() => {
@@ -150,6 +173,7 @@ export default function AgentMap() {
 
     tileLayerRef.current = tileLayer
     mapInstance.current = map
+
     renderAgents(filteredAgents, map, true)
 
     // Click empty area → zoom in 2 levels (skip when in My Zips mode)
@@ -460,31 +484,37 @@ export default function AgentMap() {
     setMyZips((prev) => prev.filter((z) => z !== zip))
   }, [])
 
-  const handleSaveZips = useCallback(async () => {
-    if (!profile) return
-    setZipSaving(true)
-
-    // Build polygon array from Census boundaries
-    const polygonRings: [number, number][][] = []
-    for (const zip of myZips) {
-      const ring = await getZipBoundary(zip)
-      if (ring) polygonRings.push(ring)
+  // Auto-save zips when they change
+  const zipsInitializedRef = useRef(false)
+  useEffect(() => {
+    // Skip the initial render (loading from profile)
+    if (!zipsInitializedRef.current) {
+      zipsInitializedRef.current = true
+      return
     }
-
-    const supabase = (await import('@/lib/supabase/client')).createClient()
-    await supabase
-      .from('ar_profiles')
-      .update({
-        territory_zips: myZips.length > 0 ? myZips : null,
-        polygon: polygonRings.length > 0 ? polygonRings : null,
-      })
-      .eq('id', profile.id)
-
-    await refreshProfile()
-    setZipSaving(false)
-    setZipSaveToast(true)
-    setTimeout(() => setZipSaveToast(false), 3000)
-  }, [profile, myZips, refreshProfile])
+    if (!profile) return
+    const timeout = setTimeout(async () => {
+      setZipSaving(true)
+      const polygonRings: [number, number][][] = []
+      for (const zip of myZips) {
+        const ring = await getZipBoundary(zip)
+        if (ring) polygonRings.push(ring)
+      }
+      const supabase = (await import('@/lib/supabase/client')).createClient()
+      await supabase
+        .from('ar_profiles')
+        .update({
+          territory_zips: myZips.length > 0 ? myZips : null,
+          polygon: polygonRings.length > 0 ? polygonRings : null,
+        })
+        .eq('id', profile.id)
+      await refreshProfile()
+      setZipSaving(false)
+      setZipSaveToast(true)
+      setTimeout(() => setZipSaveToast(false), 3000)
+    }, 500)
+    return () => clearTimeout(timeout)
+  }, [myZips, profile, refreshProfile])
 
   const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
@@ -647,6 +677,7 @@ export default function AgentMap() {
       }
       map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
     }
+    // agentsReady is handled by polling useEffect above
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAgent, partnerIds, scope, countyLoadCount, zipLoadCount])
 
@@ -832,13 +863,9 @@ export default function AgentMap() {
           <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm">My Zip Codes</h3>
-              <button
-                onClick={handleSaveZips}
-                disabled={zipSaving}
-                className="flex items-center gap-1.5 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 disabled:opacity-50"
-              >
-                {zipSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                Save
+              {zipSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+              <button onClick={() => setShowMyZips(false)} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-accent">
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -905,6 +932,18 @@ export default function AgentMap() {
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* Map loading state — show until agents are rendered (must be AFTER map div to paint on top) */}
+      {!agentsReady && (
+        <div className="absolute inset-0 z-[10000] flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-pulse">
+              <AppMark size="lg" />
+            </div>
+            <p className="text-xs font-semibold text-muted-foreground">Loading map...</p>
+          </div>
+        </div>
+      )}
 
       {/* Blur overlay for locked degree tabs */}
       {((scope === '1-degree' && !hasFeature('networkDegree1')) ||
