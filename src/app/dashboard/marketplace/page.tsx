@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
+import { maskName } from '@/lib/agent-display-name'
 import {
   getOpenPosts,
   getPostsByAgent,
@@ -222,7 +223,7 @@ function PostCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-sm">{post.postingAgentName}</span>
+              <span className="font-semibold text-sm">{maskName(post.postingAgentName)}</span>
               <span className="text-xs text-muted-foreground">{post.postingAgentBrokerage}</span>
               {isAwarded && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
@@ -338,7 +339,7 @@ function PostCard({
           {/* Bid button */}
           {showBidButton && post.status === 'open' && (
             <div className="px-4 pb-4">
-              <BidForm postId={post.id} market={post.market} postingAgentName={post.postingAgentName} />
+              <BidForm postId={post.id} market={post.market} postingAgentName={maskName(post.postingAgentName)} />
             </div>
           )}
 
@@ -395,7 +396,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm">{bid.agentName}</span>
+            <span className="font-semibold text-sm">{maskName(bid.agentName)}</span>
             {isAwarded && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
                 <Check className="w-3 h-3" />
@@ -454,7 +455,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
                         {getInitials(bid.agentName)}
                       </div>
                       <p className="text-white/80 text-sm font-semibold">
-                        {bid.agentName}&apos;s Video Pitch
+                        {maskName(bid.agentName)}&apos;s Video Pitch
                       </p>
                       <p className="text-white/40 text-xs">
                         {bid.videoDuration ? `${Math.floor(bid.videoDuration / 60)}:${(bid.videoDuration % 60).toString().padStart(2, '0')}` : ''}
@@ -677,7 +678,7 @@ function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost
             {post.neighborhood && ` — ${post.neighborhood}`}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Posted by {post.postingAgentName} · {post.budgetRange} · {post.representation}
+            Posted by {maskName(post.postingAgentName)} · {post.budgetRange} · {post.representation}
           </div>
         </div>
       )}

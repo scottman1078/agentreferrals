@@ -5,6 +5,7 @@ import { getOpenPosts, getDeadlineUrgency, isEarlyAccess, getEarlyAccessCountdow
 import type { ReferralPost } from '@/data/referral-posts'
 import { useMarketplace } from '@/lib/marketplace-provider'
 import { getInitials } from '@/lib/utils'
+import { maskName } from '@/lib/agent-display-name'
 import {
   Megaphone,
   MapPin,
@@ -152,7 +153,7 @@ function FeedPostCard({ post, isMyArea }: { post: ReferralPost; isMyArea: boolea
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-xs font-semibold truncate">{post.postingAgentName}</span>
+            <span className="text-xs font-semibold truncate">{maskName(post.postingAgentName)}</span>
             {isMyArea && (
               <span className="shrink-0 px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 YOUR AREA
