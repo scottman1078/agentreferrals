@@ -1,20 +1,17 @@
 /**
  * Smart data provider — uses Supabase hooks if authenticated, falls back to mock data.
- * This lets the app work both with and without a database connection (demo mode).
  *
- * Usage in components:
- *   const { agents, referrals, ... } = useAppData()
- *
- * Pattern:
- *   1. Check auth context for user/profile
- *   2. If authenticated, fetch from Supabase via existing hooks
- *   3. If not authenticated (demo mode), return mock data as fallback
+ * Data flow:
+ *   1. Demo mode ON (via /demo) → always return mock data
+ *   2. Authenticated user, demo OFF → Supabase data (empty states if no data)
+ *   3. Not authenticated, demo OFF → mock data (backwards compatible)
  */
 
 'use client'
 
 import { useMemo } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useDemo } from '@/contexts/demo-context'
 import { useAgents } from '@/hooks/use-agents'
 import { useReferrals } from '@/hooks/use-referrals'
 import { useInvites } from '@/hooks/use-invites'
@@ -131,6 +128,15 @@ export function useAppData(): AppData {
   let isAuthLoading = true
   let profile: ArProfile | null = null
   let userId: string | undefined
+  let isDemoMode = false
+
+  // Check demo mode
+  try {
+    const demo = useDemo()
+    isDemoMode = demo.isDemoMode
+  } catch {
+    // DemoProvider not available
+  }
 
   // Try to use auth — but handle case where AuthProvider is not mounted
   try {
@@ -140,7 +146,13 @@ export function useAppData(): AppData {
     profile = auth.profile
     userId = auth.user?.id
   } catch {
-    // AuthProvider not available — use demo mode
+    // AuthProvider not available — use mock data
+    isAuthenticated = false
+    isAuthLoading = false
+  }
+
+  // If demo mode is explicitly on, force mock data
+  if (isDemoMode) {
     isAuthenticated = false
     isAuthLoading = false
   }

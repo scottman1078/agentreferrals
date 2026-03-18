@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useDemo } from '@/contexts/demo-context'
 import {
   getOpenPosts as mockGetOpenPosts,
   getPostsByAgent as mockGetPostsByAgent,
@@ -43,10 +44,16 @@ export function useMarketplace(): MarketplaceData {
 
   let isAuthenticated = false
   let userId: string | undefined
+  let isDemoMode = false
+
+  try {
+    const demo = useDemo()
+    isDemoMode = demo.isDemoMode
+  } catch { /* no DemoProvider */ }
 
   try {
     const auth = useAuth()
-    isAuthenticated = auth.isAuthenticated
+    isAuthenticated = auth.isAuthenticated && !isDemoMode
     userId = auth.user?.id
   } catch {
     // AuthProvider not available — use mock

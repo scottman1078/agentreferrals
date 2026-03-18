@@ -10,7 +10,9 @@ import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
 import SetupWizard from '@/components/setup-wizard/setup-wizard'
 import { AdminTierProvider } from '@/contexts/admin-tier-context'
+import { DemoProvider } from '@/contexts/demo-context'
 import AdminTierSwitcher from '@/components/admin/tier-switcher'
+import DemoBanner from '@/components/ui/demo-banner'
 import { UserPlus, X } from 'lucide-react'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
@@ -242,10 +244,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <AdminTierProvider>
-        <DashboardShell>{children}</DashboardShell>
-      </AdminTierProvider>
-    </AuthProvider>
+    <DemoProvider>
+      <AuthProvider>
+        <AdminTierProvider>
+          <DemoBanner />
+          <DashboardShell>{children}</DashboardShell>
+        </AdminTierProvider>
+      </AuthProvider>
+    </DemoProvider>
   )
 }
