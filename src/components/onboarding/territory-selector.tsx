@@ -60,6 +60,10 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // Cache of zip code → boundary polygon coordinates [lat, lng][]
   const zipBoundariesRef = useRef<Map<string, LatLng[]>>(new Map())
 
+  // Always-current value ref to avoid stale closures in effects
+  const valueRef = useRef(value)
+  valueRef.current = value
+
   const [leafletReady, setLeafletReady] = useState(false)
   const [activeTab, setActiveTab] = useState<'zip' | 'county' | 'draw'>(value.mode)
   const [zipInput, setZipInput] = useState('')
@@ -165,15 +169,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
 
-  // Invalidate map size after render to handle container resizing
-  useEffect(() => {
-    if (!mapInstance.current) return
-    const timer = setTimeout(() => {
-      mapInstance.current?.invalidateSize()
-    }, 100)
-    return () => clearTimeout(timer)
-  })
-
   // Determine which state(s) are visible on the map
   const updateVisibleStates = useCallback((map: L.Map) => {
     const stateGuesses: string[] = []
@@ -210,9 +205,10 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     ensureTiles()
 
     // Show drawn polygons if switching to draw mode
-    if (activeTab === 'draw' && value.drawnPolygon.length > 0) {
+    const currentValue = valueRef.current
+    if (activeTab === 'draw' && currentValue.drawnPolygon.length > 0) {
       const group = L.featureGroup()
-      for (const coords of value.drawnPolygon) {
+      for (const coords of currentValue.drawnPolygon) {
         if (coords.length >= 3) {
           L.polygon(coords as L.LatLngExpression[], {
             color: '#f59e0b',
@@ -226,7 +222,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       drawnLayerRef.current = group
     }
 
-    onChange({ ...value, mode: activeTab })
+    onChange({ ...currentValue, mode: activeTab })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
@@ -257,7 +253,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       if (maxLat < bounds.getSouth() || minLat > bounds.getNorth() ||
           maxLng < bounds.getWest() || minLng > bounds.getEast()) return
 
-      const layer = L!.geoJSON(feat, {
+      // Deep-clone to avoid L.geoJSON corrupting the shared reference
+      const cloned = JSON.parse(JSON.stringify(feat)) as GeoJSON.Feature
+      const layer = L!.geoJSON(cloned, {
         style: {
           color: '#9ca3af',
           weight: 1,
@@ -301,7 +299,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       const feat = allCounties.get(fips)
       if (!feat) continue
 
-      const layer = L.geoJSON(feat, {
+      // Deep-clone the feature to avoid L.geoJSON corrupting the shared reference
+      const cloned = JSON.parse(JSON.stringify(feat)) as GeoJSON.Feature
+      const layer = L.geoJSON(cloned, {
         style: {
           color: '#f59e0b',
           weight: 2.5,
