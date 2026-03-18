@@ -164,6 +164,23 @@ export default function AgentMap() {
     // Add zoom control to bottom-left
     L.control.zoom({ position: 'bottomleft' }).addTo(map)
 
+    // Add custom "reset view" button above zoom controls
+    const ResetControl = L.Control.extend({
+      options: { position: 'bottomleft' as const },
+      onAdd: () => {
+        const btn = L!.DomUtil.create('div', 'leaflet-bar')
+        btn.innerHTML = '<a href="#" title="Fit all agents" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;font-size:16px;text-decoration:none;color:inherit;">⊡</a>'
+        btn.onclick = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          map.setView([39.5, -96.5], 4, { animate: true })
+        }
+        L!.DomEvent.disableClickPropagation(btn)
+        return btn
+      },
+    })
+    new ResetControl().addTo(map)
+
     const tileLayer = L.tileLayer(isDark ? DARK_TILES : LIGHT_TILES, {
       attribution: '',
     }).addTo(map)
@@ -938,21 +955,6 @@ export default function AgentMap() {
           </div>
         </div>
       )}
-
-      {/* Reset zoom button — above Leaflet zoom controls */}
-      <button
-        onClick={() => {
-          if (!mapInstance.current) return
-          const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
-          renderAgents(filtered, mapInstance.current, true)
-          setSelectedAgent(null)
-          setHoveredAgent(null)
-        }}
-        className="fixed bottom-[140px] left-[19px] z-[600] w-[30px] h-[30px] rounded-sm border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center justify-center shadow-md"
-        title="Reset view"
-      >
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
-      </button>
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
