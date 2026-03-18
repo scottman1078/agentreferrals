@@ -296,7 +296,10 @@ export default function OnboardingPage() {
       setUserEmail(user.email ?? '')
       const name = user.user_metadata?.full_name ?? ''
       setUserName(name)
-      setData((prev) => ({ ...prev, fullName: name }))
+      // Always set fullName from Google OAuth if available, even if localStorage had empty value
+      if (name) {
+        setData((prev) => prev.fullName ? prev : { ...prev, fullName: name })
+      }
     })
   }, [hub, router])
 
