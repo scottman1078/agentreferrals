@@ -148,7 +148,7 @@ export default function TopBar() {
             </button>
 
             {showAvatarMenu && (
-              <div className="absolute top-full right-0 mt-2 w-[200px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden z-[9500]">
+              <div className="absolute top-full right-0 mt-2 w-[200px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden z-[9999]" style={{ position: 'fixed', top: 60, right: 16 }}>
                 <div className="px-4 py-3 border-b border-border">
                   <div className="font-semibold text-sm">{displayName}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
