@@ -317,7 +317,7 @@ export default function LandingPage() {
               { icon: MapPin, title: 'Network Map', desc: 'Visualize agent territories, identify coverage gaps, and spot market opportunities with an interactive map.', color: 'text-blue-500' },
               { icon: ThumbsUp, title: 'Agent Endorsements', desc: 'Give and receive endorsements from agents you\'ve worked with. Social proof that builds trust and credibility.', color: 'text-violet-500' },
               { icon: Video, title: 'Video Introductions', desc: 'Record a short video intro so referral partners can see who they\'re working with before connecting.', color: 'text-red-500' },
-              { icon: Building2, title: 'Multi-Brokerage', desc: 'Search within your brokerage first, then expand to the full network. Every brokerage gets their own space.', color: 'text-purple-500' },
+              { icon: Users, title: 'Degrees of Separation', desc: 'See how you\'re connected to any agent through your network. Request warm introductions through mutual partners — just like LinkedIn for referrals.', color: 'text-purple-500' },
               { icon: BarChart3, title: 'Pipeline Tracking', desc: 'Kanban board tracks every referral from agreement to close. Never lose track of a deal again.', color: 'text-teal-500' },
               { icon: FileText, title: 'Smart Agreements', desc: 'Auto-generated referral agreements with e-signature. Terms, fees, and expiration built in.', color: 'text-orange-500' },
               { icon: TrendingUp, title: 'ROI Dashboard', desc: 'See your referral revenue, conversion rates, top markets, and top partners at a glance.', color: 'text-rose-500' },
