@@ -822,6 +822,8 @@ export default function OnboardingPage() {
       console.log('[PhoneVerify] Setting normalizedPhone:', normalized)
       setNormalizedPhone(normalized)
       normalizedPhoneRef.current = normalized
+      // Belt-and-suspenders: also store in sessionStorage
+      try { sessionStorage.setItem('ar_verify_phone', normalized) } catch {}
       updateData({ phone: normalized })
       addUserMessage(phone)
 
@@ -884,8 +886,13 @@ export default function OnboardingPage() {
   // ── Handle phone verification: resend code ──
   // NOT a useCallback — needs fresh closure every render to access latest phone
   const handleResendPhoneCode = async () => {
+    // Try every possible source for the phone number
     const phone = normalizedPhoneRef.current
-    console.log('[ResendCode] CLICKED. ref:', normalizedPhoneRef.current, 'state:', normalizedPhone, 'data.phone:', data.phone, 'input:', phoneInputValue)
+      || normalizedPhone
+      || data.phone
+      || (typeof window !== 'undefined' ? sessionStorage.getItem('ar_verify_phone') : null)
+      || phoneInputValue
+    console.log('[ResendCode] phone:', phone, 'ref:', normalizedPhoneRef.current, 'session:', typeof window !== 'undefined' ? sessionStorage.getItem('ar_verify_phone') : 'ssr')
     if (!phone) {
       setPhoneError('No phone number found. Please re-enter your number.')
       return
