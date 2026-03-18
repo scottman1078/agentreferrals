@@ -180,8 +180,9 @@ export default function SettingsPage() {
     setSaving(false)
 
     if (error) {
-      setSaveToast('Failed to save. Please try again.')
-      setTimeout(() => setSaveToast(''), 4000)
+      console.error('[Settings] Save error:', error)
+      setSaveToast(`Failed to save: ${error.message}`)
+      setTimeout(() => setSaveToast(''), 6000)
       return
     }
 
