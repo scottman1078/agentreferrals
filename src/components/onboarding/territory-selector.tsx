@@ -155,7 +155,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (initialCenter) {
       geocodeLocation(initialCenter).then((coords) => {
         if (coords && mapInstance.current) {
-          mapInstance.current.setView(coords, 7, { animate: false })
+          mapInstance.current.setView(coords, 6, { animate: false })
         }
       })
     }
@@ -255,9 +255,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           : { color: '#9ca3af', weight: 1, fillColor: '#f3f4f6', fillOpacity: 0.15, dashArray: '3, 3' }),
       })
 
-      // County name without state (e.g. "Kalamazoo County" not "Kalamazoo County, Michigan")
+      // Just the name (e.g. "Kalamazoo" not "Kalamazoo County, Michigan")
       const fullName = countyNames.get(fips)
-      const shortName = fullName ? fullName.replace(/,\s*\w+$/, '') : undefined
+      const shortName = fullName ? fullName.replace(/\s*County.*$/i, '').trim() : undefined
       if (shortName) {
         layer.bindTooltip(shortName, {
           permanent: isSelected,
@@ -391,21 +391,77 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // ZIP MODE
   // ═══════════════════════════════════════
 
-  const handleCountyClick = useCallback((fips: string, feat: GeoJSON.Feature) => {
-    const isSelected = value.selectedCounties.includes(fips)
+  const handleCountyClick = useCallback(async (fips: string, feat: GeoJSON.Feature) => {
+    const cv = valueRef.current
+    const isSelected = cv.selectedCounties.includes(fips)
     const newCounties = isSelected
-      ? value.selectedCounties.filter((f) => f !== fips)
-      : [...value.selectedCounties, fips]
+      ? cv.selectedCounties.filter((f) => f !== fips)
+      : [...cv.selectedCounties, fips]
 
     const polygonRings = buildPolygonFromCounties(newCounties, allCounties)
 
-    onChange({
-      ...value,
-      mode: 'county',
-      selectedCounties: newCounties,
-      polygon: polygonRings,
-    })
-  }, [value, allCounties, onChange])
+    // Resolve zip codes within the county boundary
+    const countyRings = geoJsonToRings(feat)
+    if (!isSelected && countyRings.length > 0) {
+      // Sample points inside the county to find zip codes
+      const ring = countyRings[0]
+      const lats = ring.map(([lat]) => lat)
+      const lngs = ring.map(([, lng]) => lng)
+      const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+      const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+
+      const step = 0.08 // ~5 mile grid
+      const samplePoints: LatLng[] = []
+      for (let lat = minLat; lat <= maxLat; lat += step) {
+        for (let lng = minLng; lng <= maxLng; lng += step) {
+          if (pointInPolygon(lat, lng, ring)) {
+            samplePoints.push([lat, lng])
+          }
+        }
+      }
+
+      const uniqueZips = new Set<string>(cv.selectedZips)
+      const batchSize = 5
+      for (let i = 0; i < Math.min(samplePoints.length, 80); i += batchSize) {
+        const batch = samplePoints.slice(i, i + batchSize)
+        const results = await Promise.all(batch.map(([lat, lng]) => getZipAtPoint(lat, lng)))
+        for (const zip of results) {
+          if (zip) uniqueZips.add(zip)
+        }
+        if (i + batchSize < samplePoints.length) {
+          await new Promise((r) => setTimeout(r, 150))
+        }
+      }
+
+      // Fetch boundaries for new zips
+      const allZips = Array.from(uniqueZips)
+      const zipPolygons: LatLng[][] = []
+      for (const zip of allZips) {
+        if (!zipBoundariesRef.current.has(zip)) {
+          const ring = await getZipBoundary(zip)
+          if (ring) zipBoundariesRef.current.set(zip, ring)
+        }
+        const r = zipBoundariesRef.current.get(zip)
+        if (r) zipPolygons.push(r)
+      }
+
+      onChange({
+        ...valueRef.current,
+        mode: 'county',
+        selectedCounties: newCounties,
+        selectedZips: allZips,
+        polygon: zipPolygons.length > 0 ? zipPolygons : polygonRings,
+      })
+    } else {
+      // Deselecting — just remove the county, keep other zips
+      onChange({
+        ...cv,
+        mode: 'county',
+        selectedCounties: newCounties,
+        polygon: polygonRings,
+      })
+    }
+  }, [allCounties, onChange])
 
   const handleZipSubmit = useCallback(async () => {
     const zip = zipInput.trim()
@@ -732,8 +788,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   const getCountyLabel = (fips: string): string => {
     const fullName = countyNames.get(fips)
-    if (fullName) return fullName.replace(/,\s*\w+$/, '') // Remove ", Michigan" etc.
-    return `County (${fips})`
+    if (fullName) return fullName.replace(/\s*County.*$/i, '').trim()
+    return fips
   }
 
   const territoryCount = activeTab === 'draw'
@@ -825,84 +881,59 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         </div>
       )}
 
-      {/* Map */}
-      <div className="relative rounded-xl border border-border overflow-hidden">
+      {/* Map — NO sibling overlays inside the container to prevent recomposite tile loss */}
+      <div className="rounded-xl border border-border" style={{ overflow: 'clip' }}>
         <div ref={mapRef} className={`w-full h-[340px] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
-        {!leafletReady && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#f2f2f2' }}>
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
-        )}
-        {activeTab === 'zip' && mapClickLoading && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ background: 'rgba(255,255,255,0.4)' }}>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-gray-700">
-              <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-              Looking up zip code...
-            </div>
-          </div>
-        )}
-        {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm z-[1000]">
-            {mapClickMessage}
-          </div>
-        )}
-        {activeTab === 'zip' && !mapClickLoading && !mapClickMessage && leafletReady && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm pointer-events-none z-[1000]">
-            <MapPin className="w-3 h-3 inline mr-1.5" />
-            Click the map to add a zip code
-          </div>
-        )}
-        {activeTab === 'county' && mapZoom < 6 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm z-[1000]">
-            <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
-            Zoom in to see county boundaries
-          </div>
-        )}
       </div>
+      {/* Status messages rendered OUTSIDE the map container */}
+      {activeTab === 'zip' && mapClickLoading && (
+        <p className="text-xs text-muted-foreground text-center mt-1">
+          <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+          Looking up zip code...
+        </p>
+      )}
+      {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
+        <p className="text-xs text-muted-foreground text-center mt-1">{mapClickMessage}</p>
+      )}
+      {activeTab === 'county' && mapZoom < 6 && (
+        <p className="text-xs text-muted-foreground text-center mt-1">Zoom in to see county boundaries</p>
+      )}
 
-      {/* Selected territories summary — zip mode */}
-      {activeTab === 'zip' && value.selectedZips.length > 0 && (
+      {/* Selected zip codes — shown for both zip and county mode */}
+      {(activeTab === 'zip' || activeTab === 'county') && value.selectedZips.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Selected Zip Codes ({value.selectedZips.length})
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {activeTab === 'county' && value.selectedCounties.length > 0
+                ? `${value.selectedCounties.map(f => getCountyLabel(f)).join(', ')} — ${value.selectedZips.length} zip codes`
+                : `Selected Zip Codes (${value.selectedZips.length})`}
+            </div>
+            <button
+              onClick={() => {
+                onChange({
+                  ...valueRef.current,
+                  selectedZips: [],
+                  selectedCounties: [],
+                  polygon: [],
+                })
+              }}
+              className="text-[10px] font-semibold text-destructive hover:text-destructive/80 transition-colors"
+            >
+              Clear All
+            </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto">
             {value.selectedZips.map((zip) => (
               <span
                 key={zip}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20"
               >
                 {zip}
                 <button
                   onClick={() => removeZip(zip)}
                   className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
                 >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Selected territories summary — county mode */}
-      {activeTab === 'county' && value.selectedCounties.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Selected Areas ({value.selectedCounties.length})
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {value.selectedCounties.map((fips) => (
-              <span
-                key={fips}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
-              >
-                {getCountyLabel(fips)}
-                <button
-                  onClick={() => removeCounty(fips)}
-                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="w-3 h-3" />
+                  <X className="w-2.5 h-2.5" />
                 </button>
               </span>
             ))}
