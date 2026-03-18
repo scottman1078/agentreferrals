@@ -130,13 +130,16 @@ export default function AgentMap() {
   useEffect(() => {
     import('leaflet').then(async (leaflet) => {
       L = leaflet
+      // Expose a mutable copy of L globally so leaflet.markercluster plugin can attach to it
+      const mutableL = Object.assign({}, L)
+      ;(window as unknown as Record<string, unknown>).L = mutableL
       delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
-      // Load markercluster plugin
+      // Load markercluster plugin (needs global L)
       // @ts-expect-error — leaflet.markercluster has no type declarations
       await import('leaflet.markercluster')
       // Load markercluster CSS
@@ -616,7 +619,7 @@ export default function AgentMap() {
       const hasPhoto = !!agent.photoUrl && !scopeLocked
 
       if (isPartner) {
-        // Partners: large, photo with white border or initials with colored border
+        // Partners: large, photo or initials
         markerSize = 36
         const content = hasPhoto
           ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
@@ -624,18 +627,16 @@ export default function AgentMap() {
         markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
             background:${hasPhoto ? '#fff' : agent.color};
-            border:3px solid ${hasPhoto ? 'white' : agent.color};
             box-shadow:0 2px 10px rgba(0,0,0,0.3);
             display:flex;align-items:center;justify-content:center;
             cursor:pointer;overflow:hidden;
           ">${content}</div>`
       } else if (is1Degree) {
-        // 1-degree: medium, initials with colored background
+        // 1-degree: medium
         markerSize = 30
         markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
             background:${agent.color};
-            border:2.5px solid ${agent.color}44;
             box-shadow:0 2px 8px rgba(0,0,0,0.2);
             display:flex;align-items:center;justify-content:center;
             font-size:10px;font-weight:700;color:white;
@@ -643,12 +644,11 @@ export default function AgentMap() {
             cursor:pointer;
           ">${initials}</div>`
       } else if (is2Degree) {
-        // 2-degree: smaller, full color
+        // 2-degree: smaller
         markerSize = 28
         markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
             background:${agent.color};
-            border:2px solid white;
             box-shadow:0 1px 6px rgba(0,0,0,0.15);
             display:flex;align-items:center;justify-content:center;
             font-size:9px;font-weight:700;color:white;
@@ -656,12 +656,11 @@ export default function AgentMap() {
             cursor:pointer;
           ">${initials}</div>`
       } else {
-        // Not connected: smallest, full color
+        // Not connected: smallest
         markerSize = 26
         markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
             background:${agent.color};
-            border:2px solid white;
             box-shadow:0 1px 4px rgba(0,0,0,0.12);
             display:flex;align-items:center;justify-content:center;
             font-size:9px;font-weight:600;color:white;
@@ -714,12 +713,13 @@ export default function AgentMap() {
       markerLayersRef.current.push(marker)
     })
 
-    // Use marker clustering for large agent sets, direct add for small ones
-    const useCluster = agentList.length > 40 && (L as unknown as Record<string, unknown>).MarkerClusterGroup
+    // Always use clustering — groups nearby agents at any zoom level
+    const windowL = (window as unknown as Record<string, unknown>).L as Record<string, unknown> | undefined
+    const useCluster = !!(windowL?.MarkerClusterGroup)
     if (useCluster) {
-      const MarkerClusterGroup = (L as unknown as Record<string, unknown>).MarkerClusterGroup as new (opts: Record<string, unknown>) => L.LayerGroup
+      const MarkerClusterGroup = windowL!.MarkerClusterGroup as new (opts: Record<string, unknown>) => L.LayerGroup
       const cluster = new MarkerClusterGroup({
-        maxClusterRadius: 50,
+        maxClusterRadius: 30,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
