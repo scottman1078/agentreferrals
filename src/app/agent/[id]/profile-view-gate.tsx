@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useProfileViewLimit } from '@/hooks/use-profile-view-limit'
 import { Eye, Zap } from 'lucide-react'
 import Link from 'next/link'
-import { AuthProvider } from '@/contexts/auth-context'
 
 interface ProfileViewGateProps {
   agentId: string
@@ -12,18 +11,9 @@ interface ProfileViewGateProps {
 
 /**
  * Records a profile view and shows a limit-reached banner when the
- * free-tier daily cap is hit. Wraps itself in AuthProvider since the
- * agent profile page is a server component without auth context.
+ * free-tier daily cap is hit.
  */
 export default function ProfileViewGate({ agentId }: ProfileViewGateProps) {
-  return (
-    <AuthProvider>
-      <ProfileViewGateInner agentId={agentId} />
-    </AuthProvider>
-  )
-}
-
-function ProfileViewGateInner({ agentId }: ProfileViewGateProps) {
   const { canView, viewsLeft, recordView, isUnlimited } = useProfileViewLimit()
   const [recorded, setRecorded] = useState(false)
 

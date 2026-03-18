@@ -33,6 +33,7 @@ import { getVerifiedCount } from '@/data/verified-referrals'
 import ContactInfoGate from './contact-info-gate'
 import AuthGate from './auth-gate'
 import ProfileViewGate from './profile-view-gate'
+import AgentAuthWrapper from './auth-wrapper'
 
 // --------------- Static params ---------------
 export function generateStaticParams() {
@@ -74,6 +75,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
   const verifiedRefCount = getVerifiedCount(agent.id)
 
   return (
+    <AgentAuthWrapper>
     <div className="min-h-screen bg-background">
       {/* Profile view rate limiter */}
       <ProfileViewGate agentId={agent.id} />
@@ -358,5 +360,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
         </AuthGate>
       </div>
     </div>
+    </AgentAuthWrapper>
   )
+
 }
