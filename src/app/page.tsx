@@ -183,7 +183,7 @@ export default function LandingPage() {
               onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
               className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold font-bold hover:opacity-90 transition-opacity"
             >
-              Get Access
+              Claim Your Spot
             </button>
           </div>
         </div>
@@ -202,13 +202,12 @@ export default function LandingPage() {
             Invite-Only Access
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
-            Refer with Confidence.<br />
-            <span className="text-primary">Close More Referrals.</span><br />
-            Keep 100% of Your Fees.
+            The Referral Network<br />
+            <span className="text-primary">Agents Actually Trust.</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
-            The industry&apos;s first AI-driven agent referral network.<br className="hidden sm:block" />
-            We connect agents to agents — across any brokerage, any market — so you can send and receive referrals with confidence.
+            AI-powered agent-to-agent referrals across any brokerage, any market.<br className="hidden sm:block" />
+            Build your network. Find opportunities. Track deals. Keep 100% of your fees.
           </p>
 
           {/* Spots counter */}
@@ -237,7 +236,7 @@ export default function LandingPage() {
               onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
               className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
             >
-              Request Access <ArrowRight className="w-4 h-4" />
+              Claim Your Spot <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('invite') }}
