@@ -172,7 +172,7 @@ export default function LandingPage() {
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="#brokerages" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Brokerages</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <ThemeToggle />
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signin') }}
