@@ -881,9 +881,9 @@ export default function OnboardingPage() {
   }, [phoneCodeValue, normalizedPhone, data.phone])
 
   // ── Handle phone verification: resend code ──
-  const handleResendPhoneCode = useCallback(async () => {
-    // Use ref to avoid stale closure — the callback may have been created before the phone was set
-    const phone = normalizedPhoneRef.current || normalizedPhone || data.phone || phoneInputValue
+  // NOT a useCallback — needs fresh closure every render to access latest phone
+  const handleResendPhoneCode = async () => {
+    const phone = normalizedPhoneRef.current
     if (!phone) {
       setPhoneError('No phone number found. Please re-enter your number.')
       return
@@ -912,8 +912,7 @@ export default function OnboardingPage() {
     } finally {
       setPhoneVerifying(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedPhone, data.phone, phoneInputValue])
+  }
 
   // ── Handle dual input submission ──
   const handleDualInputSubmit = useCallback(() => {
