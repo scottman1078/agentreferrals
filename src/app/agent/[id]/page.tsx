@@ -97,7 +97,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
             background: `linear-gradient(135deg, ${agent.color} 0%, transparent 60%)`,
           }}
         />
-        <div className="relative max-w-4xl mx-auto px-6 pt-6 pb-10">
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-10">
           {/* Back button */}
           <Link
             href="/dashboard"
@@ -133,7 +133,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
               </div>
 
               {/* Badges row */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
                 {/* Status badge */}
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <BadgeCheck className="w-3.5 h-3.5" />
@@ -214,9 +214,9 @@ export default async function AgentProfilePage({ params }: PageProps) {
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto px-6 pb-16 space-y-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-8 sm:space-y-10">
         {/* ═══ QUICK STATS ═══ */}
-        <section className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
           {[
             {
               icon: Home,
@@ -280,7 +280,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
               className="p-4 rounded-xl border border-border bg-card text-center"
             >
               <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
-              <div className="text-2xl font-extrabold">{stat.value}</div>
+              <div className="text-lg sm:text-2xl font-extrabold">{stat.value}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
               {stat.sublabel && (
                 <div className="text-[10px] text-muted-foreground mt-0.5">{stat.sublabel}</div>

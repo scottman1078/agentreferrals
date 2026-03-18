@@ -130,7 +130,7 @@ function EndorsementSkillRow({
 
       {/* Expanded endorser list */}
       {showEndorsers && (
-        <div className="ml-8 mt-1 mb-2 space-y-1">
+        <div className="ml-4 sm:ml-8 mt-1 mb-2 space-y-1">
           {group.endorsers.map((endorser, i) => (
             <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
               <div

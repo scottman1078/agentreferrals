@@ -71,7 +71,7 @@ export function AgentVideoSection({
                   </div>
                   <p className="text-white text-sm font-semibold">{videoIntro.title}</p>
                   <p className="text-white/60 text-xs">Video playback — {formatDuration(videoIntro.duration)}</p>
-                  <div className="w-48 h-1 bg-white/20 rounded-full mx-auto overflow-hidden">
+                  <div className="w-32 sm:w-48 h-1 bg-white/20 rounded-full mx-auto overflow-hidden">
                     <div className="h-full bg-primary rounded-full animate-[progress_5s_ease-in-out_infinite]" style={{ width: '35%' }} />
                   </div>
                 </div>

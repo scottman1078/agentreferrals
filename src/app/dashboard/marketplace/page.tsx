@@ -63,18 +63,18 @@ export default function MarketplacePage() {
     : openPosts
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-0">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <BackToDashboard />
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-            <Megaphone className="w-6 h-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             Referral Marketplace
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Post referral opportunities or bid on deals in your market. Agents pitch via text or video.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Post referral opportunities or bid on deals in your market.
           </p>
         </div>
         <PostReferralButton />
@@ -83,21 +83,22 @@ export default function MarketplacePage() {
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-secondary/50 mb-6">
         {([
-          { key: 'browse' as Tab, label: 'Browse Opportunities', count: openPosts.length },
-          { key: 'my-posts' as Tab, label: 'My Posts', count: myPosts.length },
-          { key: 'my-bids' as Tab, label: 'My Bids', count: myBids.length },
+          { key: 'browse' as Tab, label: 'Browse', fullLabel: 'Browse Opportunities', count: openPosts.length },
+          { key: 'my-posts' as Tab, label: 'My Posts', fullLabel: 'My Posts', count: myPosts.length },
+          { key: 'my-bids' as Tab, label: 'My Bids', fullLabel: 'My Bids', count: myBids.length },
         ]).map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
               tab === t.key
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t.label}
-            <span className="ml-1.5 text-xs opacity-60">({t.count})</span>
+            <span className="sm:hidden">{t.label}</span>
+            <span className="hidden sm:inline">{t.fullLabel}</span>
+            <span className="ml-1 text-[10px] sm:text-xs opacity-60">({t.count})</span>
           </button>
         ))}
       </div>
@@ -457,7 +458,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
                       <p className="text-white/40 text-xs">
                         {bid.videoDuration ? `${Math.floor(bid.videoDuration / 60)}:${(bid.videoDuration % 60).toString().padStart(2, '0')}` : ''}
                       </p>
-                      <div className="w-40 h-1 bg-white/20 rounded-full mx-auto overflow-hidden">
+                      <div className="w-32 sm:w-40 h-1 bg-white/20 rounded-full mx-auto overflow-hidden">
                         <div className="h-full bg-primary rounded-full animate-[progress_6s_ease-in-out_infinite]" style={{ width: '25%' }} />
                       </div>
                     </div>
@@ -765,7 +766,7 @@ function PostReferralButton() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Market *</label>
               <input
@@ -805,7 +806,7 @@ function PostReferralButton() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Budget Range</label>
               <input
@@ -826,7 +827,7 @@ function PostReferralButton() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Decision Deadline *</label>
               <input

@@ -59,7 +59,7 @@ export default function MarketplaceFeed() {
   }
 
   return (
-    <div className="fixed left-2 right-2 sm:left-4 sm:right-auto sm:w-[320px] z-[400] max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden" style={{ top: 120 }}>
+    <div className="fixed left-2 right-2 sm:left-4 sm:right-auto sm:w-[320px] z-[400] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden" style={{ top: 120 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
