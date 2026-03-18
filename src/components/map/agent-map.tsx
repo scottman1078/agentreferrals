@@ -502,37 +502,8 @@ export default function AgentMap() {
     setMyZips((prev) => prev.filter((z) => z !== zip))
   }, [])
 
-  // Auto-save zips when they change
-  const zipsInitializedRef = useRef(false)
-  useEffect(() => {
-    // Skip the initial render (loading from profile)
-    if (!zipsInitializedRef.current) {
-      zipsInitializedRef.current = true
-      return
-    }
-    if (!profile) return
-    const timeout = setTimeout(async () => {
-      setZipSaving(true)
-      const polygonRings: [number, number][][] = []
-      for (const zip of myZips) {
-        const ring = await getZipBoundary(zip)
-        if (ring) polygonRings.push(ring)
-      }
-      const supabase = (await import('@/lib/supabase/client')).createClient()
-      await supabase
-        .from('ar_profiles')
-        .update({
-          territory_zips: myZips.length > 0 ? myZips : null,
-          polygon: polygonRings.length > 0 ? polygonRings : null,
-        })
-        .eq('id', profile.id)
-      await refreshProfile()
-      setZipSaving(false)
-      setZipSaveToast(true)
-      setTimeout(() => setZipSaveToast(false), 3000)
-    }, 500)
-    return () => clearTimeout(timeout)
-  }, [myZips, profile, refreshProfile])
+  // Auto-save is removed — user clicks Save button explicitly
+  // (was causing infinite loop: save → refreshProfile → setMyZips → save)
 
   const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
@@ -967,7 +938,7 @@ export default function AgentMap() {
             <div className="animate-pulse">
               <AppMark size="lg" />
             </div>
-            <p className="text-xs font-semibold text-muted-foreground">Loading map...</p>
+            <p className="text-xs font-semibold text-muted-foreground">Loading your referral network...</p>
           </div>
         </div>
       )}
