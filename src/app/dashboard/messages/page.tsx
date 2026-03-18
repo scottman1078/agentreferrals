@@ -73,7 +73,9 @@ function NewMessageModal({
     })
   }
 
+  const demoGuardCompose = useDemoGuard()
   function handleStart() {
+    if (demoGuardCompose()) return
     if (selectedIds.size === 1) {
       onSelect([...selectedIds][0])
     } else if (selectedIds.size > 1) {
