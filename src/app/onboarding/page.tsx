@@ -887,12 +887,19 @@ export default function OnboardingPage() {
   // NOT a useCallback — needs fresh closure every render to access latest phone
   const handleResendPhoneCode = async () => {
     // Try every possible source for the phone number
-    const phone = normalizedPhoneRef.current
+    let phone = normalizedPhoneRef.current
       || normalizedPhone
       || data.phone
       || (typeof window !== 'undefined' ? sessionStorage.getItem('ar_verify_phone') : null)
       || phoneInputValue
-    console.log('[ResendCode] phone:', phone, 'ref:', normalizedPhoneRef.current, 'session:', typeof window !== 'undefined' ? sessionStorage.getItem('ar_verify_phone') : 'ssr')
+
+    // Last resort: extract phone from the "sent a code to XXXXXXXXXX" message
+    if (!phone) {
+      const codeMsg = messages.find((m) => m.content?.includes('sent a 6-digit code to'))
+      const match = codeMsg?.content?.match(/code to (\+?\d[\d\s()-]+\d)/)
+      if (match) phone = match[1].replace(/\D/g, '')
+    }
+    console.log('[ResendCode] phone:', phone)
     if (!phone) {
       setPhoneError('No phone number found. Please re-enter your number.')
       return
