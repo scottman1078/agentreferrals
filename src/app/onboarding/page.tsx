@@ -880,8 +880,12 @@ export default function OnboardingPage() {
 
   // ── Handle phone verification: resend code ──
   const handleResendPhoneCode = useCallback(async () => {
-    const phone = normalizedPhone || data.phone
-    if (!phone) return
+    const phone = normalizedPhone || data.phone || phoneInputValue
+    console.log('[ResendCode] phone:', phone, 'normalizedPhone:', normalizedPhone, 'data.phone:', data.phone, 'phoneInputValue:', phoneInputValue)
+    if (!phone) {
+      setPhoneError('No phone number found. Please re-enter your number.')
+      return
+    }
     setPhoneVerifying(true)
     setPhoneError('')
 
@@ -907,7 +911,7 @@ export default function OnboardingPage() {
       setPhoneVerifying(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedPhone, data.phone])
+  }, [normalizedPhone, data.phone, phoneInputValue])
 
   // ── Handle dual input submission ──
   const handleDualInputSubmit = useCallback(() => {
