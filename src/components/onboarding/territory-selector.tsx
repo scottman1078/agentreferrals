@@ -155,7 +155,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (initialCenter) {
       geocodeLocation(initialCenter).then((coords) => {
         if (coords && mapInstance.current) {
-          mapInstance.current.setView(coords, 8, { animate: false })
+          mapInstance.current.setView(coords, 7, { animate: false })
         }
       })
     }
@@ -230,24 +230,36 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     const selectedSet = new Set(value.selectedCounties)
 
     allCounties.forEach((feat, fips) => {
-      const bbox = getFeatureBbox(feat)
-      if (!bbox) return
+      // Extract coordinates manually — L.geoJSON corrupts features
+      const rings = geoJsonToRings(feat)
+      if (rings.length === 0) return
 
-      const [minLng, minLat, maxLng, maxLat] = bbox
-      if (maxLat < bounds.getSouth() || minLat > bounds.getNorth() ||
-          maxLng < bounds.getWest() || minLng > bounds.getEast()) return
+      // Check if any ring intersects viewport
+      let inView = false
+      for (const ring of rings) {
+        for (const [lat, lng] of ring) {
+          if (lat >= bounds.getSouth() && lat <= bounds.getNorth() &&
+              lng >= bounds.getWest() && lng <= bounds.getEast()) {
+            inView = true
+            break
+          }
+        }
+        if (inView) break
+      }
+      if (!inView) return
 
       const isSelected = selectedSet.has(fips)
-      const cloned = JSON.parse(JSON.stringify(feat)) as GeoJSON.Feature
-      const layer = L!.geoJSON(cloned, {
-        style: isSelected
+      const layer = L!.polygon(rings as L.LatLngExpression[][], {
+        ...(isSelected
           ? { color: '#f59e0b', weight: 2.5, fillColor: '#f59e0b', fillOpacity: 0.25 }
-          : { color: '#9ca3af', weight: 1, fillColor: '#f3f4f6', fillOpacity: 0.15, dashArray: '3, 3' },
+          : { color: '#9ca3af', weight: 1, fillColor: '#f3f4f6', fillOpacity: 0.15, dashArray: '3, 3' }),
       })
 
-      const name = countyNames.get(fips)
-      if (name) {
-        layer.bindTooltip(name, {
+      // County name without state (e.g. "Kalamazoo County" not "Kalamazoo County, Michigan")
+      const fullName = countyNames.get(fips)
+      const shortName = fullName ? fullName.replace(/,\s*\w+$/, '') : undefined
+      if (shortName) {
+        layer.bindTooltip(shortName, {
           permanent: isSelected,
           direction: 'center',
           className: 'territory-tooltip',
@@ -585,9 +597,12 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   const ZIP_CLUSTER_ZOOM = 9
 
-  // Fit map to selected zips
+  // Fit map to selected zips — only on initial load or tab switch, NOT on every zip add
+  const hasInitialFit = useRef(false)
   useEffect(() => {
     if (!mapInstance.current || !L || activeTab !== 'zip' || value.selectedZips.length === 0) return
+    // Only fit bounds once (initial load) or when switching to zip tab
+    if (hasInitialFit.current) return
     const map = mapInstance.current
     const allBounds: L.LatLngBounds[] = []
     for (const zip of value.selectedZips) {
@@ -599,9 +614,15 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       let combined = allBounds[0]
       for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
       map.fitBounds(combined, { padding: [30, 30], maxZoom: 11, animate: false })
+      hasInitialFit.current = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger])
+
+  // Reset fit flag when switching away from zip tab
+  useEffect(() => {
+    if (activeTab !== 'zip') hasInitialFit.current = false
+  }, [activeTab])
 
   // Render zip layers — cluster when zoomed out, individual when zoomed in
   useEffect(() => {
@@ -710,9 +731,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   }, [activeTab, leafletReady, mapClickLoading, value, onChange])
 
   const getCountyLabel = (fips: string): string => {
-    if (countyNames.has(fips)) return countyNames.get(fips)!
-    const stateAbbr = FIPS_TO_STATE[fips.substring(0, 2)] || ''
-    return `${stateAbbr} County (${fips})`
+    const fullName = countyNames.get(fips)
+    if (fullName) return fullName.replace(/,\s*\w+$/, '') // Remove ", Michigan" etc.
+    return `County (${fips})`
   }
 
   const territoryCount = activeTab === 'draw'
@@ -984,16 +1005,16 @@ async function geocodeLocation(query: string): Promise<LatLng | null> {
   return null
 }
 
-function getFeatureBbox(feat: GeoJSON.Feature): [number, number, number, number] | null {
-  const coords: number[][] = []
+/** Convert GeoJSON feature to Leaflet-format [lat, lng] rings */
+function geoJsonToRings(feat: GeoJSON.Feature): LatLng[][] {
+  const rings: LatLng[][] = []
   const geom = feat.geometry
   if (geom.type === 'Polygon') {
-    geom.coordinates[0].forEach((c) => coords.push(c))
+    rings.push(geom.coordinates[0].map(([lng, lat]) => [lat, lng] as LatLng))
   } else if (geom.type === 'MultiPolygon') {
-    geom.coordinates.forEach((p) => p[0].forEach((c) => coords.push(c)))
+    for (const poly of geom.coordinates) {
+      rings.push(poly[0].map(([lng, lat]) => [lat, lng] as LatLng))
+    }
   }
-  if (coords.length === 0) return null
-  const lngs = coords.map((c) => c[0])
-  const lats = coords.map((c) => c[1])
-  return [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)]
+  return rings
 }
