@@ -819,8 +819,8 @@ export default function AgentMap() {
       {/* My Zips editing panel */}
       {showMyZips && (
         <div
-          style={{ position: 'fixed', top: 76, right: 16, zIndex: 9000 }}
-          className="w-[320px]"
+          style={{ position: 'fixed', top: 112, left: 16, zIndex: 9000 }}
+          className="w-[280px]"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
