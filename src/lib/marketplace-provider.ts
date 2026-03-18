@@ -84,10 +84,11 @@ export function useMarketplace(): MarketplaceData {
       }
     }
 
-    // Fall back to mock
+    // Fall back to mock — use demo user 'jason' for mock data
+    const mockUserId = userId || 'jason'
     setOpenPosts(mockGetOpenPosts())
-    setMyPosts(mockGetPostsByAgent('jason'))
-    setMyBids(mockGetBidsByAgent('jason'))
+    setMyPosts(mockGetPostsByAgent(mockUserId))
+    setMyBids(mockGetBidsByAgent(mockUserId))
     setSource('mock')
     setIsLoading(false)
   }, [isAuthenticated, userId])

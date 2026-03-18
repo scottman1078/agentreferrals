@@ -171,7 +171,7 @@ export default function MarketplacePage() {
               description="Browse open opportunities and pitch for referrals in your market."
             />
           ) : (
-            myBids.map((bid) => <MyBidCard key={bid.id} bid={bid} />)
+            myBids.map((bid) => <MyBidCard key={bid.id} bid={bid} allPosts={[...openPosts, ...myPosts]} />)
           )}
         </div>
       )}
@@ -644,14 +644,8 @@ function BidForm({
 // MY BID CARD (for bid tab)
 // ══════════════════════════════════════
 
-function MyBidCard({ bid }: { bid: ReferralBid }) {
-  const post = getOpenPosts().find((p) => p.id === bid.postId) ||
-    getPostsByAgent('jason').find((p) => p.id === bid.postId) ||
-    // search all posts
-    (() => {
-      const { referralPosts } = require('@/data/referral-posts')
-      return referralPosts.find((p: ReferralPost) => p.id === bid.postId)
-    })()
+function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost[] }) {
+  const post = allPosts.find((p) => p.id === bid.postId)
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
