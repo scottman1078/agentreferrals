@@ -91,7 +91,7 @@ export default function MarketplaceFeed() {
         <div className="px-4 py-2 bg-amber-500/5 border-b border-amber-500/10">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
             <Flame className="w-3.5 h-3.5" />
-            {myAreaPosts.length} opportunit{myAreaPosts.length !== 1 ? 'ies' : 'y'} in your market — agents want YOU
+            {myAreaPosts.length} opportunit{myAreaPosts.length !== 1 ? 'ies' : 'y'} in your market
           </div>
         </div>
       )}

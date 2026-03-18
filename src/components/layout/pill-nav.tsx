@@ -42,7 +42,7 @@ const moreItems = [
   { href: '/dashboard/documents', icon: FileText, label: 'Documents' },
   { href: '/dashboard/referral-history', icon: History, label: 'Referral History' },
   { href: '/dashboard/invite', icon: UserPlus, label: 'Invite' },
-  { href: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
+
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
 
