@@ -13,6 +13,7 @@ import { AdminTierProvider } from '@/contexts/admin-tier-context'
 import { DemoProvider } from '@/contexts/demo-context'
 import AdminTierSwitcher from '@/components/admin/tier-switcher'
 import DemoBanner from '@/components/ui/demo-banner'
+import { useDemo } from '@/contexts/demo-context'
 import { UserPlus, X } from 'lucide-react'
 import { nudges as initialNudges } from '@/data/nudges'
 import type { Nudge } from '@/data/nudges'
@@ -43,6 +44,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const [newPartners, setNewPartners] = useState<NewPartnerNotification[]>([])
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
+  const { isDemoMode } = useDemo()
   const router = useRouter()
   const pathname = usePathname()
   const isMapPage = pathname === '/dashboard'
@@ -82,8 +84,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }))
   }, [])
 
-  // Redirect to onboarding if user hasn't completed profile setup
+  // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode)
   useEffect(() => {
+    if (isDemoMode) return
     if (isLoading) return
     if (!isAuthenticated) {
       router.push('/')
@@ -92,7 +95,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     if (needsOnboarding || (profile && !profile.primary_area)) {
       router.push('/onboarding')
     }
-  }, [isLoading, isAuthenticated, needsOnboarding, profile, router])
+  }, [isLoading, isAuthenticated, needsOnboarding, profile, router, isDemoMode])
 
   // Show setup wizard if user completed onboarding but has no territory.
   // Once decided (show or skip), a ref prevents re-evaluation on subsequent profile updates.
@@ -222,7 +225,15 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Main content */}
         <div className={`flex-1 relative overflow-hidden ${isMapPage ? '' : 'pb-[76px]'}`}>
-          {children}
+          {isDemoMode && (
+            <div className="absolute inset-0 z-[100] cursor-default" style={{ pointerEvents: 'auto' }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          )}
+          <div className={isDemoMode ? 'pointer-events-none select-none' : ''}>
+            {children}
+          </div>
         </div>
 
         {/* Bottom pill nav — always visible */}
