@@ -252,6 +252,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+
+        {/* Admin-only floating tier switcher */}
+        <AdminTierSwitcher />
       </div>
     </BrokerageProvider>
   )
