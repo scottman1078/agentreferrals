@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
@@ -69,6 +70,7 @@ export default function CreateReferralModal({
   const [step, setStep] = useState<Step>(preselectedAgentId ? 0 : 0)
   const [submitted, setSubmitted] = useState(false)
   const { agents } = useAppData()
+  const demoGuard = useDemoGuard()
 
   // Step 1 — Client Info
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
@@ -156,6 +158,7 @@ export default function CreateReferralModal({
   }
 
   function handleSubmit() {
+    if (demoGuard()) return
     // In the future, insert into ar_referrals via Supabase
     // For now, just show success state
     setSubmitted(true)

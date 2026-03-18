@@ -238,7 +238,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               onMouseDown={(e) => e.stopPropagation()}
             />
           )}
-          <div className={`h-full ${isDemoMode ? 'pointer-events-none select-none' : ''}`}>
+          <div className="h-full">
             {children}
           </div>
         </div>
@@ -252,9 +252,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
-
-        {/* Admin-only floating tier switcher */}
-        <AdminTierSwitcher />
       </div>
     </BrokerageProvider>
   )

@@ -566,17 +566,20 @@ export default function AgentMap() {
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
       const markerSize = 32
+      const photoContent = agent.photoUrl
+        ? `<img src="${agent.photoUrl}" alt="${agent.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+        : initials
       const markerHtml = isPartner
         ? `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.color};
-            border:2px solid white;
+            background:${agent.photoUrl ? 'transparent' : agent.color};
+            border:2px solid ${agent.color};
             box-shadow:0 2px 8px rgba(0,0,0,0.3);
             display:flex;align-items:center;justify-content:center;
             font-size:11px;font-weight:700;color:white;
             font-family:var(--font-dm-sans),system-ui,sans-serif;
-            cursor:pointer;
-          ">${initials}</div>`
+            cursor:pointer;overflow:hidden;
+          ">${photoContent}</div>`
         : isDegreeAgent
           ? `<div style="
               width:${markerSize}px;height:${markerSize}px;border-radius:50%;
@@ -587,8 +590,8 @@ export default function AgentMap() {
               font-size:11px;font-weight:700;color:${agent.color};
               opacity:0.85;
               font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;
-            ">${initials}</div>`
+              cursor:pointer;overflow:hidden;
+            ">${photoContent}</div>`
           : `<div style="
               width:${markerSize}px;height:${markerSize}px;border-radius:50%;
               background:white;
@@ -597,8 +600,8 @@ export default function AgentMap() {
               display:flex;align-items:center;justify-content:center;
               font-size:11px;font-weight:700;color:${agent.color};
               font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;
-            ">${initials}</div>`
+              cursor:pointer;overflow:hidden;
+            ">${photoContent}</div>`
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
         html: markerHtml,
