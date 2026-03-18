@@ -613,16 +613,18 @@ export default function AgentMap() {
       let markerSize: number
       let markerHtml: string
 
+      const hasPhoto = !!agent.photoUrl && !scopeLocked
+
       if (isPartner) {
-        // Partners: large, photo with colored ring
+        // Partners: large, photo with white border or initials with colored border
         markerSize = 36
-        const content = agent.photoUrl && !scopeLocked
+        const content = hasPhoto
           ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
           : `<span style="font-size:12px;font-weight:700;color:white;">${initials}</span>`
         markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.photoUrl && !scopeLocked ? '#fff' : agent.color};
-            border:3px solid ${agent.color};
+            background:${hasPhoto ? '#fff' : agent.color};
+            border:3px solid ${hasPhoto ? 'white' : agent.color};
             box-shadow:0 2px 10px rgba(0,0,0,0.3);
             display:flex;align-items:center;justify-content:center;
             cursor:pointer;overflow:hidden;
