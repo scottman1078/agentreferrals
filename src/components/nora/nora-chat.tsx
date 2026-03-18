@@ -10,6 +10,11 @@ import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2 }
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { nudges, getActiveNudges } from '@/data/nudges'
 import { getCommNudges } from '@/data/comm-nudges'
+import { getOpenPosts, getBidsByAgent } from '@/data/referral-posts'
+import { getEndorsementCount } from '@/data/endorsements'
+import { getCommScore } from '@/data/communication-score'
+import { referrals as mockReferrals } from '@/data/referrals'
+import { getVerifiedCount, getPendingCount } from '@/data/verified-referrals'
 import type { Agent, NoraMessage } from '@/types'
 
 // ── Pattern-matching fallback (used when no API key) ──────────────────
@@ -17,11 +22,49 @@ function buildNoraResponses(agentList: Agent[]) {
   const activeNudges = getActiveNudges(nudges)
   const inactivePartnerNudges = activeNudges.filter((n) => n.type === 'inactive_partner')
 
+  const openPosts = getOpenPosts()
+  const commNudges = getCommNudges('jason')
+  const allActiveNudges = getActiveNudges(nudges)
+  const myAreaPosts = openPosts.filter((p) => p.market.toLowerCase().includes('michigan') || p.market.toLowerCase().includes('grand rapids') || p.market.toLowerCase().includes('plainwell'))
+
   return [
+    // ── Draft messages command ──
+    { patterns: ['draft messages', 'draft check-in', 'write messages', 'help me draft'], response: (() => {
+      const targets = commNudges.filter((n) => n.priority === 'high' && n.suggestedMessage)
+      if (targets.length === 0) return "You're all caught up! No urgent messages to draft right now."
+      return `Here are draft messages for your overdue partners:\n\n${targets.map((n) => `📨 **To ${n.agentName}:**\n"${n.suggestedMessage}"\n`).join('\n')}Want me to adjust the tone or send these?`
+    })(), matchLogic: undefined },
+
+    // ── Marketplace command ──
+    { patterns: ['show marketplace', 'marketplace', 'open opportunities', 'referral opportunities'], response: (() => {
+      if (openPosts.length === 0) return "No open marketplace opportunities right now. Want to post one?"
+      const items = openPosts.slice(0, 4).map((p) => `• ${p.postingAgentName} — ${p.representation} in ${p.market} (${p.budgetRange}) — ${p.bidsCount} bids`)
+      const myArea = myAreaPosts.length > 0 ? `\n\n🔥 ${myAreaPosts.length} of these are in YOUR market!` : ''
+      return `📋 Open Referral Opportunities:\n\n${items.join('\n')}${myArea}\n\nGo to Dashboard → Marketplace to bid, or say "post a referral" to create one.`
+    })(), matchLogic: undefined },
+
+    // ── Pipeline command ──
+    { patterns: ['my pipeline', 'pipeline status', 'active referrals', 'show pipeline'], response: (() => {
+      const active = mockReferrals.filter((r) => (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) && r.stage !== 'Fee Received')
+      if (active.length === 0) return "Your pipeline is empty! Want to post a referral opportunity or find a partner?"
+      return `📊 Your Active Pipeline:\n\n${active.map((r) => `• ${r.clientName} — ${r.market} — ${r.stage}\n  ${r.fromAgent.includes("O'Brien") ? `→ To: ${r.toAgent}` : `← From: ${r.fromAgent}`} · ${r.feePercent}% · Est. $${(r.estimatedPrice / 1000).toFixed(0)}k`).join('\n\n')}\n\nWant me to draft updates for any of these?`
+    })(), matchLogic: undefined },
+
+    // ── Comm score command ──
+    { patterns: ['my score', 'comm score', 'communication score', 'my reputation', 'my stats'], response: (() => {
+      const cs = getCommScore('jason')
+      if (!cs) return "I couldn't find your communication score."
+      const trend = cs.trend === 'up' ? '📈 trending up' : cs.trend === 'down' ? '📉 trending down' : '➡️ stable'
+      return `📡 Your Reputation Dashboard:\n\n• Comm Score: ${cs.overall}/100 (${cs.label}) — ${trend}\n• Pipeline Activity: ${cs.pipelineActivity}\n• Message Frequency: ${cs.messageFrequency}\n• Response Time: ${cs.responseTime}\n• Check-In Consistency: ${cs.checkInConsistency}\n• Verified Referrals: ${getVerifiedCount('jason')}\n• Endorsements: ${getEndorsementCount('jason')}\n\n${cs.trend === 'down' ? '⚠️ Your score is dropping. Send updates on stale referrals to recover. Want me to draft them?' : 'Keep up the good work!'}`
+    })(), matchLogic: undefined },
+
+    // ── Post a referral command ──
+    { patterns: ['post a referral', 'post referral', 'create opportunity', 'find an agent for'], response: "To post a referral opportunity:\n\n1. Go to Dashboard → Marketplace\n2. Click \"Post Referral\"\n3. Fill in the market, client needs, and terms\n4. Agents in that area will bid with text + video pitches!\n\nOr tell me the market and I'll help you find agents directly.", matchLogic: undefined },
+
     // Nudge-related patterns
     { patterns: ['remind', 'check in with partners', 'follow up'], response: inactivePartnerNudges.length > 0 ? `You have ${inactivePartnerNudges.length} partner${inactivePartnerNudges.length > 1 ? 's' : ''} you haven't contacted recently:\n\n${inactivePartnerNudges.map((n) => `\u2022 ${n.agentName} — ${n.daysInactive} days inactive`).join('\n')}\n\nWant me to draft check-in messages for any of them?` : "All your partners are up to date! No inactive connections right now.", matchLogic: undefined },
     { patterns: ['draft a message to ashley', 'message ashley', 'write to ashley'], response: "Here's a personalized check-in for Ashley Monroe:\n\n\"Hey Ashley, just checking in! The Nashville market looks hot right now. Have any clients considering Michigan? I'd love to help. Also congrats on the Martinez closing!\"\n\nWant me to adjust the tone or focus?", matchLogic: () => agentList.filter((a) => a.name.toLowerCase().includes('ashley')) },
-    { patterns: ['who should i reach out to', 'who to contact', 'who to message', 'reach out'], response: activeNudges.length > 0 ? `Based on your activity, I'd prioritize these partners:\n\n${activeNudges.slice(0, 5).map((n, i) => `${i + 1}. ${n.agentName} — ${n.title}`).join('\n')}\n\nWant me to draft messages for any of them?` : "You're all caught up! All your partners have been contacted recently.", matchLogic: undefined },
+    { patterns: ['who should i reach out to', 'who to contact', 'who to message', 'reach out'], response: allActiveNudges.length > 0 ? `Based on your activity, I'd prioritize these partners:\n\n${allActiveNudges.slice(0, 5).map((n, i) => `${i + 1}. ${n.agentName} — ${n.title}`).join('\n')}\n\nWant me to draft messages for any of them?` : "You're all caught up! All your partners have been contacted recently.", matchLogic: undefined },
     // Original patterns
     { patterns: ['nashville', 'tennessee', 'tn'], response: "I found agents covering Nashville. Ashley Monroe at Real Broker is your top match — 95 ReferNet Score, Relocation & Luxury specialist, responds in < 30 min.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('nashville')) },
     { patterns: ['chicago', 'illinois', 'il'], response: "Marcus Reid at Compass Chicago — 94 ReferNet Score, 88 deals/year, Luxury + Investment + Relocation. Responds within 30 minutes.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('chicago')) },
@@ -45,7 +88,7 @@ function findResponse(query: string, agentList: Agent[]): { text: string; agents
     }
   }
   return {
-    text: "I can help you find the right agent! Try:\n\n\u2022 \"Luxury agent in Nashville\"\n\u2022 \"Who covers Phoenix?\"\n\u2022 \"Relocation specialists\"\n\u2022 \"Investment agents in Dallas\"\n\u2022 \"Who's in my brokerage?\"",
+    text: "I can help! Try:\n\n\u2022 \"Draft messages\" — I'll write check-ins for overdue partners\n\u2022 \"Show marketplace\" — Browse referral opportunities\n\u2022 \"My pipeline\" — Status on all active referrals\n\u2022 \"My score\" — Your reputation dashboard\n\u2022 \"Find agent in Nashville\" — Match with top agents\n\u2022 \"Luxury specialists\" — Search by specialty\n\u2022 \"Who should I reach out to?\" — Prioritized outreach list",
     agents: [],
   }
 }
@@ -62,39 +105,107 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const hasAutoOpened = useRef(false)
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
-  const inactiveCount = getActiveNudges(nudges).filter((n) => n.type === 'inactive_partner').length
 
-  const highPriorityCommNudges = getCommNudges('jason').filter((n) => n.priority === 'high')
+  // Pull all data for the briefing
+  const openMarketplacePosts = getOpenPosts()
+  const myBids = getBidsByAgent('jason')
+  const commScore = getCommScore('jason')
+  const endorsementCount = getEndorsementCount('jason')
+  const verifiedCount = getVerifiedCount('jason')
+  const pendingVerifications = getPendingCount('jason')
+  const activeReferrals = mockReferrals.filter((r) =>
+    (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) &&
+    r.stage !== 'Fee Received'
+  )
+  const closedReferrals = mockReferrals.filter((r) =>
+    (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) &&
+    (r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')
+  )
+  const allCommNudges = getCommNudges('jason')
+  const urgentNudges = allCommNudges.filter((n) => n.priority === 'high')
+  const activeNudgeList = getActiveNudges(nudges)
+  const inactivePartners = activeNudgeList.filter((n) => n.type === 'inactive_partner')
+  const congratsNudges = allCommNudges.filter((n) => n.type === 'congratulate')
+  const marketplaceInMyArea = openMarketplacePosts.filter((p) =>
+    p.market.toLowerCase().includes('michigan') ||
+    p.market.toLowerCase().includes('grand rapids') ||
+    p.market.toLowerCase().includes('plainwell')
+  )
 
   const buildWelcomeMessage = useCallback(() => {
-    const greetings: string[] = []
+    const sections: string[] = []
 
-    // Personalized greeting
-    greetings.push(`Hey ${firstName}! 👋`)
+    // Greeting
+    const hour = new Date().getHours()
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+    sections.push(`${timeGreeting}, ${firstName}! Here's your daily briefing:`)
 
-    // Communication nudges — high priority
-    if (highPriorityCommNudges.length > 0) {
-      greetings.push(`You have ${highPriorityCommNudges.length} partner${highPriorityCommNudges.length > 1 ? 's' : ''} waiting on updates — want me to help draft messages?`)
+    // ── URGENT ACTIONS ──
+    const urgentItems: string[] = []
+    if (urgentNudges.length > 0) {
+      urgentNudges.forEach((n) => {
+        urgentItems.push(`• ${n.message}`)
+      })
+    }
+    if (inactivePartners.length > 0) {
+      inactivePartners.slice(0, 3).forEach((n) => {
+        urgentItems.push(`• ${n.agentName} — ${n.daysInactive} days since last contact`)
+      })
+    }
+    if (urgentItems.length > 0) {
+      sections.push(`🔴 ACTION NEEDED (${urgentItems.length})\n${urgentItems.join('\n')}\n\nWant me to draft messages for any of these?`)
     }
 
-    // Inactive partners nudge
-    if (inactiveCount > 0) {
-      greetings.push(`You have ${inactiveCount} partner${inactiveCount > 1 ? 's' : ''} you haven't contacted in 30+ days — want me to draft check-in messages?`)
+    // ── PIPELINE SNAPSHOT ──
+    const pipelineItems: string[] = []
+    pipelineItems.push(`• ${activeReferrals.length} active referrals in pipeline`)
+    pipelineItems.push(`• ${closedReferrals.length} closed/pending fee`)
+    if (pendingVerifications > 0) {
+      pipelineItems.push(`• ${pendingVerifications} referrals awaiting partner verification`)
+    }
+    if (congratsNudges.length > 0) {
+      congratsNudges.forEach((n) => {
+        pipelineItems.push(`• 🎉 ${n.agentName} moved ${n.clientName || 'a referral'} to Under Contract!`)
+      })
+    }
+    sections.push(`📊 PIPELINE\n${pipelineItems.join('\n')}`)
+
+    // ── MARKETPLACE OPPORTUNITIES ──
+    if (openMarketplacePosts.length > 0) {
+      const marketItems: string[] = []
+      if (marketplaceInMyArea.length > 0) {
+        marketItems.push(`• 🔥 ${marketplaceInMyArea.length} open opportunit${marketplaceInMyArea.length !== 1 ? 'ies' : 'y'} in YOUR market — agents are looking for you!`)
+      }
+      marketItems.push(`• ${openMarketplacePosts.length} total open referral opportunities`)
+      const topPost = openMarketplacePosts[0]
+      marketItems.push(`• Hot: ${topPost.postingAgentName} posted a ${topPost.budgetRange} ${topPost.representation.toLowerCase()} in ${topPost.market} — ${topPost.bidsCount} bids so far`)
+      if (myBids.length > 0) {
+        const pendingBids = myBids.filter((b) => b.status === 'pending')
+        if (pendingBids.length > 0) {
+          marketItems.push(`• You have ${pendingBids.length} pending bid${pendingBids.length !== 1 ? 's' : ''} awaiting review`)
+        }
+      }
+      sections.push(`🏪 MARKETPLACE\n${marketItems.join('\n')}`)
     }
 
-    // New agents suggestion
-    const recentAgents = agents.filter((a) => a.status === 'active').slice(-3)
-    if (recentAgents.length > 0) {
-      greetings.push(`There are new agents in ${recentAgents.map((a) => a.area.split(',')[0]).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 3).join(', ')} — want me to help you connect?`)
+    // ── COMM SCORE & TRUST ──
+    if (commScore) {
+      const scoreItems: string[] = []
+      scoreItems.push(`• Comm Score: ${commScore.overall}/100 (${commScore.label})`)
+      if (commScore.trend === 'down') {
+        scoreItems.push(`• ⚠️ Your score is trending down — send updates on stale referrals to recover`)
+      } else if (commScore.trend === 'up') {
+        scoreItems.push(`• 📈 Score trending up — keep it going!`)
+      }
+      scoreItems.push(`• ${verifiedCount} verified referrals | ${endorsementCount} endorsements`)
+      sections.push(`📡 YOUR REPUTATION\n${scoreItems.join('\n')}`)
     }
 
-    // Default fallback
-    if (greetings.length === 1) {
-      greetings.push("I'm NORA, your AI referral assistant. Ask me to find agents, draft messages, or explore new markets!")
-    }
+    // ── QUICK ACTIONS ──
+    sections.push(`What would you like to do?\n• "Draft messages" — I'll write check-ins for your overdue partners\n• "Show marketplace" — Browse open referral opportunities\n• "Find an agent in [city]" — I'll match you with the best partner\n• "My pipeline" — Detailed status on all active referrals`)
 
-    return greetings.join('\n\n')
-  }, [firstName, inactiveCount, agents, highPriorityCommNudges.length])
+    return sections.join('\n\n')
+  }, [firstName, urgentNudges, inactivePartners, activeReferrals.length, closedReferrals.length, pendingVerifications, congratsNudges, openMarketplacePosts, marketplaceInMyArea, myBids, commScore, verifiedCount, endorsementCount])
 
   const [messages, setMessages] = useState<NoraMessage[]>([
     { id: 'welcome', role: 'assistant', content: buildWelcomeMessage(), timestamp: new Date() },
