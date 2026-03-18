@@ -450,7 +450,9 @@ export default function MessagesPage() {
     return [...filteredConversations].sort((a, b) => {
       const aLast = getLastMessage(a)
       const bLast = getLastMessage(b)
-      return new Date(bLast.createdAt).getTime() - new Date(aLast.createdAt).getTime()
+      const aTime = aLast?.createdAt ? new Date(aLast.createdAt).getTime() : 0
+      const bTime = bLast?.createdAt ? new Date(bLast.createdAt).getTime() : 0
+      return bTime - aTime
     })
   }, [filteredConversations])
 
