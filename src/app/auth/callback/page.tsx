@@ -5,12 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { createClient } from '@/lib/supabase/client'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { UserPlus, LogIn } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 
 export default function AuthCallback() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState('Signing you in...')
+  const [showNoAccount, setShowNoAccount] = useState(false)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
     const hub = createHubClient()
@@ -41,8 +44,6 @@ export default function AuthCallback() {
           const refreshToken = params.get('refresh_token')
 
           if (accessToken && refreshToken) {
-            // Use a regular Supabase client (not SSR) to set the session
-            // because createBrowserClient from @supabase/ssr doesn't support setSession from hash
             const hubUrl = process.env.NEXT_PUBLIC_HUB_URL
             const hubAnonKey = process.env.NEXT_PUBLIC_HUB_ANON_KEY
             if (hubUrl && hubAnonKey) {
@@ -53,14 +54,13 @@ export default function AuthCallback() {
               })
               if (!error && sessionData?.session) {
                 session = sessionData.session
-                // Also set it on the SSR hub client so it persists
                 try {
                   await hub.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken,
                   })
                 } catch {
-                  // SSR client may not support this — session is set on regular client
+                  // SSR client may not support this
                 }
               } else {
                 console.error('[AuthCallback] setSession failed:', error?.message)
@@ -93,10 +93,15 @@ export default function AuthCallback() {
 
       // 4. Session established — check if user needs onboarding
       setStatus('Almost there...')
-      // Clear the hash from the URL for cleanliness
       if (window.location.hash) {
         window.history.replaceState(null, '', window.location.pathname)
       }
+
+      // Get user's name for the interstitial
+      const name = (session.user.user_metadata?.full_name as string)
+        || session.user.email?.split('@')[0]
+        || ''
+      setUserName(name)
 
       try {
         const { data: arProfile } = await product
@@ -106,17 +111,57 @@ export default function AuthCallback() {
           .single()
 
         if (arProfile && arProfile.primary_area) {
+          // Existing AR user — go to dashboard
           window.location.href = '/dashboard'
         } else {
-          window.location.href = '/onboarding'
+          // No AR profile — show interstitial instead of silent redirect
+          setShowNoAccount(true)
         }
       } catch {
-        window.location.href = '/onboarding'
+        setShowNoAccount(true)
       }
     }
 
     handleAuth()
   }, [router, searchParams])
+
+  // Interstitial: no AgentReferrals account found
+  if (showNoAccount) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background p-4">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl p-8 text-center">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-7 h-7 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">
+            Welcome{userName ? `, ${userName.split(' ')[0]}` : ''}!
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            You don&apos;t have an AgentReferrals account yet. Would you like to create one? It only takes a few minutes.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => { window.location.href = '/onboarding' }}
+              className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create My Account
+            </button>
+            <button
+              onClick={() => { window.location.href = '/' }}
+              className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              Back to Home
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-4">
+            If you already have an account, you may have signed up with a different email address.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-background">
