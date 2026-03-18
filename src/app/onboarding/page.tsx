@@ -843,14 +843,23 @@ export default function OnboardingPage() {
   }, [phoneInputValue])
 
   // ── Handle phone verification: check code ──
-  const handleCheckPhoneCode = useCallback(async () => {
+  const handleCheckPhoneCode = async () => {
     const code = phoneCodeValue.trim()
     if (code.length !== 6) return
     setPhoneCodeChecking(true)
     setPhoneError('')
 
     try {
-      const phone = normalizedPhone || data.phone
+      // Use same fallback chain as resend to avoid stale closure
+      let phone = normalizedPhoneRef.current
+        || normalizedPhone
+        || data.phone
+        || (typeof window !== 'undefined' ? sessionStorage.getItem('ar_verify_phone') : null)
+      if (!phone) {
+        const codeMsg = messages.find((m) => m.content?.includes('sent a 6-digit code to'))
+        const match = codeMsg?.content?.match(/code to (\+?\d[\d\s()-]+\d)/)
+        if (match) phone = match[1].replace(/\D/g, '')
+      }
       const res = await fetch('/api/auth/verify-phone/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -880,8 +889,7 @@ export default function OnboardingPage() {
     } finally {
       setPhoneCodeChecking(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phoneCodeValue, normalizedPhone, data.phone])
+  }
 
   // ── Handle phone verification: resend code ──
   // NOT a useCallback — needs fresh closure every render to access latest phone
