@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useTheme } from 'next-themes'
 import { MapPin, Hash, MousePointer2, Pencil, X, Loader2, Search } from 'lucide-react'
 import {
   getAllCountyFeatures,
@@ -34,7 +33,6 @@ interface Props {
 let L: typeof import('leaflet') | null = null
 
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 
 const TABS = [
   { id: 'zip' as const, label: 'By Zip Code', icon: Hash },
@@ -49,10 +47,8 @@ for (const [abbr, fips] of Object.entries(STATE_FIPS)) {
 }
 
 export default function TerritorySelector({ value, onChange, initialCenter }: Props) {
-  const { resolvedTheme } = useTheme()
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
-  const tileLayerRef = useRef<L.TileLayer | null>(null)
   const countyLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
@@ -128,8 +124,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
 
     L.control.zoom({ position: 'bottomleft' }).addTo(map)
-    const isDark = resolvedTheme === 'dark'
-    tileLayerRef.current = L.tileLayer(isDark ? DARK_TILES : LIGHT_TILES, { attribution: '' }).addTo(map)
+    L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
     map.attributionControl.setPrefix('')
 
     map.on('zoomend', () => {
@@ -152,7 +147,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     return () => {
       map.remove()
       mapInstance.current = null
-      tileLayerRef.current = null
       countyLayersRef.current.clear()
       selectedLayersRef.current.clear()
       zipLayersRef.current.clear()
@@ -161,13 +155,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
-
-  // Switch tiles on theme change
-  useEffect(() => {
-    if (!tileLayerRef.current) return
-    const isDark = resolvedTheme === 'dark'
-    tileLayerRef.current.setUrl(isDark ? DARK_TILES : LIGHT_TILES)
-  }, [resolvedTheme])
 
   // Determine which state(s) are visible on the map
   const updateVisibleStates = useCallback((map: L.Map) => {
