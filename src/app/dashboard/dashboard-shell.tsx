@@ -232,12 +232,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Main content */}
         <div className={`flex-1 relative overflow-hidden ${isMapPage ? '' : 'pb-[76px]'}`}>
-          {isDemoMode && (
-            <div className="absolute inset-0 z-[100] cursor-default" style={{ pointerEvents: 'auto' }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            />
-          )}
           <div className="h-full">
             {children}
           </div>
