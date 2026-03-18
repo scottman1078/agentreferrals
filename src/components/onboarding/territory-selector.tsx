@@ -799,7 +799,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     map.on('click', handleMapClick)
     return () => { map.off('click', handleMapClick) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, mapClickLoading, value, onChange])
+  }, [activeTab, leafletReady, mapClickLoading, value, onChange])
 
   const getCountyLabel = (fips: string): string => {
     if (countyNames.has(fips)) return countyNames.get(fips)!
