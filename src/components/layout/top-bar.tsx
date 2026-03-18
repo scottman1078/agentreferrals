@@ -110,22 +110,8 @@ export default function TopBar() {
 
         <div className="flex-1" />
 
-        {/* Right: Legend + Controls */}
+        {/* Right: Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Map legend key */}
-          {isMapPage && (
-            <div className="hidden md:flex items-center gap-2.5 px-2.5 py-1 rounded-lg border border-border bg-background/50">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-primary border border-white shadow-sm" />
-                <span className="text-[10px] font-semibold text-muted-foreground">Partner</span>
-              </div>
-              <div className="w-px h-3 bg-border" />
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-white border-2 border-primary" />
-                <span className="text-[10px] font-semibold text-muted-foreground">Not Connected</span>
-              </div>
-            </div>
-          )}
 
           <div className="hidden lg:block">
             <BrokerageSwitcher />
