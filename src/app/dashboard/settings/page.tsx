@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info } from 'lucide-react'
@@ -30,6 +31,7 @@ function formatPhoneDisplay(phone: string): string {
 }
 
 export default function SettingsPage() {
+  const demoGuard = useDemoGuard()
   const { profile, isAuthenticated, refreshProfile } = useAuth()
   const { tier, plan } = useFeatureGate()
   const router = useRouter()
@@ -107,6 +109,7 @@ export default function SettingsPage() {
   }, [profile, isAuthenticated])
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (demoGuard()) return
     const file = e.target.files?.[0]
     if (!file || !profile) return
 
@@ -162,6 +165,7 @@ export default function SettingsPage() {
   }
 
   async function handleSave() {
+    if (demoGuard()) return
     if (!profile) return
     setSaving(true)
     setSaveToast('')
@@ -372,6 +376,7 @@ export default function SettingsPage() {
               <div className="text-right pt-4">
                 <button
                   onClick={async () => {
+                    if (demoGuard()) return
                     if (!profile) return
                     setSavingTerritory(true)
                     const supabase = createClient()

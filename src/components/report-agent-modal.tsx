@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { X, Flag, AlertTriangle, ShieldOff } from 'lucide-react'
 import { REPORT_REASON_LABELS, type ReportReason } from '@/data/report-block'
 
@@ -20,8 +21,10 @@ export default function ReportAgentModal({
   const [reason, setReason] = useState<ReportReason>('spam')
   const [description, setDescription] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const demoGuard = useDemoGuard()
 
   function handleSubmit() {
+    if (demoGuard()) return
     onSubmit(reason, description)
     setSubmitted(true)
   }

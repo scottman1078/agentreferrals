@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials, formatCurrency } from '@/lib/utils'
@@ -9,6 +10,7 @@ import { MapPin, Check } from 'lucide-react'
 import type { Candidate } from '@/types'
 
 export default function RecruitingPage() {
+  const demoGuard = useDemoGuard()
   const { candidatesByZone, voidZones } = useAppData()
   const [selectedZone, setSelectedZone] = useState('')
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set())
@@ -101,7 +103,7 @@ export default function RecruitingPage() {
                     {c.tags.map((t) => (<span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-semibold text-white" style={{ background: TAG_COLORS[t] }}>{t}</span>))}
                   </div>
                   <button
-                    onClick={() => setInvitedIds((p) => new Set(p).add(c.id))}
+                    onClick={() => { if (demoGuard()) return; setInvitedIds((p) => new Set(p).add(c.id)) }}
                     disabled={invitedIds.has(c.id)}
                     className={`w-full h-9 rounded-lg text-xs font-bold transition-all ${invitedIds.has(c.id) ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
                   >

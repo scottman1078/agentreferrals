@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
 import { useAppData } from '@/lib/data-provider'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { getPartnerAgentIds, get1DegreeAgentIds, get2DegreeAgentIds } from '@/data/partnerships'
 import type { Agent, Brokerage, BrokerageScope } from '@/types'
 
@@ -15,12 +16,14 @@ interface BrokerageContextType {
   partnerIds: string[]
   oneDegreeIds: string[]
   twoDegreeIds: string[]
+  scopeLocked: boolean
 }
 
 const BrokerageContext = createContext<BrokerageContextType | null>(null)
 
 export function BrokerageProvider({ children }: { children: ReactNode }) {
   const { agents, brokerages } = useAppData()
+  const { hasFeature } = useFeatureGate()
   const [currentBrokerageId, setCurrentBrokerageId] = useState('real')
   const [scope, setScope] = useState<BrokerageScope>('my-network')
 
@@ -30,6 +33,15 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
   const partnerIds = useMemo(() => getPartnerAgentIds('jason'), [])
   const oneDegreeIds = useMemo(() => get1DegreeAgentIds('jason'), [])
   const twoDegreeIds = useMemo(() => get2DegreeAgentIds('jason'), [])
+
+  const scopeLocked = useMemo(() => {
+    if (scope === 'my-network') return false
+    if (scope === '1-degree') return !hasFeature('networkDegree1')
+    if (scope === '2-degree') return !hasFeature('networkDegree2')
+    if (scope === 'my-brokerage') return !hasFeature('brokerageNetwork')
+    if (scope === 'all-network') return !hasFeature('allNetwork')
+    return false
+  }, [scope, hasFeature])
 
   const filteredAgents = useMemo(() => {
     if (scope === 'all-network') return agents
@@ -52,6 +64,7 @@ export function BrokerageProvider({ children }: { children: ReactNode }) {
         partnerIds,
         oneDegreeIds,
         twoDegreeIds,
+        scopeLocked,
       }}
     >
       {children}

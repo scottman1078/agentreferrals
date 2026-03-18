@@ -9,6 +9,7 @@ export const agents: Agent[] = [
     dealsPerYear: 32, yearsLicensed: 8, avgSalePrice: 285000,
     polygon: [],
     color: '#f0a500', isPrimary: true, referNetScore: 92, responseTime: '< 1hr', closedReferrals: 8,
+    photoUrl: '/demo/avatar-jason.jpg',
   },
   {
     id: 'derek', name: 'Derek Chung', brokerage: 'Real Broker LLC — West MI', brokerageId: 'real',
@@ -17,6 +18,7 @@ export const agents: Agent[] = [
     dealsPerYear: 45, yearsLicensed: 7, avgSalePrice: 340000,
     polygon: [],
     color: '#14b8a6', referNetScore: 87, responseTime: '< 2hr', closedReferrals: 5,
+    photoUrl: '/demo/avatar-derek.jpg',
   },
   {
     id: 'ashley', name: 'Ashley Monroe', brokerage: 'Real Broker LLC — Nashville', brokerageId: 'real',
@@ -25,6 +27,7 @@ export const agents: Agent[] = [
     dealsPerYear: 74, yearsLicensed: 13, avgSalePrice: 595000,
     polygon: [],
     color: '#f472b6', referNetScore: 95, responseTime: '< 30min', closedReferrals: 14,
+    photoUrl: '/demo/avatar-ashley.jpg',
   },
   {
     id: 'tomas', name: 'Tomás Reyes', brokerage: 'Real Broker LLC — San Antonio', brokerageId: 'real',
@@ -33,6 +36,7 @@ export const agents: Agent[] = [
     dealsPerYear: 61, yearsLicensed: 11, avgSalePrice: 320000,
     polygon: [],
     color: '#10b981', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 9,
+    photoUrl: '/demo/avatar-tomas.jpg',
   },
   {
     id: 'darius', name: 'Darius King', brokerage: 'Real Broker LLC — Arizona', brokerageId: 'real',
@@ -41,6 +45,7 @@ export const agents: Agent[] = [
     dealsPerYear: 86, yearsLicensed: 14, avgSalePrice: 620000,
     polygon: [],
     color: '#d97706', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 11,
+    photoUrl: '/demo/avatar-darius.jpg',
   },
   {
     id: 'lily', name: 'Lily Park', brokerage: 'Real Broker LLC — Denver', brokerageId: 'real',
@@ -49,6 +54,7 @@ export const agents: Agent[] = [
     dealsPerYear: 63, yearsLicensed: 11, avgSalePrice: 680000,
     polygon: [],
     color: '#059669', referNetScore: 88, responseTime: '< 2hr', closedReferrals: 7,
+    photoUrl: '/demo/avatar-lily.jpg',
   },
   {
     id: 'natalie', name: 'Natalie Cruz', brokerage: 'Real Broker LLC — Las Vegas', brokerageId: 'real',
@@ -57,6 +63,7 @@ export const agents: Agent[] = [
     dealsPerYear: 71, yearsLicensed: 12, avgSalePrice: 540000,
     polygon: [],
     color: '#db2777', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 6,
+    photoUrl: '/demo/avatar-natalie.jpg',
   },
   {
     id: 'brent', name: 'Brent Schaefer', brokerage: 'Real Broker LLC — Muskegon', brokerageId: 'real',
@@ -65,6 +72,7 @@ export const agents: Agent[] = [
     dealsPerYear: 28, yearsLicensed: 11, avgSalePrice: 195000,
     polygon: [],
     color: '#f97316', referNetScore: 78, responseTime: '< 4hr', closedReferrals: 3,
+    photoUrl: '/demo/avatar-brent.jpg',
   },
   // KELLER WILLIAMS agents
   {
@@ -74,6 +82,7 @@ export const agents: Agent[] = [
     dealsPerYear: 67, yearsLicensed: 12, avgSalePrice: 520000,
     polygon: [],
     color: '#22c55e', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 10,
+    photoUrl: '/demo/avatar-megan.jpg',
   },
   {
     id: 'carla', name: 'Carla Mendez', brokerage: 'Keller Williams — Lansing', brokerageId: 'kw',
@@ -82,6 +91,7 @@ export const agents: Agent[] = [
     dealsPerYear: 52, yearsLicensed: 14, avgSalePrice: 310000,
     polygon: [],
     color: '#6366f1', referNetScore: 84, responseTime: '< 2hr', closedReferrals: 6,
+    photoUrl: '/demo/avatar-carla.jpg',
   },
   // COMPASS agents
   {
@@ -91,6 +101,7 @@ export const agents: Agent[] = [
     dealsPerYear: 88, yearsLicensed: 15, avgSalePrice: 615000,
     polygon: [],
     color: '#818cf8', referNetScore: 94, responseTime: '< 30min', closedReferrals: 16,
+    photoUrl: '/demo/avatar-marcus.jpg',
   },
   {
     id: 'michelle', name: 'Michelle Foster', brokerage: 'Compass Charlotte', brokerageId: 'compass',
@@ -99,6 +110,7 @@ export const agents: Agent[] = [
     dealsPerYear: 58, yearsLicensed: 9, avgSalePrice: 510000,
     polygon: [],
     color: '#e879f9', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 7,
+    photoUrl: '/demo/avatar-michelle.jpg',
   },
   {
     id: 'laura', name: 'Laura Chen', brokerage: 'Compass San Francisco', brokerageId: 'compass',
@@ -107,6 +119,7 @@ export const agents: Agent[] = [
     dealsPerYear: 76, yearsLicensed: 13, avgSalePrice: 1850000,
     polygon: [],
     color: '#94a3b8', referNetScore: 82, responseTime: '< 4hr', closedReferrals: 4,
+    photoUrl: '/demo/avatar-laura.jpg',
   },
   // eXp REALTY agents
   {
@@ -116,6 +129,7 @@ export const agents: Agent[] = [
     dealsPerYear: 38, yearsLicensed: 9, avgSalePrice: 245000,
     polygon: [],
     color: '#a855f7', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 5,
+    photoUrl: '/demo/avatar-priya.jpg',
   },
   {
     id: 'omar', name: 'Omar Hassan', brokerage: 'eXp Realty — Minneapolis', brokerageId: 'exp',
@@ -124,6 +138,7 @@ export const agents: Agent[] = [
     dealsPerYear: 55, yearsLicensed: 10, avgSalePrice: 420000,
     polygon: [],
     color: '#38bdf8', referNetScore: 87, responseTime: '< 2hr', closedReferrals: 8,
+    photoUrl: '/demo/avatar-omar.jpg',
   },
   {
     id: 'james', name: 'James Whitfield', brokerage: 'eXp Realty — Orlando', brokerageId: 'exp',
@@ -132,6 +147,7 @@ export const agents: Agent[] = [
     dealsPerYear: 79, yearsLicensed: 14, avgSalePrice: 445000,
     polygon: [],
     color: '#06b6d4', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+    photoUrl: '/demo/avatar-james.jpg',
   },
   {
     id: 'kwame', name: 'Kwame Davis', brokerage: 'eXp Realty — Detroit', brokerageId: 'exp',
@@ -140,6 +156,7 @@ export const agents: Agent[] = [
     dealsPerYear: 41, yearsLicensed: 6, avgSalePrice: 295000,
     polygon: [],
     color: '#fb923c', referNetScore: 76, responseTime: '< 4hr', closedReferrals: 2,
+    photoUrl: '/demo/avatar-kwame.jpg',
   },
   // BERKSHIRE HATHAWAY agents
   {
@@ -149,6 +166,7 @@ export const agents: Agent[] = [
     dealsPerYear: 93, yearsLicensed: 16, avgSalePrice: 685000,
     polygon: [],
     color: '#c084fc', referNetScore: 96, responseTime: '< 30min', closedReferrals: 18,
+    photoUrl: '/demo/avatar-tanya.jpg',
   },
   {
     id: 'faith', name: 'Faith Okafor', brokerage: 'BHHS Fox & Roach — Philadelphia', brokerageId: 'bhhs',
@@ -157,6 +175,7 @@ export const agents: Agent[] = [
     dealsPerYear: 47, yearsLicensed: 8, avgSalePrice: 380000,
     polygon: [],
     color: '#2563eb', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 5,
+    photoUrl: '/demo/avatar-faith.jpg',
   },
   // SOTHEBY'S agents
   {
@@ -166,6 +185,7 @@ export const agents: Agent[] = [
     dealsPerYear: 95, yearsLicensed: 16, avgSalePrice: 1650000,
     polygon: [],
     color: '#eab308', referNetScore: 97, responseTime: '< 30min', closedReferrals: 22,
+    photoUrl: '/demo/avatar-rachel.jpg',
   },
   {
     id: 'brendan', name: 'Brendan Walsh', brokerage: "Sotheby's — Boston", brokerageId: 'sothebys',
@@ -174,6 +194,7 @@ export const agents: Agent[] = [
     dealsPerYear: 71, yearsLicensed: 13, avgSalePrice: 890000,
     polygon: [],
     color: '#7c3aed', referNetScore: 93, responseTime: '< 1hr', closedReferrals: 13,
+    photoUrl: '/demo/avatar-brendan.jpg',
   },
   // RE/MAX agents
   {
@@ -183,6 +204,7 @@ export const agents: Agent[] = [
     dealsPerYear: 102, yearsLicensed: 17, avgSalePrice: 780000,
     polygon: [],
     color: '#f43f5e', referNetScore: 94, responseTime: '< 30min', closedReferrals: 15,
+    photoUrl: '/demo/avatar-carlos.jpg',
   },
   {
     id: 'sofia', name: 'Sofia Chen', brokerage: 'RE/MAX — Seattle', brokerageId: 'remax',
@@ -191,6 +213,7 @@ export const agents: Agent[] = [
     dealsPerYear: 82, yearsLicensed: 14, avgSalePrice: 920000,
     polygon: [],
     color: '#14b8a6', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 11,
+    photoUrl: '/demo/avatar-sofia.jpg',
   },
   // COLDWELL BANKER agents
   {
@@ -200,6 +223,7 @@ export const agents: Agent[] = [
     dealsPerYear: 118, yearsLicensed: 21, avgSalePrice: 2100000,
     polygon: [],
     color: '#dc2626', referNetScore: 88, responseTime: '< 2hr', closedReferrals: 9,
+    photoUrl: '/demo/avatar-priscilla.jpg',
   },
   {
     id: 'anthony', name: 'Anthony Moore', brokerage: 'Coldwell Banker — DC', brokerageId: 'coldwell',
@@ -208,6 +232,7 @@ export const agents: Agent[] = [
     dealsPerYear: 65, yearsLicensed: 12, avgSalePrice: 820000,
     polygon: [],
     color: '#9333ea', referNetScore: 81, responseTime: '< 4hr', closedReferrals: 4,
+    photoUrl: '/demo/avatar-anthony.jpg',
   },
   {
     id: 'rick', name: 'Rick Santos', brokerage: 'Coldwell Banker — Miami', brokerageId: 'coldwell',
@@ -216,6 +241,7 @@ export const agents: Agent[] = [
     dealsPerYear: 84, yearsLicensed: 18, avgSalePrice: 1100000,
     polygon: [],
     color: '#fb7185', referNetScore: 85, responseTime: '< 2hr', closedReferrals: 7,
+    photoUrl: '/demo/avatar-rick.jpg',
   },
   {
     id: 'ben', name: 'Ben Archer', brokerage: 'Coldwell Banker — Portland', brokerageId: 'coldwell',
@@ -224,6 +250,7 @@ export const agents: Agent[] = [
     dealsPerYear: 44, yearsLicensed: 7, avgSalePrice: 490000,
     polygon: [],
     color: '#4ade80', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    photoUrl: '/demo/avatar-ben.jpg',
   },
   // ══════════════════════════════════════
   // ADDITIONAL AGENTS — fill out the network
@@ -236,6 +263,7 @@ export const agents: Agent[] = [
     dealsPerYear: 49, yearsLicensed: 8, avgSalePrice: 385000,
     polygon: [],
     color: '#3b82f6', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 6,
+    photoUrl: '/demo/avatar-tamara.jpg',
   },
   {
     id: 'ryan_h', name: 'Ryan Harper', brokerage: 'eXp Realty — Raleigh', brokerageId: 'exp',
@@ -244,6 +272,7 @@ export const agents: Agent[] = [
     dealsPerYear: 56, yearsLicensed: 10, avgSalePrice: 440000,
     polygon: [],
     color: '#60a5fa', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 9,
+    photoUrl: '/demo/avatar-ryan_h.jpg',
   },
   {
     id: 'diana', name: 'Diana Patel', brokerage: 'eXp Realty — Houston', brokerageId: 'exp',
@@ -252,6 +281,7 @@ export const agents: Agent[] = [
     dealsPerYear: 63, yearsLicensed: 9, avgSalePrice: 365000,
     polygon: [],
     color: '#2563eb', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 10,
+    photoUrl: '/demo/avatar-diana.jpg',
   },
   // KW — more agents
   {
@@ -261,6 +291,7 @@ export const agents: Agent[] = [
     dealsPerYear: 72, yearsLicensed: 14, avgSalePrice: 875000,
     polygon: [],
     color: '#ef4444', referNetScore: 91, responseTime: '< 30min', closedReferrals: 13,
+    photoUrl: '/demo/avatar-steve.jpg',
   },
   {
     id: 'nina', name: 'Nina Rodriguez', brokerage: 'Keller Williams — Austin', brokerageId: 'kw',
@@ -269,6 +300,7 @@ export const agents: Agent[] = [
     dealsPerYear: 58, yearsLicensed: 7, avgSalePrice: 480000,
     polygon: [],
     color: '#dc2626', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 7,
+    photoUrl: '/demo/avatar-nina.jpg',
   },
   {
     id: 'troy', name: 'Troy Jackson', brokerage: 'Keller Williams — Columbus', brokerageId: 'kw',
@@ -286,6 +318,7 @@ export const agents: Agent[] = [
     dealsPerYear: 91, yearsLicensed: 15, avgSalePrice: 1350000,
     polygon: [],
     color: '#16a34a', referNetScore: 95, responseTime: '< 30min', closedReferrals: 19,
+    photoUrl: '/demo/avatar-elena.jpg',
   },
   {
     id: 'daniel_k', name: 'Daniel Kim', brokerage: 'Compass — Seattle', brokerageId: 'compass',
@@ -303,6 +336,7 @@ export const agents: Agent[] = [
     dealsPerYear: 54, yearsLicensed: 18, avgSalePrice: 1200000,
     polygon: [],
     color: '#7c3aed', referNetScore: 92, responseTime: '< 1hr', closedReferrals: 14,
+    photoUrl: '/demo/avatar-patricia.jpg',
   },
   {
     id: 'george', name: 'George Palmer', brokerage: 'BHHS — Chicago', brokerageId: 'bhhs',
@@ -337,6 +371,7 @@ export const agents: Agent[] = [
     dealsPerYear: 28, yearsLicensed: 20, avgSalePrice: 4500000,
     polygon: [],
     color: '#0d9488', referNetScore: 98, responseTime: '< 1hr', closedReferrals: 24,
+    photoUrl: '/demo/avatar-victoria.jpg',
   },
   {
     id: 'james_w', name: 'James Wellington', brokerage: "Sotheby's — Palm Beach", brokerageId: 'sothebys',
@@ -345,6 +380,7 @@ export const agents: Agent[] = [
     dealsPerYear: 42, yearsLicensed: 16, avgSalePrice: 2800000,
     polygon: [],
     color: '#0f766e', referNetScore: 96, responseTime: '< 30min', closedReferrals: 20,
+    photoUrl: '/demo/avatar-james_w.jpg',
   },
   // Coldwell Banker — more agents
   {
@@ -374,6 +410,7 @@ export const agents: Agent[] = [
     dealsPerYear: 68, yearsLicensed: 12, avgSalePrice: 1150000,
     polygon: [],
     color: '#dc2626', referNetScore: 93, responseTime: '< 1hr', closedReferrals: 15,
+    photoUrl: '/demo/avatar-sarah_t.jpg',
   },
   {
     id: 'jean_p', name: 'Jean-Philippe Bouchard', brokerage: 'Royal LePage — Montreal', brokerageId: 'royallepage',
@@ -399,6 +436,7 @@ export const agents: Agent[] = [
     dealsPerYear: 73, yearsLicensed: 14, avgSalePrice: 1300000,
     polygon: [],
     color: '#003366', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+    photoUrl: '/demo/avatar-david_w.jpg',
   },
   {
     id: 'claire_h', name: 'Claire Henderson', brokerage: 'Sutton Group — Victoria', brokerageId: 'sutton',

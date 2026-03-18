@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAuth } from '@/contexts/auth-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
@@ -99,6 +100,7 @@ interface NoraChatProps {
 }
 
 export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
+  const demoGuard = useDemoGuard()
   const { agents, getAgentReviewStats } = useAppData()
   const { profile } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
@@ -311,6 +313,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   async function handleSend() {
+    if (demoGuard()) return
     if (!input.trim() || isLoading) return
     const userMsg: NoraMessage = { id: `u-${Date.now()}`, role: 'user', content: input.trim(), timestamp: new Date() }
     setMessages((p) => [...p, userMsg])

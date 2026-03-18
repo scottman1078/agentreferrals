@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import {
   getOpenPosts,
   getPostsByAgent,
@@ -511,6 +512,7 @@ function BidForm({
   market: string
   postingAgentName: string
 }) {
+  const demoGuardBid = useDemoGuard()
   const [isOpen, setIsOpen] = useState(false)
   const [pitch, setPitch] = useState('')
   const [highlights, setHighlights] = useState('')
@@ -628,6 +630,7 @@ function BidForm({
       {/* Submit */}
       <button
         onClick={() => {
+          if (demoGuardBid()) return
           if (pitch.trim()) setSubmitted(true)
         }}
         disabled={!pitch.trim()}
@@ -698,6 +701,7 @@ function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost
 // ══════════════════════════════════════
 
 function PostReferralButton() {
+  const demoGuard = useDemoGuard()
   const [isOpen, setIsOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({
@@ -878,6 +882,7 @@ function PostReferralButton() {
           </button>
           <button
             onClick={() => {
+              if (demoGuard()) return
               if (form.market.trim() && form.description.trim()) setSubmitted(true)
             }}
             disabled={!form.market.trim() || !form.description.trim()}

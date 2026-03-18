@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { StickyNote, Send, Trash2, Loader2 } from 'lucide-react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 
 interface NoteEntry {
   id: string
@@ -18,6 +19,7 @@ interface AgentNotesProps {
 }
 
 export default function AgentNotes({ agentId, authorId, variant = 'inline' }: AgentNotesProps) {
+  const demoGuard = useDemoGuard()
   const [notes, setNotes] = useState<NoteEntry[]>([])
   const [newNote, setNewNote] = useState('')
   const [loading, setLoading] = useState(true)
@@ -37,6 +39,7 @@ export default function AgentNotes({ agentId, authorId, variant = 'inline' }: Ag
   }, [authorId, agentId])
 
   const saveNote = useCallback(async () => {
+    if (demoGuard()) return
     if (!authorId || !newNote.trim()) return
     setSaving(true)
 
@@ -55,6 +58,7 @@ export default function AgentNotes({ agentId, authorId, variant = 'inline' }: Ag
   }, [authorId, agentId, newNote])
 
   const deleteNote = useCallback(async (noteId: string) => {
+    if (demoGuard()) return
     if (!authorId) return
     await fetch(`/api/notes?id=${noteId}&authorId=${authorId}`, { method: 'DELETE' })
     setNotes((prev) => prev.filter((n) => n.id !== noteId))

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import {
   getAgentEndorsements,
   getEndorsementCount,
@@ -153,6 +154,7 @@ function EndorsementSkillRow({
 
 // ── Endorse Form ──
 function EndorseForm({ agentId, agentName, onClose }: { agentId: string; agentName: string; onClose: () => void }) {
+  const demoGuard = useDemoGuard()
   const [selected, setSelected] = useState<EndorsementSkill[]>([])
   const [submitted, setSubmitted] = useState(false)
   let userId: string | undefined
@@ -165,6 +167,7 @@ function EndorseForm({ agentId, agentName, onClose }: { agentId: string; agentNa
   }
 
   async function handleSubmit() {
+    if (demoGuard()) return
     if (selected.length === 0) return
     if (userId) {
       await submitEndorsement(agentId, userId, selected)

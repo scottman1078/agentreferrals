@@ -29,6 +29,7 @@ export interface Agent {
   referNetScore?: number // 0-100 composite trust/performance metric
   responseTime?: string // "< 1hr", "< 4hr", etc.
   closedReferrals?: number
+  photoUrl?: string
 }
 
 export interface Referral {

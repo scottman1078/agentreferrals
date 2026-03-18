@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
 import { getInitials } from '@/lib/utils'
 import { Star, MessageSquare, X, Shield, Heart, ChevronDown, ChevronUp, PenLine, Send, Check } from 'lucide-react'
@@ -137,6 +138,7 @@ function StarRatingInput({ value, onChange, label }: { value: number; onChange: 
 
 // ─── Write Review Form ───
 function WriteReviewForm({ agentId, agentName, onClose }: { agentId: string; agentName: string; onClose: () => void }) {
+  const demoGuard = useDemoGuard()
   const [overallRating, setOverallRating] = useState(0)
   const [communicationRating, setCommunicationRating] = useState(0)
   const [professionalismRating, setProfessionalismRating] = useState(0)
@@ -148,6 +150,7 @@ function WriteReviewForm({ agentId, agentName, onClose }: { agentId: string; age
   const canSubmit = overallRating > 0 && communicationRating > 0 && professionalismRating > 0 && clientCareRating > 0 && comment.trim().length > 0
 
   async function handleSubmit() {
+    if (demoGuard()) return
     if (!canSubmit) return
     try {
       await fetch('/api/reviews', {

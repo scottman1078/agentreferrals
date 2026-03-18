@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
@@ -57,6 +58,7 @@ function getPartnershipDuration(agentId: string): string | null {
 
 export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessage }: AgentPeekCardProps) {
   const router = useRouter()
+  const demoGuard = useDemoGuard()
   const { profile } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
@@ -64,6 +66,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
 
   function handleReport(reason: ReportReason, description: string) {
+    if (demoGuard()) return
     // POST to API (fire-and-forget for mock)
     fetch('/api/report', {
       method: 'POST',
@@ -78,6 +81,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   }
 
   function handleBlock() {
+    if (demoGuard()) return
     addBlock(profile?.id ?? 'jason', agent.id)
     setBlocked(true)
     setShowBlockConfirm(false)
@@ -95,7 +99,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
 
   // Connection path for degree-of-separation agents
-  const { scope, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
   const { agents: allAgents } = useAppData()
   const isDegreeView = scope === '1-degree' || scope === '2-degree'
   const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
@@ -187,10 +191,14 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           <div className="flex items-start gap-3">
             {/* Avatar */}
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0"
+              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden"
               style={{ background: agent.color }}
             >
-              {initials}
+              {!scopeLocked && agent.photoUrl ? (
+                <img src={agent.photoUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -345,7 +353,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             {isDegreeAgent ? (
               /* Non-partner degree agent: Request Intro only, no direct message for free tier */
               <button
-                onClick={() => onSendReferral?.(agent)}
+                onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" />
@@ -353,7 +361,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               </button>
             ) : (
               <button
-                onClick={() => onSendReferral?.(agent)}
+                onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 <Send className="w-3.5 h-3.5" />
@@ -363,7 +371,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             {/* Message button: only for direct partners, not for degree agents */}
             {isDirectPartner && (
               <button
-                onClick={() => onMessage?.(agent)}
+                onClick={() => { if (demoGuard()) return; onMessage?.(agent) }}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
               >
                 <MessageSquare className="w-3.5 h-3.5" />

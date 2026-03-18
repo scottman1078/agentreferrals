@@ -55,13 +55,15 @@ export default function BrokerageSwitcher() {
       id: 'my-brokerage',
       label: currentBrokerage.name,
       count: agents.filter((a) => a.brokerageId === currentBrokerage.id).length,
-      locked: false,
+      locked: !hasFeature('brokerageNetwork'),
+      requiredTier: requiredTier('brokerageNetwork') ?? undefined,
     },
     {
       id: 'all-network',
       label: 'All',
       count: agents.length,
-      locked: false,
+      locked: !hasFeature('allNetwork'),
+      requiredTier: requiredTier('allNetwork') ?? undefined,
     },
   ]
 
@@ -96,9 +98,7 @@ export default function BrokerageSwitcher() {
               className={`relative px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all flex items-center gap-1 ${
                 scope === tab.id
                   ? 'bg-primary text-primary-foreground'
-                  : tab.locked
-                    ? 'text-muted-foreground/50 cursor-pointer hover:text-muted-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               title={tab.locked ? `Requires ${tab.requiredTier} plan` : undefined}
             >

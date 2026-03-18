@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAdminTier } from '@/contexts/admin-tier-context'
+import { useDemo } from '@/contexts/demo-context'
 import { PLANS, type SubscriptionTier } from '@/lib/stripe'
 
 /** Feature keys from the PLANS config */
@@ -25,15 +26,18 @@ const ADMIN_EMAILS = ['scott@agentdashboards.com']
 export function useFeatureGate() {
   const { profile } = useAuth()
   const { tierOverride, setTierOverride } = useAdminTier()
+  const { isDemoMode } = useDemo()
 
   const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '')
+  const canSwitchTier = isAdmin || isDemoMode
 
   const tier: SubscriptionTier = useMemo(() => {
-    if (isAdmin && tierOverride) return tierOverride
+    if (canSwitchTier && tierOverride) return tierOverride
+    if (isDemoMode) return tierOverride || 'pro'
     const raw = profile?.subscription_tier
     if (raw && raw in TIER_RANK) return raw as SubscriptionTier
     return 'starter'
-  }, [profile?.subscription_tier, isAdmin, tierOverride])
+  }, [profile?.subscription_tier, canSwitchTier, isDemoMode, tierOverride])
 
   const plan = useMemo(() => PLANS.find((p) => p.id === tier)!, [tier])
 
@@ -75,6 +79,8 @@ export function useFeatureGate() {
     isAtLeast,
     requiredTier,
     isAdmin,
+    canSwitchTier,
+    isDemoMode,
     setAdminTier,
   }
 }

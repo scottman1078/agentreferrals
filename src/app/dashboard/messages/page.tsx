@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import { getInitials } from '@/lib/utils'
 import { agents } from '@/data/agents'
@@ -334,6 +335,7 @@ function ConversationItem({
 // ─── Main Messages Page ───
 
 export default function MessagesPage() {
+  const demoGuard = useDemoGuard()
   // Read ?agent= param from window.location on mount (avoids useSearchParams Suspense issues)
   const [preselectedAgent, setPreselectedAgent] = useState<string | null>(null)
 
@@ -372,6 +374,7 @@ export default function MessagesPage() {
   }, [conversationList])
 
   function sendMessageToAgent(agentId: string, content: string) {
+    if (demoGuard()) return
     // Ensure conversation exists
     let convExists = conversationList.find((c) => c.agentId === agentId)
     if (!convExists) {
@@ -526,6 +529,7 @@ export default function MessagesPage() {
   }
 
   function handleSend() {
+    if (demoGuard()) return
     if (!newMessage.trim() || !activeConvId) return
 
     const msg: Message = {

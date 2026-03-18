@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAppData } from '@/lib/data-provider'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import {
   X,
   ChevronRight,
@@ -60,6 +61,7 @@ export default function AgreementBuilder({ onClose, prefill }: AgreementBuilderP
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
+  const demoGuard = useDemoGuard()
 
   const [data, setData] = useState<AgreementData>({
     referringAgentName: currentUser?.name || '',
@@ -119,6 +121,7 @@ export default function AgreementBuilder({ onClose, prefill }: AgreementBuilderP
   }
 
   async function handleSend() {
+    if (demoGuard()) return
     setSending(true)
     setSendError(null)
     try {

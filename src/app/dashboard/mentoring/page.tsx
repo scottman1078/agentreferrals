@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { useAuth } from '@/contexts/auth-context'
 import { getInitials } from '@/lib/utils'
@@ -319,8 +320,10 @@ function RequestMentorModal({
   )
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const demoGuard = useDemoGuard()
 
   const handleSubmit = () => {
+    if (demoGuard()) return
     setSubmitted(true)
   }
 
@@ -436,8 +439,10 @@ function MyMentorshipsTab() {
   // In demo mode, show Jason's mentorships
   const myMentorships = getMentorshipsByAgent('jason')
   const [actionedIds, setActionedIds] = useState<Set<string>>(new Set())
+  const demoGuard = useDemoGuard()
 
   const handleAction = (id: string, _action: 'accept' | 'decline') => {
+    if (demoGuard()) return
     setActionedIds((prev) => new Set(prev).add(id))
   }
 
@@ -556,6 +561,7 @@ function BecomeMentorTab() {
   const [selectedSpecs, setSelectedSpecs] = useState<Set<string>>(new Set())
   const [bio, setBio] = useState('')
   const [saved, setSaved] = useState(false)
+  const demoGuard = useDemoGuard()
 
   const toggleSpec = (spec: string) => {
     setSelectedSpecs((prev) => {
@@ -567,6 +573,7 @@ function BecomeMentorTab() {
   }
 
   const handleSave = () => {
+    if (demoGuard()) return
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }

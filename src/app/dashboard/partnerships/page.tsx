@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
@@ -73,12 +74,15 @@ export default function PartnershipsPage() {
   const [expandedGaps, setExpandedGaps] = useState<Set<string>>(new Set(['gap-1', 'gap-2', 'gap-3']))
   const [searchQuery, setSearchQuery] = useState('')
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
+  const demoGuard = useDemoGuard()
 
   const handleOffer = (agentId: string) => {
+    if (demoGuard()) return
     setOfferedIds((prev) => new Set(prev).add(agentId))
   }
 
   const handleRequest = (agentId: string) => {
+    if (demoGuard()) return
     setRequestedIds((prev) => new Set(prev).add(agentId))
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -57,6 +58,7 @@ function InviteSkeleton() {
 }
 
 export default function InvitePage() {
+  const demoGuard = useDemoGuard()
   const { invites: initialInvites, referralCode: REFERRAL_CODE, referralLink: REFERRAL_LINK, invitesLoading } = useAppData()
   const { profile, user } = useAuth()
   const [inviteList, setInviteList] = useState<Invite[]>(initialInvites)
@@ -144,6 +146,7 @@ export default function InvitePage() {
   }
 
   async function sendSingleInvite() {
+    if (demoGuard()) return
     if (!singleForm.email) return
     setSendingInvite(true)
     setInviteError('')
@@ -175,6 +178,7 @@ export default function InvitePage() {
   }
 
   async function sendBulkInvite() {
+    if (demoGuard()) return
     const emails = bulkEmails.split(/[\n,;]+/).map((e) => e.trim()).filter(Boolean)
     if (emails.length === 0) return
     setSendingBulk(true)

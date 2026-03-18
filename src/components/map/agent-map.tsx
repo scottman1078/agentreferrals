@@ -41,7 +41,7 @@ export default function AgentMap() {
   const [referralAgent, setReferralAgent] = useState<Agent | null>(null)
   const router = useRouter()
   const { resolvedTheme } = useTheme()
-  const { filteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { filteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())
@@ -566,9 +566,11 @@ export default function AgentMap() {
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
       const markerSize = 32
-      const photoContent = agent.photoUrl
-        ? `<img src="${agent.photoUrl}" alt="${agent.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
-        : initials
+      const photoContent = scopeLocked
+        ? initials
+        : agent.photoUrl
+          ? `<img src="${agent.photoUrl}" alt="${agent.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+          : initials
       const markerHtml = isPartner
         ? `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;

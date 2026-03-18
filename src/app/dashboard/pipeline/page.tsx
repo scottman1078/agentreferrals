@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { FeatureGate } from '@/components/ui/feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { PIPELINE_STAGES, STAGE_COLORS } from '@/lib/constants'
@@ -134,6 +135,7 @@ export default function PipelinePageGated() {
 }
 
 function PipelinePage() {
+  const demoGuard = useDemoGuard()
   const { referrals, referralsLoading } = useAppData()
   const [referralList, setReferralList] = useState<Referral[]>(referrals)
 
@@ -150,6 +152,7 @@ function PipelinePage() {
   const totalFees = referralList.reduce((s, r) => s + r.estimatedPrice * (r.feePercent / 100), 0)
 
   function handleDrop(stage: PipelineStage) {
+    if (demoGuard()) return
     if (!draggedId) return
     setReferralList((prev) => prev.map((r) => (r.id === draggedId ? { ...r, stage } : r)))
     setDraggedId(null)

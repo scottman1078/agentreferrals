@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { Search, MapPin, Loader2, Star, Clock, Send, MessageSquare, Users, X } from 'lucide-react'
 import { geocodeAddress, type GeoResult } from '@/lib/geocode'
 import { pointInPolygon } from '@/lib/geo-utils'
@@ -216,6 +217,7 @@ export default function PartnerSearch({ onResultSelect, compact }: PartnerSearch
 }
 
 function AgentResultCard({ agent }: { agent: Agent }) {
+  const demoGuard = useDemoGuard()
   const initials = getInitials(agent.name)
   const score = agent.referNetScore ?? 0
   const scoreColor = score >= 90 ? 'text-emerald-500' : score >= 80 ? 'text-amber-500' : 'text-muted-foreground'
@@ -281,11 +283,11 @@ function AgentResultCard({ agent }: { agent: Agent }) {
 
           {/* Actions */}
           <div className="flex items-center gap-2 mt-2.5">
-            <button className="flex items-center gap-1.5 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold hover:opacity-90 transition-opacity">
+            <button onClick={() => { demoGuard() }} className="flex items-center gap-1.5 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold hover:opacity-90 transition-opacity">
               <Send className="w-3 h-3" />
               Send Referral
             </button>
-            <button className="flex items-center gap-1.5 h-7 px-3 rounded-lg border border-border text-[11px] font-semibold hover:bg-accent transition-colors">
+            <button onClick={() => { demoGuard() }} className="flex items-center gap-1.5 h-7 px-3 rounded-lg border border-border text-[11px] font-semibold hover:bg-accent transition-colors">
               <MessageSquare className="w-3 h-3" />
               Message
             </button>
