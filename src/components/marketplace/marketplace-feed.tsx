@@ -41,7 +41,8 @@ export default function MarketplaceFeed() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-20 left-4 z-[400] flex items-center gap-2 px-3 py-2 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-lg hover:shadow-xl transition-all"
+        className="fixed left-4 z-[400] flex items-center gap-2 px-3 py-2 rounded-xl bg-card/95 backdrop-blur-xl border border-border shadow-lg hover:shadow-xl transition-all"
+        style={{ top: 120 }}
       >
         <Megaphone className="w-4 h-4 text-primary" />
         <span className="text-xs font-bold">{openPosts.length}</span>
@@ -56,7 +57,7 @@ export default function MarketplaceFeed() {
   }
 
   return (
-    <div className="fixed top-20 left-4 z-[400] w-[320px] max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden">
+    <div className="fixed left-4 z-[400] w-[320px] max-h-[calc(100vh-12rem)] flex flex-col rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden" style={{ top: 120 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
