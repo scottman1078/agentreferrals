@@ -6,7 +6,7 @@ import {
   getAllCountyFeatures,
   STATE_FIPS,
 } from '@/lib/county-boundaries'
-import { getZipBoundary, getCentroid, getZipAtPoint } from '@/lib/zip-boundaries'
+import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import { pointInPolygon } from '@/lib/geo-utils'
 
 type LatLng = [number, number]
@@ -52,6 +52,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const zipClusterLayerRef = useRef<L.Layer | null>(null)
+  const wmsLayerRef = useRef<L.TileLayer.WMS | null>(null)
+  const wmsLabelsRef = useRef<L.TileLayer.WMS | null>(null)
   const drawnLayerRef = useRef<L.Layer | null>(null)
   const drawControlRef = useRef<L.Control.Draw | null>(null)
 
@@ -144,6 +146,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       countyLayersRef.current.clear()
       selectedLayersRef.current.clear()
       zipLayersRef.current.clear()
+      wmsLayerRef.current = null
+      wmsLabelsRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
@@ -709,6 +713,37 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger, mapZoom])
+
+  // Show WMS zip boundary overlay in zip mode so users can see where to click
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    if (activeTab === 'zip') {
+      if (!wmsLayerRef.current) {
+        wmsLayerRef.current = L.tileLayer.wms(ZCTA_WMS_URL, {
+          layers: ZCTA_WMS_LAYERS,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.35,
+        })
+      }
+      if (!map.hasLayer(wmsLayerRef.current)) wmsLayerRef.current.addTo(map)
+
+      if (!wmsLabelsRef.current) {
+        wmsLabelsRef.current = L.tileLayer.wms(ZCTA_WMS_URL, {
+          layers: ZCTA_WMS_LABELS,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.6,
+        })
+      }
+      if (!map.hasLayer(wmsLabelsRef.current)) wmsLabelsRef.current.addTo(map)
+    } else {
+      if (wmsLayerRef.current && map.hasLayer(wmsLayerRef.current)) map.removeLayer(wmsLayerRef.current)
+      if (wmsLabelsRef.current && map.hasLayer(wmsLabelsRef.current)) map.removeLayer(wmsLabelsRef.current)
+    }
+  }, [activeTab, leafletReady])
 
   // Click-to-add zip codes: click anywhere on the map in zip mode to look up + add that zip
   useEffect(() => {
