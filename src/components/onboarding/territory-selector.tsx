@@ -49,13 +49,10 @@ for (const [abbr, fips] of Object.entries(STATE_FIPS)) {
 export default function TerritorySelector({ value, onChange, initialCenter }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
-  const tileLayerRef = useRef<L.TileLayer | null>(null)
-  const countyLayersRef = useRef<Map<string, L.Layer>>(new Map())
-  const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
-  const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
-  const zipClusterLayerRef = useRef<L.Layer | null>(null)
-  const drawnLayerRef = useRef<L.Layer | null>(null)
+  // All data layers go into this group — tile layer stays untouched on the map
+  const dataGroupRef = useRef<L.LayerGroup | null>(null)
   const drawControlRef = useRef<L.Control.Draw | null>(null)
+  const drawnItemsRef = useRef<L.FeatureGroup | null>(null)
 
   // Cache of zip code → boundary polygon coordinates [lat, lng][]
   const zipBoundariesRef = useRef<Map<string, LatLng[]>>(new Map())
@@ -97,12 +94,14 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [])
 
-  // Ensure tile layer stays visible — re-add if missing
-  const ensureTiles = useCallback(() => {
-    if (!mapInstance.current || !L || !tileLayerRef.current) return
-    if (!mapInstance.current.hasLayer(tileLayerRef.current)) {
-      tileLayerRef.current.addTo(mapInstance.current)
-    }
+  // Clear all data layers (keeps tile layer untouched)
+  const clearDataLayers = useCallback(() => {
+    if (dataGroupRef.current) dataGroupRef.current.clearLayers()
+  }, [])
+
+  // Add a layer to the data group (never directly to map)
+  const addDataLayer = useCallback((layer: L.Layer) => {
+    if (dataGroupRef.current) dataGroupRef.current.addLayer(layer)
   }, [])
 
   // Initialize map
@@ -135,8 +134,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
 
     L.control.zoom({ position: 'bottomleft' }).addTo(map)
-    tileLayerRef.current = L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
+    L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
     map.attributionControl.setPrefix('')
+
+    // Data layer group — all polygons/markers go here, tile layer stays untouched
+    dataGroupRef.current = L.layerGroup().addTo(map)
 
     // Force light background on the Leaflet container itself
     map.getContainer().style.background = '#f2f2f2'
@@ -161,10 +163,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     return () => {
       map.remove()
       mapInstance.current = null
-      tileLayerRef.current = null
-      countyLayersRef.current.clear()
-      selectedLayersRef.current.clear()
-      zipLayersRef.current.clear()
+      dataGroupRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
@@ -182,44 +181,31 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // CLEAR ALL DATA LAYERS on tab switch
   // ═══════════════════════════════════════
   useEffect(() => {
-    if (!mapInstance.current || !L) return
-    const map = mapInstance.current
+    if (!mapInstance.current || !L || !dataGroupRef.current) return
 
-    // Always clear ALL data layers first
-    countyLayersRef.current.forEach((layer) => map.removeLayer(layer))
-    countyLayersRef.current.clear()
-    selectedLayersRef.current.forEach((layer) => map.removeLayer(layer))
-    selectedLayersRef.current.clear()
-    zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
-    zipLayersRef.current.clear()
-    if (zipClusterLayerRef.current) {
-      map.removeLayer(zipClusterLayerRef.current)
-      zipClusterLayerRef.current = null
-    }
-    if (drawnLayerRef.current) {
-      map.removeLayer(drawnLayerRef.current)
-      drawnLayerRef.current = null
-    }
+    // Clear ALL data layers — tile layer is never in this group
+    clearDataLayers()
 
-    // Re-add tile layer if it got removed
-    ensureTiles()
+    // Remove draw control if switching away from draw
+    if (activeTab !== 'draw' && drawControlRef.current) {
+      mapInstance.current.removeControl(drawControlRef.current)
+      drawControlRef.current = null
+      drawnItemsRef.current = null
+    }
 
     // Show drawn polygons if switching to draw mode
     const currentValue = valueRef.current
     if (activeTab === 'draw' && currentValue.drawnPolygon.length > 0) {
-      const group = L.featureGroup()
       for (const coords of currentValue.drawnPolygon) {
         if (coords.length >= 3) {
-          L.polygon(coords as L.LatLngExpression[], {
+          addDataLayer(L.polygon(coords as L.LatLngExpression[], {
             color: '#f59e0b',
             weight: 2.5,
             fillColor: '#f59e0b',
             fillOpacity: 0.25,
-          }).addTo(group)
+          }))
         }
       }
-      group.addTo(map)
-      drawnLayerRef.current = group
     }
 
     onChange({ ...currentValue, mode: activeTab })
@@ -230,22 +216,20 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // COUNTY MODE
   // ═══════════════════════════════════════
 
-  // Render county boundaries when in county mode and zoomed in enough
+  // Render ALL county layers (selected + unselected) in one effect
   useEffect(() => {
-    if (!mapInstance.current || !L || activeTab !== 'county' || allCounties.size === 0) return
-    if (mapZoom < 6) {
-      countyLayersRef.current.forEach((layer) => mapInstance.current?.removeLayer(layer))
-      countyLayersRef.current.clear()
-      return
-    }
+    if (!mapInstance.current || !L || !dataGroupRef.current || activeTab !== 'county' || allCounties.size === 0) return
+
+    // Clear previous county layers and re-render
+    clearDataLayers()
+
+    if (mapZoom < 6) return // counties not visible at low zoom
 
     const map = mapInstance.current
     const bounds = map.getBounds()
+    const selectedSet = new Set(value.selectedCounties)
 
     allCounties.forEach((feat, fips) => {
-      if (countyLayersRef.current.has(fips)) return
-      if (selectedLayersRef.current.has(fips)) return
-
       const bbox = getFeatureBbox(feat)
       if (!bbox) return
 
@@ -253,115 +237,61 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       if (maxLat < bounds.getSouth() || minLat > bounds.getNorth() ||
           maxLng < bounds.getWest() || minLng > bounds.getEast()) return
 
-      // Deep-clone to avoid L.geoJSON corrupting the shared reference
+      const isSelected = selectedSet.has(fips)
       const cloned = JSON.parse(JSON.stringify(feat)) as GeoJSON.Feature
       const layer = L!.geoJSON(cloned, {
-        style: {
-          color: '#9ca3af',
-          weight: 1,
-          fillColor: '#f3f4f6',
-          fillOpacity: 0.15,
-          dashArray: '3, 3',
-        },
+        style: isSelected
+          ? { color: '#f59e0b', weight: 2.5, fillColor: '#f59e0b', fillOpacity: 0.25 }
+          : { color: '#9ca3af', weight: 1, fillColor: '#f3f4f6', fillOpacity: 0.15, dashArray: '3, 3' },
       })
 
       const name = countyNames.get(fips)
       if (name) {
-        layer.bindTooltip(name, { permanent: false, direction: 'center', className: 'territory-tooltip' })
+        layer.bindTooltip(name, {
+          permanent: isSelected,
+          direction: 'center',
+          className: 'territory-tooltip',
+        })
       }
 
       layer.on('click', () => handleCountyClick(fips, feat))
-      layer.addTo(map)
-      countyLayersRef.current.set(fips, layer)
+      addDataLayer(layer)
     })
-
-    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, mapZoom, allCounties, countyNames])
-
-  // Re-render selected counties
-  useEffect(() => {
-    if (!mapInstance.current || !L || activeTab !== 'county' || allCounties.size === 0) return
-    const map = mapInstance.current
-
-    selectedLayersRef.current.forEach((layer) => map.removeLayer(layer))
-    selectedLayersRef.current.clear()
-
-    for (const fips of value.selectedCounties) {
-      const countyLayer = countyLayersRef.current.get(fips)
-      if (countyLayer) {
-        map.removeLayer(countyLayer)
-        countyLayersRef.current.delete(fips)
-      }
-    }
-
-    for (const fips of value.selectedCounties) {
-      const feat = allCounties.get(fips)
-      if (!feat) continue
-
-      // Deep-clone the feature to avoid L.geoJSON corrupting the shared reference
-      const cloned = JSON.parse(JSON.stringify(feat)) as GeoJSON.Feature
-      const layer = L.geoJSON(cloned, {
-        style: {
-          color: '#f59e0b',
-          weight: 2.5,
-          fillColor: '#f59e0b',
-          fillOpacity: 0.25,
-        },
-      })
-
-      const name = countyNames.get(fips)
-      if (name) {
-        layer.bindTooltip(name, { permanent: true, direction: 'center', className: 'territory-tooltip' })
-      }
-
-      layer.on('click', () => handleCountyClick(fips, feat))
-      layer.addTo(map)
-      selectedLayersRef.current.set(fips, layer)
-    }
-
-    ensureTiles()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.selectedCounties, activeTab, allCounties, countyNames])
+  }, [activeTab, mapZoom, allCounties, countyNames, value.selectedCounties])
 
   // ═══════════════════════════════════════
   // DRAW MODE
   // ═══════════════════════════════════════
 
   useEffect(() => {
-    if (!mapInstance.current || !L) return
+    if (!mapInstance.current || !L || activeTab !== 'draw') return
     const map = mapInstance.current
-
-    if (activeTab !== 'draw') {
-      if (drawControlRef.current) {
-        map.removeControl(drawControlRef.current)
-        drawControlRef.current = null
-      }
-      return
-    }
 
     import('leaflet-draw').then(() => {
       if (!mapInstance.current || !L || activeTab !== 'draw') return
 
       if (drawControlRef.current) {
         map.removeControl(drawControlRef.current)
+        drawControlRef.current = null
       }
 
+      // drawnItems must be added directly to the map (not data group) for Leaflet Draw to work
       const drawnItems = new L.FeatureGroup()
       map.addLayer(drawnItems)
+      drawnItemsRef.current = drawnItems
 
-      for (const coords of value.drawnPolygon) {
+      const currentVal = valueRef.current
+      for (const coords of currentVal.drawnPolygon) {
         if (coords.length >= 3) {
-          const poly = L.polygon(coords as L.LatLngExpression[], {
+          L.polygon(coords as L.LatLngExpression[], {
             color: '#f59e0b',
             weight: 2.5,
             fillColor: '#f59e0b',
             fillOpacity: 0.25,
-          })
-          drawnItems.addLayer(poly)
+          }).addTo(drawnItems)
         }
       }
-      drawnLayerRef.current = drawnItems
 
       const drawControl = new L.Control.Draw({
         position: 'topright',
@@ -398,10 +328,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
         const latLngs = drawnLayer.getLatLngs()[0] as L.LatLng[]
         const coords: LatLng[] = latLngs.map((ll) => [ll.lat, ll.lng])
-        const newDrawnPolygons = [...value.drawnPolygon, coords]
+        const cv = valueRef.current
+        const newDrawnPolygons = [...cv.drawnPolygon, coords]
 
         onChange({
-          ...value,
+          ...cv,
           mode: 'draw',
           drawnPolygon: newDrawnPolygons,
           polygon: newDrawnPolygons,
@@ -421,25 +352,24 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           }
         })
 
-        if (remainingPolygons.length === 0) {
-          drawnLayerRef.current = null
-        }
-
+        const cv = valueRef.current
         onChange({
-          ...value,
+          ...cv,
           mode: 'draw',
           drawnPolygon: remainingPolygons,
           polygon: remainingPolygons,
         })
       })
-
-      ensureTiles()
     })
 
     return () => {
       if (drawControlRef.current && mapInstance.current) {
         mapInstance.current.removeControl(drawControlRef.current)
         drawControlRef.current = null
+      }
+      if (drawnItemsRef.current && mapInstance.current) {
+        mapInstance.current.removeLayer(drawnItemsRef.current)
+        drawnItemsRef.current = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -670,23 +600,20 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
       map.fitBounds(combined, { padding: [30, 30], maxZoom: 11, animate: false })
     }
-    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger])
 
   // Render zip layers — cluster when zoomed out, individual when zoomed in
   useEffect(() => {
-    if (!mapInstance.current || !L) return
+    if (!mapInstance.current || !L || !dataGroupRef.current) return
+    if (activeTab !== 'zip') return
+
+    // Clear and re-render all zip data layers
+    clearDataLayers()
+
+    if (value.selectedZips.length === 0) return
+
     const map = mapInstance.current
-
-    zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
-    zipLayersRef.current.clear()
-    if (zipClusterLayerRef.current) {
-      map.removeLayer(zipClusterLayerRef.current)
-      zipClusterLayerRef.current = null
-    }
-
-    if (activeTab !== 'zip' || value.selectedZips.length === 0) return
 
     if (mapZoom < ZIP_CLUSTER_ZOOM && value.selectedZips.length > 1) {
       let totalLat = 0, totalLng = 0, count = 0
@@ -706,10 +633,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         const marker = L!.marker([totalLat / count, totalLng / count], { icon: clusterIcon })
         marker.bindTooltip(`${value.selectedZips.length} zip codes — zoom in to see boundaries`, { direction: 'top' })
         marker.on('click', () => map.setZoom(ZIP_CLUSTER_ZOOM + 1))
-        marker.addTo(map)
-        zipClusterLayerRef.current = marker
+        addDataLayer(marker)
       }
-      ensureTiles()
       return
     }
 
@@ -724,11 +649,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       })
       layer.bindTooltip(zip, { permanent: true, direction: 'center', className: 'territory-tooltip' })
       layer.on('click', () => removeZip(zip))
-      layer.addTo(map)
-      zipLayersRef.current.set(zip, layer)
+      addDataLayer(layer)
     }
-
-    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger, mapZoom])
 
