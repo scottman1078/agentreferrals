@@ -251,7 +251,7 @@ export default function CreateReferralModal({
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-[600px] max-h-[90vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[680px] max-h-[90vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
           <div className="font-bold text-lg">New Referral</div>
@@ -281,7 +281,7 @@ export default function CreateReferralModal({
                     {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
                   </div>
                   <span
-                    className={`text-[11px] font-semibold hidden sm:block ${
+                    className={`text-[11px] font-semibold whitespace-nowrap ${
                       i === step
                         ? 'text-foreground'
                         : 'text-muted-foreground'
