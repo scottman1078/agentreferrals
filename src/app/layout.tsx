@@ -30,6 +30,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={dmSans.variable} suppressHydrationWarning>
+      <head>
+        <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" />
+        <link rel="modulepreload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js" />
+      </head>
       <body className="font-sans antialiased">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
