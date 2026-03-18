@@ -164,13 +164,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setNeedsOnboarding(false)
 
       // 3. Merge hub profile fields onto ar_profiles data
+      // AR profile fields take priority when they have a value (user saved via Settings)
       const merged: ArProfile = {
         ...(arData as ArProfile),
-        // Hub fields take priority for shared identity
-        email: hubProfile?.email || arData.email || userEmail || '',
-        full_name: hubProfile?.full_name || arData.full_name || (userMeta?.full_name as string) || '',
-        phone: hubProfile?.phone ?? arData.phone ?? null,
-        avatar_url: hubProfile?.avatar_url ?? arData.avatar_url ?? null,
+        email: arData.email || hubProfile?.email || userEmail || '',
+        full_name: arData.full_name || hubProfile?.full_name || (userMeta?.full_name as string) || '',
+        phone: arData.phone ?? hubProfile?.phone ?? null,
+        avatar_url: arData.avatar_url ?? hubProfile?.avatar_url ?? null,
       }
 
       setProfile(merged)
