@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { useAppData } from '@/lib/data-provider'
 import { formatCurrency, getInitials } from '@/lib/utils'
+import { maskName } from '@/lib/agent-display-name'
 import { TAG_COLORS } from '@/lib/constants'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -451,7 +452,7 @@ export default function PartnershipsPage() {
                                       {getInitials(agent.name)}
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-sm">{agent.name}</div>
+                                      <div className="font-semibold text-sm">{maskName(agent.name)}</div>
                                       <div className="text-[11px] text-muted-foreground">
                                         {agent.brokerage}
                                       </div>

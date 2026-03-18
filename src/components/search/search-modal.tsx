@@ -7,6 +7,7 @@ import { pointInPolygon } from '@/lib/geo-utils'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
+import { maskName } from '@/lib/agent-display-name'
 import type { Agent } from '@/types'
 
 interface SearchModalProps {
@@ -272,7 +273,7 @@ function ModalAgentCard({ agent }: { agent: Agent }) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-bold text-sm">{agent.name}</span>
+            <span className="font-bold text-sm">{maskName(agent.name)}</span>
             {score > 0 && (
               <span className={`text-xs font-bold ${scoreColor}`}>
                 Score: {score}

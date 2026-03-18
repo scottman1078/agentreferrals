@@ -7,6 +7,7 @@ import { pointInPolygon } from '@/lib/geo-utils'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
+import { maskName } from '@/lib/agent-display-name'
 import type { Agent } from '@/types'
 
 interface PartnerSearchProps {
@@ -233,7 +234,7 @@ function AgentResultCard({ agent }: { agent: Agent }) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-bold text-sm truncate">{agent.name}</span>
+            <span className="font-bold text-sm truncate">{maskName(agent.name)}</span>
             {score > 0 && (
               <span className={`text-xs font-bold ${scoreColor}`}>
                 {score}

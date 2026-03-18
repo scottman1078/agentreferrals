@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
+import { maskName } from '@/lib/agent-display-name'
 import Link from 'next/link'
 import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2 } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
@@ -429,7 +430,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold">{agent.name}</span>
+                            <span className="text-xs font-semibold">{maskName(agent.name)}</span>
                             {agent.referNetScore && (
                               <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${agent.referNetScore >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
                                 {agent.referNetScore}

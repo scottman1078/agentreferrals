@@ -13,6 +13,8 @@ import AgentNotes from '@/components/agent-notes'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import { addBlock, isBlocked } from '@/data/report-block'
 import ReportAgentModal from '@/components/report-agent-modal'
+import { maskName } from '@/lib/agent-display-name'
+import { useAgentDisplayName } from '@/hooks/use-agent-display-name'
 import type { ReportReason } from '@/data/report-block'
 import type { Agent } from '@/types'
 
@@ -82,7 +84,9 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
     setShowMenu(false)
   }
   const { getAgentReviewStats } = useAppData()
-  const initials = getInitials(agent.name)
+  const getDisplayNameFn = useAgentDisplayName()
+  const displayName = getDisplayNameFn(agent)
+  const initials = getInitials(agent.name) // initials always from full name
   const reviewStats = getAgentReviewStats(agent.id)
   const score = agent.referNetScore ?? 0
   const scoreColor =
@@ -102,7 +106,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
         if (id === 'jason') return { id, name: 'You', color: '#f0a500', initials: 'You' }
         const a = allAgents.find((ag) => ag.id === id)
         return a
-          ? { id: a.id, name: a.name, color: a.color, initials: getInitials(a.name) }
+          ? { id: a.id, name: maskName(a.name), color: a.color, initials: getInitials(a.name) }
           : { id, name: id, color: '#6b7280', initials: '?' }
       })
     : null
@@ -191,7 +195,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-base truncate">{agent.name}</span>
+                <span className="font-bold text-base truncate">{displayName}</span>
                 {score > 0 && (
                   <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${scoreColor}`}>
                     {score}
@@ -385,7 +389,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
               <Ban className="w-6 h-6 text-destructive" />
             </div>
-            <h3 className="font-bold text-base mb-1">Block {agent.name}?</h3>
+            <h3 className="font-bold text-base mb-1">Block {displayName}?</h3>
             <p className="text-xs text-muted-foreground mb-4">
               This agent will be hidden from your network and won&apos;t be able to contact you.
             </p>
@@ -411,7 +415,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
       {showReportModal && (
         <ReportAgentModal
           agentId={agent.id}
-          agentName={agent.name}
+          agentName={displayName}
           onClose={() => setShowReportModal(false)}
           onSubmit={handleReport}
         />

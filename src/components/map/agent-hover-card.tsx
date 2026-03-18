@@ -7,6 +7,8 @@ import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { ArrowRight, MessageSquare } from 'lucide-react'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import { maskName } from '@/lib/agent-display-name'
+import { useAgentDisplayName } from '@/hooks/use-agent-display-name'
 import type { Agent } from '@/types'
 
 interface AgentHoverCardProps {
@@ -15,7 +17,9 @@ interface AgentHoverCardProps {
 }
 
 export default function AgentHoverCard({ agent, position }: AgentHoverCardProps) {
-  const initials = getInitials(agent.name)
+  const getDisplayName = useAgentDisplayName()
+  const displayName = getDisplayName(agent)
+  const initials = getInitials(agent.name) // initials always use full name
   const score = agent.referNetScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
@@ -30,7 +34,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const connectionPath = isDegreeView && isDegreeAgent ? getConnectionPath('jason', agent.id) : null
   const pathNames = connectionPath?.slice(1, -1).map((id) => {
     const a = agents.find((ag) => ag.id === id)
-    return a?.name ?? id
+    return a ? maskName(a.name) : id
   }) ?? []
 
   // Position card above the cursor, centered horizontally
@@ -54,7 +58,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm truncate">{agent.name}</span>
+              <span className="font-bold text-sm truncate">{displayName}</span>
               {score > 0 && (
                 <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${scoreColor}`}>
                   {score}
