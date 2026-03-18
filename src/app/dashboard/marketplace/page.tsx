@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
-import { maskName } from '@/lib/agent-display-name'
+import { useAgentDisplayName } from '@/hooks/use-agent-display-name'
 import {
   getOpenPosts,
   getPostsByAgent,
@@ -51,6 +51,7 @@ export default function MarketplacePage() {
   const [tab, setTab] = useState<Tab>('browse')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
+  const getDisplayName = useAgentDisplayName()
 
   const marketplace = useMarketplace()
   const { openPosts, myPosts, myBids } = marketplace
@@ -195,9 +196,11 @@ function PostCard({
   post: ReferralPost
   isExpanded: boolean
   onToggle: () => void
+
   showBidButton?: boolean
   showBids?: boolean
 }) {
+  const getDisplayName = useAgentDisplayName()
   const bids = getBidsForPost(post.id)
   const awardedBid = getAwardedBid(post)
   const isAwarded = post.status === 'awarded'
@@ -223,7 +226,7 @@ function PostCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-sm">{maskName(post.postingAgentName)}</span>
+              <span className="font-semibold text-sm">{getDisplayName({ id: post.postingAgentId, name: post.postingAgentName })}</span>
               <span className="text-xs text-muted-foreground">{post.postingAgentBrokerage}</span>
               {isAwarded && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
@@ -339,7 +342,7 @@ function PostCard({
           {/* Bid button */}
           {showBidButton && post.status === 'open' && (
             <div className="px-4 pb-4">
-              <BidForm postId={post.id} market={post.market} postingAgentName={maskName(post.postingAgentName)} />
+              <BidForm postId={post.id} market={post.market} postingAgentName={getDisplayName({ id: post.postingAgentId, name: post.postingAgentName })} />
             </div>
           )}
 
@@ -376,6 +379,7 @@ function PostCard({
 // ══════════════════════════════════════
 
 function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) {
+  const getDisplayName = useAgentDisplayName()
   const [showVideo, setShowVideo] = useState(false)
 
   return (
@@ -396,7 +400,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm">{maskName(bid.agentName)}</span>
+            <span className="font-semibold text-sm">{getDisplayName({ id: bid.agentId, name: bid.agentName })}</span>
             {isAwarded && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
                 <Check className="w-3 h-3" />
@@ -455,7 +459,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
                         {getInitials(bid.agentName)}
                       </div>
                       <p className="text-white/80 text-sm font-semibold">
-                        {maskName(bid.agentName)}&apos;s Video Pitch
+                        {getDisplayName({ id: bid.agentId, name: bid.agentName })}&apos;s Video Pitch
                       </p>
                       <p className="text-white/40 text-xs">
                         {bid.videoDuration ? `${Math.floor(bid.videoDuration / 60)}:${(bid.videoDuration % 60).toString().padStart(2, '0')}` : ''}
@@ -649,6 +653,7 @@ function BidForm({
 // ══════════════════════════════════════
 
 function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost[] }) {
+  const getDisplayName = useAgentDisplayName()
   const post = allPosts.find((p) => p.id === bid.postId)
 
   return (
@@ -678,7 +683,7 @@ function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost
             {post.neighborhood && ` — ${post.neighborhood}`}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Posted by {maskName(post.postingAgentName)} · {post.budgetRange} · {post.representation}
+            Posted by {getDisplayName({ id: post.postingAgentId, name: post.postingAgentName })} · {post.budgetRange} · {post.representation}
           </div>
         </div>
       )}
