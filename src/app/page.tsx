@@ -259,12 +259,12 @@ export default function LandingPage() {
             <div className="flex items-center justify-center gap-6 sm:gap-8">
               {[
                 { name: 'Real Broker', src: '/logos/real.svg' },
-                { name: 'eXp Realty', src: '/logos/exp.svg' },
-                { name: 'Compass', src: '/logos/compass.svg' },
-                { name: 'KW', src: '/logos/kw.svg' },
-                { name: 'RE/MAX', src: '/logos/remax.svg' },
-                { name: "Sotheby's", src: '/logos/sothebys.svg' },
-                { name: 'Coldwell Banker', src: '/logos/coldwell.svg' },
+                { name: 'eXp Realty', src: '/logos/exp.png' },
+                { name: 'Compass', src: '/logos/compass.png' },
+                { name: 'KW', src: '/logos/kw.png' },
+                { name: 'RE/MAX', src: '/logos/remax.png' },
+                { name: "Sotheby's", src: '/logos/sothebys.png' },
+                { name: 'Coldwell Banker', src: '/logos/coldwell.png' },
               ].map((b) => (
                 <img key={b.name} src={b.src} alt={b.name} className="h-5 sm:h-6 w-auto" />
               ))}

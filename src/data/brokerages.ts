@@ -5,7 +5,7 @@ export const brokerages: Brokerage[] = [
     id: 'real',
     name: 'Real Broker LLC',
     logo: 'R',
-    logoUrl: '/logos/real.png',
+    logoUrl: '/logos/real.svg',
     color: '#000000',
     memberCount: 3247,
     marketsServed: 48,
