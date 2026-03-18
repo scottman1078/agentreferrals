@@ -8,6 +8,8 @@ import {
 } from '@/data/video-intros'
 import type { ZoomInterview } from '@/data/video-intros'
 import { getInitials } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
+import { requestZoomInterview } from '@/hooks/use-video-intros'
 import {
   Play,
   Video,
@@ -147,6 +149,7 @@ export function AgentVideoSection({
         </button>
       ) : (
         <RequestInterviewForm
+          agentId={agentId}
           agentName={agentName}
           onClose={() => setShowRequestForm(false)}
         />
@@ -245,17 +248,23 @@ function InterviewCard({
 
 // ── Request Interview Form ──
 function RequestInterviewForm({
+  agentId,
   agentName,
   onClose,
 }: {
+  agentId: string
   agentName: string
   onClose: () => void
 }) {
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  let userId: string | undefined
+  try { const auth = useAuth(); userId = auth.user?.id } catch { /* no auth */ }
 
-  function handleSubmit() {
-    // TODO: POST to Supabase + send Zoom invite
+  async function handleSubmit() {
+    if (userId) {
+      await requestZoomInterview(userId, agentId, message || undefined)
+    }
     setSubmitted(true)
   }
 

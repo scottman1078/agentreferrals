@@ -13,6 +13,7 @@ import {
   timeAgo,
 } from '@/data/referral-posts'
 import type { ReferralPost, ReferralBid } from '@/data/referral-posts'
+import { useMarketplace } from '@/lib/marketplace-provider'
 import { getInitials, formatCurrency } from '@/lib/utils'
 import {
   Megaphone,
@@ -49,9 +50,8 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
 
-  const openPosts = getOpenPosts()
-  const myPosts = getPostsByAgent('jason')
-  const myBids = getBidsByAgent('jason')
+  const marketplace = useMarketplace()
+  const { openPosts, myPosts, myBids } = marketplace
 
   const filteredPosts = searchQuery.trim()
     ? openPosts.filter(

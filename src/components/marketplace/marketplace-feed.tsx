@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { getOpenPosts, getDeadlineUrgency, isEarlyAccess, getEarlyAccessCountdown, timeAgo } from '@/data/referral-posts'
 import type { ReferralPost } from '@/data/referral-posts'
+import { useMarketplace } from '@/lib/marketplace-provider'
 import { getInitials } from '@/lib/utils'
 import {
   Megaphone,
@@ -25,7 +26,7 @@ import Link from 'next/link'
 export default function MarketplaceFeed() {
   const [isOpen, setIsOpen] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
-  const openPosts = getOpenPosts()
+  const { openPosts } = useMarketplace()
 
   // Posts in the user's market area
   const myAreaPosts = openPosts.filter(

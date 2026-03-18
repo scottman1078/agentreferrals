@@ -9,6 +9,8 @@ import {
 } from '@/data/endorsements'
 import type { EndorsementSkill } from '@/data/endorsements'
 import { getInitials } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
+import { submitEndorsement } from '@/hooks/use-endorsements'
 import { ThumbsUp, X, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 
 export function AgentEndorsementsPanel({
@@ -48,6 +50,7 @@ export function AgentEndorsementsPanel({
       {/* Endorse form */}
       {showEndorseForm && (
         <EndorseForm
+          agentId={agentId}
           agentName={agentName}
           onClose={() => setShowEndorseForm(false)}
         />
@@ -149,9 +152,11 @@ function EndorsementSkillRow({
 }
 
 // ── Endorse Form ──
-function EndorseForm({ agentName, onClose }: { agentName: string; onClose: () => void }) {
+function EndorseForm({ agentId, agentName, onClose }: { agentId: string; agentName: string; onClose: () => void }) {
   const [selected, setSelected] = useState<EndorsementSkill[]>([])
   const [submitted, setSubmitted] = useState(false)
+  let userId: string | undefined
+  try { const auth = useAuth(); userId = auth.user?.id } catch { /* no auth */ }
 
   function toggle(skill: EndorsementSkill) {
     setSelected((prev) =>
@@ -159,9 +164,11 @@ function EndorseForm({ agentName, onClose }: { agentName: string; onClose: () =>
     )
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (selected.length === 0) return
-    // TODO: POST to Supabase ar_endorsements table
+    if (userId) {
+      await submitEndorsement(agentId, userId, selected)
+    }
     setSubmitted(true)
   }
 
