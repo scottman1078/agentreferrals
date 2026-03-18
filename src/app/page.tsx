@@ -238,22 +238,16 @@ export default function LandingPage() {
             >
               Claim Your Spot <ArrowRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('invite') }}
-              className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all flex items-center gap-2"
+            <a
+              href="/demo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-12 px-8 rounded-xl border border-border bg-card text-foreground font-semibold text-base hover:bg-accent transition-all flex items-center gap-2 no-underline"
             >
-              I Have an Invite Code <KeyRound className="w-4 h-4" />
-            </button>
+              <Eye className="w-4 h-4" />
+              View Live Demo
+            </a>
           </div>
-          <a
-            href="/demo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-            See the platform with demo data
-          </a>
           {/* Brokerage logos — above the fold */}
           <div className="mt-8 sm:mt-10">
             <p className="text-xs text-muted-foreground font-medium mb-3">Trusted by agents at</p>
