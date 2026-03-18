@@ -140,63 +140,40 @@ export default function SetupWizard({ onComplete, profile }: SetupWizardProps) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="w-full max-w-2xl rounded-2xl bg-card shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-card border-b border-border px-6 pt-6 pb-4 rounded-t-2xl">
-          {/* Step indicator */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            {STEPS.map((label, i) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="flex flex-col items-center gap-1.5">
+        {/* Compact header */}
+        <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-3 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-foreground">Define Your Service Area</h2>
+            {/* Step dots */}
+            <div className="flex items-center gap-2">
+              {STEPS.map((label, i) => (
+                <div key={label} className="flex items-center gap-2">
                   <div
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    className={`w-2 h-2 rounded-full transition-all ${
                       i < currentStep
-                        ? 'bg-green-500 scale-100'
+                        ? 'bg-green-500'
                         : i === currentStep
-                        ? 'bg-primary scale-125 ring-4 ring-primary/20'
-                        : 'bg-muted-foreground/30 scale-100'
+                        ? 'bg-primary ring-2 ring-primary/20'
+                        : 'bg-muted-foreground/30'
                     }`}
+                    title={label}
                   />
-                  <span
-                    className={`text-[10px] font-medium transition-colors ${
-                      i === currentStep
-                        ? 'text-primary'
-                        : i < currentStep
-                        ? 'text-green-600'
-                        : 'text-muted-foreground/50'
-                    }`}
-                  >
-                    {label}
-                  </span>
+                  {i < STEPS.length - 1 && (
+                    <div className={`w-6 h-px ${i < currentStep ? 'bg-green-500' : 'bg-border'}`} />
+                  )}
                 </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={`w-12 h-px mt-[-18px] transition-colors ${
-                      i < currentStep ? 'bg-green-500' : 'bg-border'
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-4">
           {/* Step 1: Territory */}
           {currentStep === 0 && (
             <div className={`animate-in ${slideDir === 'left' ? 'slide-in-from-right-4' : 'slide-in-from-left-4'} duration-300`}>
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-                  <MapPin className="w-6 h-6 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Define Your Service Area</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  This helps other agents find you for referrals in your market.
-                </p>
-              </div>
-
               {/* Free tier callout */}
-              <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <div className="mb-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <p className="text-xs text-amber-700 dark:text-amber-400">
                   <Sparkles className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
                   You&apos;re on the free plan — only agents in your direct network will see your service area.{' '}

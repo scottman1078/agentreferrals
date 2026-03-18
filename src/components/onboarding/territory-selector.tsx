@@ -512,7 +512,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       if (mapInstance.current) {
         const center = getCentroid(ring)
-        mapInstance.current.flyTo(center, 12, { duration: 0.8 })
+        mapInstance.current.setView(center, 11, { animate: false })
       }
 
       setZipInput('')
@@ -668,10 +668,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (allBounds.length > 0) {
       let combined = allBounds[0]
       for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
-      map.fitBounds(combined, { padding: [40, 40], maxZoom: 12 })
+      map.fitBounds(combined, { padding: [30, 30], maxZoom: 11, animate: false })
     }
-    // Ensure tiles after zoom
-    setTimeout(() => ensureTiles(), 300)
+    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger])
 
@@ -885,7 +884,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       {/* Map */}
       <div className="relative rounded-xl border border-border overflow-hidden">
-        <div ref={mapRef} className={`w-full h-[400px] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
+        <div ref={mapRef} className={`w-full h-[340px] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
         {!leafletReady && (
           <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#f2f2f2' }}>
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
