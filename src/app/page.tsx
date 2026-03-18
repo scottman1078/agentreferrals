@@ -8,7 +8,8 @@ import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
   ArrowRight, Star, ChevronRight, Sparkles, Globe, Building2,
   MessageSquare, BarChart3, Search, Eye, EyeOff, Lock, Mail,
-  CheckCircle2, Loader2, KeyRound, Clock
+  CheckCircle2, Loader2, KeyRound, Clock, ShoppingBag, BadgeCheck,
+  Video, ThumbsUp, UserCheck, Megaphone
 } from 'lucide-react'
 
 const TOTAL_SPOTS = 5000
@@ -297,17 +298,23 @@ export default function LandingPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Features</span>
             <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Everything you need to refer with confidence</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {[
               { icon: Sparkles, title: 'NORA AI Assistant', desc: 'Tell NORA the market you need a partner in. She finds verified agents across your entire network in seconds.', color: 'text-primary' },
+              { icon: ShoppingBag, title: 'Referral Marketplace', desc: 'Post referral opportunities for agents to bid on. Find deals in your market posted by agents across the country.', color: 'text-pink-500' },
+              { icon: BadgeCheck, title: 'Verified Referrals', desc: 'Build your track record with verified closed referrals. Show other agents you close deals and communicate.', color: 'text-emerald-500' },
               { icon: MapPin, title: 'Network Map', desc: 'Visualize agent territories, identify coverage gaps, and spot market opportunities with an interactive map.', color: 'text-blue-500' },
+              { icon: ThumbsUp, title: 'Agent Endorsements', desc: 'Give and receive endorsements from agents you\'ve worked with. Social proof that builds trust and credibility.', color: 'text-violet-500' },
+              { icon: Video, title: 'Video Introductions', desc: 'Record a short video intro so referral partners can see who they\'re working with before connecting.', color: 'text-red-500' },
               { icon: Building2, title: 'Multi-Brokerage', desc: 'Search within your brokerage first, then expand to the full network. Every brokerage gets their own space.', color: 'text-purple-500' },
-              { icon: BarChart3, title: 'Pipeline Tracking', desc: 'Kanban board tracks every referral from agreement to close. Never lose track of a deal again.', color: 'text-emerald-500' },
+              { icon: BarChart3, title: 'Pipeline Tracking', desc: 'Kanban board tracks every referral from agreement to close. Never lose track of a deal again.', color: 'text-teal-500' },
               { icon: FileText, title: 'Smart Agreements', desc: 'Auto-generated referral agreements with e-signature. Terms, fees, and expiration built in.', color: 'text-orange-500' },
               { icon: TrendingUp, title: 'ROI Dashboard', desc: 'See your referral revenue, conversion rates, top markets, and top partners at a glance.', color: 'text-rose-500' },
-              { icon: Search, title: 'Agent Discovery', desc: 'Find agents by production, specialization, price range, and area. Filter by brokerage or search globally.', color: 'text-cyan-500' },
+              { icon: UserCheck, title: 'Agent Discovery', desc: 'Find agents by production, specialization, price range, and area. Filter by brokerage or search globally.', color: 'text-cyan-500' },
               { icon: MessageSquare, title: 'Direct Messaging', desc: 'Chat directly with referral partners. No middleman, no company taking your fee.', color: 'text-indigo-500' },
               { icon: Globe, title: 'Coverage Gaps', desc: 'See where your network has holes. Get AI-powered recommendations for agents to recruit.', color: 'text-amber-500' },
+              { icon: Megaphone, title: 'Check-In Nudges', desc: 'AI-powered reminders to stay in touch with your referral partners. Never let a relationship go cold.', color: 'text-sky-500' },
+              { icon: Shield, title: 'Name Protection', desc: 'Agent identities are masked until you connect. No one can look up your clients\' agents online.', color: 'text-slate-500' },
             ].map((f) => (
               <div key={f.title} className="p-6 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group">
                 <f.icon className={`w-10 h-10 ${f.color} mb-4 group-hover:scale-110 transition-transform`} />
