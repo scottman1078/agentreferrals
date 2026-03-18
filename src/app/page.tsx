@@ -518,6 +518,48 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* DATA PRIVACY PLEDGE */}
+      <section className="py-20 px-6 bg-card/50 border-y border-border">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-5">
+            <Shield className="w-7 h-7 text-emerald-500" />
+          </div>
+          <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mb-4">Our Data Privacy Pledge</h2>
+          <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
+            Your data is yours. Period. We built AgentReferrals on trust — and that starts with how we treat your information.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+            <div className="p-5 rounded-xl border border-border bg-background">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                <Shield className="w-5 h-5 text-emerald-500" />
+              </div>
+              <h3 className="font-bold text-sm mb-1">We Never Sell Your Data</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Your contact info, client details, and referral history are never sold, shared, or monetized. Not to brokerages, not to lead companies, not to anyone.
+              </p>
+            </div>
+            <div className="p-5 rounded-xl border border-border bg-background">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                <Mail className="w-5 h-5 text-emerald-500" />
+              </div>
+              <h3 className="font-bold text-sm mb-1">Zero Spam. Ever.</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                No cold emails, no marketing blasts, no selling your inbox to third parties. We only send notifications you&apos;ve opted into — referral updates, partner messages, and platform alerts.
+              </p>
+            </div>
+            <div className="p-5 rounded-xl border border-border bg-background">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                <Lock className="w-5 h-5 text-emerald-500" />
+              </div>
+              <h3 className="font-bold text-sm mb-1">Agent Identity Protection</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Agent names are masked until you connect. Your profile, phone number, and client information are only visible to your approved referral partners.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
