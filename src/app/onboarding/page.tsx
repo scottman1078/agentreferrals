@@ -819,6 +819,7 @@ export default function OnboardingPage() {
       }
 
       const normalized = result.normalizedPhone || phone
+      console.log('[PhoneVerify] Setting normalizedPhone:', normalized)
       setNormalizedPhone(normalized)
       normalizedPhoneRef.current = normalized
       updateData({ phone: normalized })
@@ -884,10 +885,12 @@ export default function OnboardingPage() {
   // NOT a useCallback — needs fresh closure every render to access latest phone
   const handleResendPhoneCode = async () => {
     const phone = normalizedPhoneRef.current
+    console.log('[ResendCode] CLICKED. ref:', normalizedPhoneRef.current, 'state:', normalizedPhone, 'data.phone:', data.phone, 'input:', phoneInputValue)
     if (!phone) {
       setPhoneError('No phone number found. Please re-enter your number.')
       return
     }
+    console.log('[ResendCode] Sending to:', phone)
     setPhoneVerifying(true)
     setPhoneError('')
 
