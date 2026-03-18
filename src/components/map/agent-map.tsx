@@ -666,6 +666,15 @@ export default function AgentMap() {
         map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 8, duration: 0.8 })
       })
 
+      // ── Double-click → zoom all the way into service area ──
+      marker.on('dblclick', (e: L.LeafletMouseEvent) => {
+        L!.DomEvent.stopPropagation(e)
+        setHoveredAgent(null)
+        setSelectedAgent(agent)
+        const agentBounds = L!.polygon(polygonCoords as L.LatLngExpression[][]).getBounds()
+        map.flyToBounds(agentBounds, { padding: [60, 60], maxZoom: 14, duration: 1.2 })
+      })
+
       markerLayersRef.current.push(marker)
     })
 
@@ -929,6 +938,21 @@ export default function AgentMap() {
           </div>
         </div>
       )}
+
+      {/* Reset zoom button — above Leaflet zoom controls */}
+      <button
+        onClick={() => {
+          if (!mapInstance.current) return
+          const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
+          renderAgents(filtered, mapInstance.current, true)
+          setSelectedAgent(null)
+          setHoveredAgent(null)
+        }}
+        className="fixed bottom-[140px] left-[19px] z-[600] w-[30px] h-[30px] rounded-sm border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center justify-center shadow-md"
+        title="Reset view"
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+      </button>
 
       {/* Map container */}
       <div ref={mapRef} className="w-full h-full" />
