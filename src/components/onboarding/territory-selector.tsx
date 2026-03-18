@@ -730,7 +730,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         fillOpacity: 0.25,
       })
       layer.bindTooltip(zip, { permanent: true, direction: 'center', className: 'territory-tooltip' })
-      layer.on('click', () => removeZip(zip))
+      // No click handler — don't remove on click. Users remove via X on chips.
+      // Stop click from propagating to the map click-to-add handler
+      layer.on('click', (e: L.LeafletMouseEvent) => {
+        L!.DomEvent.stopPropagation(e)
+      })
       addDataLayer(layer)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1028,12 +1032,11 @@ function buildPolygonFromCounties(
 
 async function geocodeLocation(query: string): Promise<LatLng | null> {
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&country=US&format=json&limit=1`
-    )
-    const results = await res.json()
-    if (results && results.length > 0) {
-      return [parseFloat(results[0].lat), parseFloat(results[0].lon)]
+    // Use our own API proxy to avoid CORS/403 issues with external geocoders
+    const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.lat && data.lng) return [data.lat, data.lng]
     }
   } catch {
     // ignore
