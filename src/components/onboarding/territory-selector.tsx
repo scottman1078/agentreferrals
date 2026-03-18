@@ -879,33 +879,33 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       {/* Map */}
       <div className="relative rounded-xl border border-border overflow-hidden">
-        <div ref={mapRef} className={`w-full h-[400px] bg-muted ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} />
+        <div ref={mapRef} className={`w-full h-[400px] bg-[#f2f2f2] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} />
         {!leafletReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <div className="absolute inset-0 flex items-center justify-center bg-[#f2f2f2]">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         )}
         {activeTab === 'zip' && mapClickLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-sm pointer-events-none">
-            <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2 text-sm font-medium shadow-sm">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          <div className="absolute inset-0 flex items-center justify-center bg-white/40 pointer-events-none">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-gray-700">
+              <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
               Looking up zip code...
             </div>
           </div>
         )}
         {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm">
             {mapClickMessage}
           </div>
         )}
         {activeTab === 'zip' && !mapClickLoading && !mapClickMessage && leafletReady && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm pointer-events-none">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm pointer-events-none">
             <MapPin className="w-3 h-3 inline mr-1.5" />
             Click the map to add a zip code
           </div>
         )}
         {activeTab === 'county' && mapZoom < 6 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm">
             <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
             Zoom in to see county boundaries
           </div>
