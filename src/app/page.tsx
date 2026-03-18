@@ -257,7 +257,7 @@ export default function LandingPage() {
           {/* Brokerage logos — above the fold */}
           <div className="mt-8 sm:mt-10">
             <p className="text-xs text-muted-foreground font-medium mb-3">Trusted by agents at</p>
-            <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap opacity-60 dark:opacity-40 dark:invert">
+            <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap">
               {[
                 { name: 'Real Broker', src: '/logos/real.svg' },
                 { name: 'eXp Realty', src: '/logos/exp.svg' },
@@ -267,7 +267,7 @@ export default function LandingPage() {
                 { name: "Sotheby's", src: '/logos/sothebys.svg' },
                 { name: 'Coldwell Banker', src: '/logos/coldwell.svg' },
               ].map((b) => (
-                <img key={b.name} src={b.src} alt={b.name} className="h-6 sm:h-8 w-auto grayscale" />
+                <img key={b.name} src={b.src} alt={b.name} className="h-6 sm:h-8 w-auto opacity-40 hover:opacity-70 transition-opacity dark:invert" />
               ))}
             </div>
           </div>
