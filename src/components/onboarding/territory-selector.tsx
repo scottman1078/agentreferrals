@@ -49,8 +49,8 @@ for (const [abbr, fips] of Object.entries(STATE_FIPS)) {
 export default function TerritorySelector({ value, onChange, initialCenter }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
-  // All data layers go into this group — tile layer stays untouched on the map
-  const dataGroupRef = useRef<L.LayerGroup | null>(null)
+  // Track data layers in a plain array — removed individually, never touches tiles
+  const dataLayersRef = useRef<L.Layer[]>([])
   const drawControlRef = useRef<L.Control.Draw | null>(null)
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null)
 
@@ -94,14 +94,22 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [])
 
-  // Clear all data layers (keeps tile layer untouched)
+  // Clear all tracked data layers from the map (never touches tile layer)
   const clearDataLayers = useCallback(() => {
-    if (dataGroupRef.current) dataGroupRef.current.clearLayers()
+    const map = mapInstance.current
+    if (!map) return
+    for (const layer of dataLayersRef.current) {
+      try { map.removeLayer(layer) } catch { /* already removed */ }
+    }
+    dataLayersRef.current = []
   }, [])
 
-  // Add a layer to the data group (never directly to map)
+  // Add a layer directly to the map and track it
   const addDataLayer = useCallback((layer: L.Layer) => {
-    if (dataGroupRef.current) dataGroupRef.current.addLayer(layer)
+    const map = mapInstance.current
+    if (!map) return
+    layer.addTo(map)
+    dataLayersRef.current.push(layer)
   }, [])
 
   // Initialize map
@@ -137,9 +145,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
     map.attributionControl.setPrefix('')
 
-    // Data layer group — all polygons/markers go here, tile layer stays untouched
-    dataGroupRef.current = L.layerGroup().addTo(map)
-
     // Force light background on the Leaflet container itself
     map.getContainer().style.background = '#f2f2f2'
 
@@ -155,7 +160,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (initialCenter) {
       geocodeLocation(initialCenter).then((coords) => {
         if (coords && mapInstance.current) {
-          mapInstance.current.setView(coords, 6, { animate: false })
+          mapInstance.current.setView(coords, 5, { animate: false })
         }
       })
     }
@@ -163,7 +168,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     return () => {
       map.remove()
       mapInstance.current = null
-      dataGroupRef.current = null
+      dataLayersRef.current = []
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
@@ -181,7 +186,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // CLEAR ALL DATA LAYERS on tab switch
   // ═══════════════════════════════════════
   useEffect(() => {
-    if (!mapInstance.current || !L || !dataGroupRef.current) return
+    if (!mapInstance.current || !L) return
 
     // Clear ALL data layers — tile layer is never in this group
     clearDataLayers()
@@ -218,12 +223,12 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   // Render ALL county layers (selected + unselected) in one effect
   useEffect(() => {
-    if (!mapInstance.current || !L || !dataGroupRef.current || activeTab !== 'county' || allCounties.size === 0) return
+    if (!mapInstance.current || !L || activeTab !== 'county' || allCounties.size === 0) return
 
     // Clear previous county layers and re-render
     clearDataLayers()
 
-    if (mapZoom < 6) return // counties not visible at low zoom
+    if (mapZoom < 5) return // counties not visible at low zoom
 
     const map = mapInstance.current
     const bounds = map.getBounds()
@@ -682,7 +687,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   // Render zip layers — cluster when zoomed out, individual when zoomed in
   useEffect(() => {
-    if (!mapInstance.current || !L || !dataGroupRef.current) return
+    if (!mapInstance.current || !L) return
     if (activeTab !== 'zip') return
 
     // Clear and re-render all zip data layers
@@ -866,7 +871,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       {activeTab === 'county' && (
         <div>
           <p className="text-sm text-muted-foreground">
-            {mapZoom < 6
+            {mapZoom < 5
               ? 'Zoom in on the map to see county boundaries, then click to select.'
               : 'Click counties on the map to add or remove them from your territory.'}
           </p>
@@ -895,7 +900,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
         <p className="text-xs text-muted-foreground text-center mt-1">{mapClickMessage}</p>
       )}
-      {activeTab === 'county' && mapZoom < 6 && (
+      {activeTab === 'county' && mapZoom < 5 && (
         <p className="text-xs text-muted-foreground text-center mt-1">Zoom in to see county boundaries</p>
       )}
 
