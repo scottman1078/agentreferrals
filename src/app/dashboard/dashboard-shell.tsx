@@ -238,7 +238,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               onMouseDown={(e) => e.stopPropagation()}
             />
           )}
-          <div className={isDemoMode ? 'pointer-events-none select-none' : ''}>
+          <div className={`h-full ${isDemoMode ? 'pointer-events-none select-none' : ''}`}>
             {children}
           </div>
         </div>

@@ -75,9 +75,16 @@ function ROIPage() {
   useEffect(() => {
     if (!chartRef.current) return
     let inst: import('chart.js').Chart | null = null
+    let cancelled = false
     import('chart.js').then(({ Chart, registerables }) => {
+      if (cancelled) return
       Chart.register(...registerables)
-      const ctx = chartRef.current?.getContext('2d')
+      const canvas = chartRef.current
+      if (!canvas) return
+      // Destroy any existing chart on this canvas
+      const existingChart = Chart.getChart(canvas)
+      if (existingChart) existingChart.destroy()
+      const ctx = canvas.getContext('2d')
       if (!ctx) return
       const isDark = document.documentElement.classList.contains('dark')
       inst = new Chart(ctx, {
@@ -96,7 +103,7 @@ function ROIPage() {
         },
       })
     })
-    return () => { inst?.destroy() }
+    return () => { cancelled = true; inst?.destroy() }
   }, [])
 
   if (referralsLoading) return <ROISkeleton />
