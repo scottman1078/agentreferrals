@@ -206,7 +206,7 @@ export default function LandingPage() {
             <span className="text-primary">Agents Actually Trust.</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
-            AI-powered agent-to-agent referrals across any brokerage, any market.<br className="hidden sm:block" />
+            The most advanced and intelligent agent-to-agent referral platform that provides referral opportunities across all brokerages, in any market.<br className="hidden sm:block" />
             Build your network. Find opportunities. Track deals. Keep 100% of your fees.
           </p>
 
