@@ -129,7 +129,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
-    <div className="fixed bottom-[88px] left-4 right-4 max-w-lg mx-auto z-[450]">
+    <div className="fixed bottom-[120px] left-4 right-4 max-w-lg mx-auto z-[450]">
       <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border overflow-hidden">
         {/* Drag handle */}
         <div className="flex justify-center pt-2 pb-1">

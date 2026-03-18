@@ -2,7 +2,6 @@
 
 import { useDemo } from '@/contexts/demo-context'
 import { Eye, X, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
 import { useState } from 'react'
 
 export default function DemoBanner() {
@@ -19,14 +18,16 @@ export default function DemoBanner() {
           <span>You&apos;re viewing demo data — this is what your platform will look like with active referrals</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/auth/magic"
-            onClick={() => disableDemo()}
-            className="flex items-center gap-1 px-3 py-1 rounded-full bg-white text-primary text-xs font-bold hover:bg-white/90 transition-colors"
+          <button
+            onClick={() => {
+              disableDemo()
+              window.location.href = '/?signup=true'
+            }}
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-white text-primary text-xs font-bold hover:bg-white/90 transition-colors cursor-pointer"
           >
             Sign Up Free
             <ArrowRight className="w-3 h-3" />
-          </Link>
+          </button>
           <button
             onClick={() => setDismissed(true)}
             className="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"

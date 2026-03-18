@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
@@ -16,6 +16,7 @@ const TOTAL_SPOTS = 5000
 
 export default function LandingPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showLogin, setShowLogin] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
@@ -66,17 +67,21 @@ export default function LandingPage() {
       .catch(() => {})
   }, [])
 
-  // Read invite code from URL params
+  // Read invite code / signup from URL params
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const inviteParam = params.get('invite') || params.get('ref')
+    const inviteParam = searchParams.get('invite') || searchParams.get('ref')
     if (inviteParam) {
       setInviteCode(inviteParam)
       setShowLogin(true)
       setAuthMode('signup')
       setSignupPath('invite')
     }
-  }, [])
+    if (searchParams.get('signup') === 'true') {
+      setShowLogin(true)
+      setAuthMode('signup')
+      setSignupPath(null)
+    }
+  }, [searchParams])
 
   // If user is already authenticated, redirect to dashboard
   useEffect(() => {
