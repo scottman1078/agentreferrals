@@ -372,10 +372,10 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             )}
             <button
               onClick={() => router.push(`/agent/${agent.id}`)}
-              className="h-9 px-3 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors shrink-0"
-              title="View Full Profile"
+              className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors shrink-0"
             >
-              <User className="w-4 h-4" />
+              <User className="w-3.5 h-3.5" />
+              <span className="text-xs">Profile</span>
             </button>
           </div>
         </div>
