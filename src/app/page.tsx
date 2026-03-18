@@ -267,15 +267,9 @@ export default function LandingPage() {
                 { name: "Sotheby's", src: '/logos/sothebys.svg' },
                 { name: 'Coldwell Banker', src: '/logos/coldwell.svg' },
               ].map((b) => (
-                <img key={b.name} src={b.src} alt={b.name} className="h-6 sm:h-8 w-auto opacity-40 hover:opacity-70 transition-opacity dark:invert" />
+                <img key={b.name} src={b.src} alt={b.name} className="h-7 sm:h-9 w-auto" style={{ opacity: 0.35 }} />
               ))}
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 text-xs sm:text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero platform fees</span>
-            <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> 17,000+ agents</span>
-            <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-primary" /> Keep 100% of your fees</span>
           </div>
         </div>
       </section>
