@@ -165,14 +165,15 @@ function FeedPostCard({ post, isMyArea }: { post: ReferralPost; isMyArea: boolea
             </span>
           </div>
 
+          <div className="flex items-center gap-1 mb-1">
+            <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{post.budgetRange}</span>
+          </div>
+
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-0.5">
-              <DollarSign className="w-2.5 h-2.5" />
-              {post.budgetRange}
-            </span>
-            <span className="flex items-center gap-0.5">
               <Handshake className="w-2.5 h-2.5" />
-              {post.feePercent}%
+              {post.feePercent}% fee
             </span>
             <span className="flex items-center gap-0.5">
               <MessageSquare className="w-2.5 h-2.5" />
