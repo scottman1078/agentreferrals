@@ -175,7 +175,7 @@ export default function LandingPage() {
             <ThemeToggle />
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signin') }}
-              className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Sign In
             </button>
@@ -245,26 +245,20 @@ export default function LandingPage() {
               I Have an Invite Code <KeyRound className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10 text-xs sm:text-sm text-muted-foreground">
+          {/* Brokerage logos — above the fold */}
+          <div className="mt-8 sm:mt-10">
+            <p className="text-xs text-muted-foreground font-medium mb-3">Trusted by agents at</p>
+            <div className="flex items-center justify-center gap-4 sm:gap-8 flex-wrap opacity-50">
+              {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker'].map((b) => (
+                <span key={b} className="font-bold text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{b}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero platform fees</span>
             <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> 17,000+ agents</span>
             <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-primary" /> Keep 100% of your fees</span>
-          </div>
-        </div>
-      </section>
-
-      {/* SOCIAL PROOF */}
-      <section className="py-8 sm:py-12 border-y border-border bg-card/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <p className="text-center text-sm text-muted-foreground mb-8 font-medium">Trusted by agents at leading brokerages</p>
-          <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap opacity-60">
-            {['Real Broker', 'eXp Realty', 'Compass', 'Keller Williams', 'RE/MAX', "Sotheby's", 'Coldwell Banker', 'Berkshire Hathaway', 'Royal LePage'].map((b) => (
-              <span key={b} className="font-bold text-sm text-muted-foreground whitespace-nowrap">{b}</span>
-            ))}
-          </div>
-          <div className="flex items-center justify-center gap-8 mt-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary" /> <span className="font-semibold text-foreground">27</span> markets covered</span>
-            <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> <span className="font-semibold text-foreground">150+</span> referral partners connected</span>
           </div>
         </div>
       </section>
@@ -353,8 +347,58 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIALS */}
+      <section className="py-24 px-6 bg-card/50 border-y border-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">What Agents Are Saying</span>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Real agents. Real results.</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "I closed 3 referrals in my first month. The network actually works because every agent is vetted and responsive.",
+                name: "Sarah M.",
+                brokerage: "Real Broker LLC",
+                stat: "3 referrals closed in 30 days",
+              },
+              {
+                quote: "I used to lose referral fees to platforms that take a cut. Here I keep 100% and know exactly who I'm sending my clients to.",
+                name: "Marcus R.",
+                brokerage: "eXp Realty",
+                stat: "$47K in referral fees earned",
+              },
+              {
+                quote: "NORA found me a luxury agent in Scottsdale in 30 seconds. The AI matching is a game changer for finding the right partner.",
+                name: "Jennifer K.",
+                brokerage: "Compass",
+                stat: "12 markets covered",
+              },
+            ].map((t) => (
+              <div key={t.name} className="p-6 rounded-2xl border border-border bg-background">
+                <div className="flex gap-1 mb-4">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="w-4 h-4 text-primary fill-primary" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed mb-6">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-sm">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.brokerage}</div>
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                    {t.stat}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* BROKERAGES */}
-      <section id="brokerages" className="py-24 px-6 bg-card/50 border-y border-border">
+      <section id="brokerages" className="py-24 px-6">
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Multi-Brokerage</span>
           <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3 mb-4">Your brokerage. Your space. Your network.</h2>
@@ -460,8 +504,8 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mb-4">Ready to modernize your referral network?</h2>
-          <p className="text-muted-foreground text-lg mb-8">Join 17,000+ agents who&apos;ve upgraded from Facebook groups to AI-powered referrals.</p>
+          <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mb-4">Ready to refer with confidence?</h2>
+          <p className="text-muted-foreground text-lg mb-8">Join agents who&apos;ve upgraded from Facebook groups to AI-powered referrals.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signup'); setSignupPath('invite') }}
