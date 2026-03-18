@@ -11,6 +11,10 @@ import type { Topology, GeometryCollection } from 'topojson-specification'
 let countyMap: Map<string, GeoJSON.Feature> | null = null
 let loadPromise: Promise<void> | null = null
 
+// FIPS code → county name cache (loaded from Census API)
+let countyNameMap: Map<string, string> | null = null
+let nameLoadPromise: Promise<void> | null = null
+
 // State abbreviation → FIPS code prefix
 const STATE_FIPS: Record<string, string> = {
   AL: '01', AK: '02', AZ: '04', AR: '05', CA: '06', CO: '08', CT: '09',
@@ -339,6 +343,52 @@ function pointInRing(x: number, y: number, ring: number[][]): boolean {
     }
   }
   return inside
+}
+
+// Reverse FIPS prefix → state abbreviation
+const FIPS_TO_STATE_ABBR: Record<string, string> = {}
+for (const [abbr, fips] of Object.entries(STATE_FIPS)) {
+  FIPS_TO_STATE_ABBR[fips] = abbr
+}
+
+/** Load county names from Census API (one-time) */
+async function loadCountyNames(): Promise<void> {
+  if (countyNameMap) return
+  if (nameLoadPromise) { await nameLoadPromise; return }
+
+  nameLoadPromise = (async () => {
+    try {
+      const res = await fetch('https://api.census.gov/data/2020/dec/pl?get=NAME&for=county:*')
+      const rows = await res.json() as string[][]
+      countyNameMap = new Map()
+      // First row is header: ["NAME","state","county"]
+      for (let i = 1; i < rows.length; i++) {
+        const [name, stateFips, countyFips] = rows[i]
+        const fips = `${stateFips}${countyFips}`
+        countyNameMap.set(fips, name)
+      }
+      console.log(`[CountyNames] Loaded ${countyNameMap.size} county names`)
+    } catch (err) {
+      console.error('[CountyNames] Failed to load:', err)
+      countyNameMap = new Map()
+    }
+  })()
+  await nameLoadPromise
+}
+
+/** Get a human-readable county name for a FIPS code */
+export async function getCountyName(fips: string): Promise<string> {
+  await loadCountyNames()
+  const name = countyNameMap?.get(fips)
+  if (name) return name
+  const stateAbbr = FIPS_TO_STATE_ABBR[fips.substring(0, 2)] || ''
+  return `County ${fips}${stateAbbr ? `, ${stateAbbr}` : ''}`
+}
+
+/** Get all county names (loads if needed). Returns Map<fips, name> */
+export async function getAllCountyNames(): Promise<Map<string, string>> {
+  await loadCountyNames()
+  return countyNameMap ?? new Map()
 }
 
 /** Get bounding box of a GeoJSON feature */

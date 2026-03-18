@@ -195,16 +195,8 @@ export default function SetupWizard({ onComplete, profile }: SetupWizardProps) {
                 </p>
               </div>
 
-              <div className="min-h-[400px]">
-                <TerritorySelector
-                  value={territory}
-                  onChange={setTerritory}
-                  initialCenter={profile?.primary_area || undefined}
-                />
-              </div>
-
               {/* Free tier callout */}
-              <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <p className="text-xs text-amber-700 dark:text-amber-400">
                   <Sparkles className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
                   You&apos;re on the free plan — only agents in your direct network will see your service area.{' '}
@@ -219,6 +211,14 @@ export default function SetupWizard({ onComplete, profile }: SetupWizardProps) {
                     Upgrade to be visible to all agents
                   </button>
                 </p>
+              </div>
+
+              <div className="min-h-[400px]">
+                <TerritorySelector
+                  value={territory}
+                  onChange={setTerritory}
+                  initialCenter={profile?.primary_area || undefined}
+                />
               </div>
 
               {saveError && (
