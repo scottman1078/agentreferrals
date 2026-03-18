@@ -84,9 +84,16 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }))
   }, [])
 
+  // If a real user is authenticated, auto-clear demo mode
+  useEffect(() => {
+    if (isAuthenticated && isDemoMode) {
+      sessionStorage.removeItem('ar_demo_mode')
+    }
+  }, [isAuthenticated, isDemoMode])
+
   // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode)
   useEffect(() => {
-    if (isDemoMode) return
+    if (isDemoMode && !isAuthenticated) return
     if (isLoading) return
     if (!isAuthenticated) {
       router.push('/')
