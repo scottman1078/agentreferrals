@@ -252,6 +252,7 @@ export default function OnboardingPage() {
   const [phoneVerified, setPhoneVerified] = useState(false)
   const [phoneVerifying, setPhoneVerifying] = useState(false)
   const [phoneCodeChecking, setPhoneCodeChecking] = useState(false)
+  const [phoneResent, setPhoneResent] = useState(false)
   const [phoneError, setPhoneError] = useState('')
   const [phoneInputValue, setPhoneInputValue] = useState('')
   const [phoneCodeValue, setPhoneCodeValue] = useState('')
@@ -897,6 +898,8 @@ export default function OnboardingPage() {
       } else {
         setPhoneError('')
         setPhoneCodeValue('')
+        setPhoneResent(true)
+        setTimeout(() => setPhoneResent(false), 4000)
       }
     } catch {
       setPhoneError('Something went wrong. Please try again.')
@@ -1855,12 +1858,15 @@ export default function OnboardingPage() {
                 {phoneError && (
                   <p className="text-xs text-red-500">{phoneError}</p>
                 )}
+                {phoneResent && (
+                  <p className="text-xs text-emerald-500 font-medium">Code sent! Check your phone.</p>
+                )}
                 <button
                   onClick={handleResendPhoneCode}
-                  disabled={phoneVerifying}
-                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                  disabled={phoneVerifying || phoneResent}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 disabled:opacity-50"
                 >
-                  {phoneVerifying ? 'Sending...' : 'Resend Code'}
+                  {phoneVerifying ? 'Sending...' : phoneResent ? 'Code Sent' : 'Resend Code'}
                 </button>
               </>
             )}
