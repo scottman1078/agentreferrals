@@ -49,6 +49,7 @@ for (const [abbr, fips] of Object.entries(STATE_FIPS)) {
 export default function TerritorySelector({ value, onChange, initialCenter }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
+  const tileLayerRef = useRef<L.TileLayer | null>(null)
   const countyLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const selectedLayersRef = useRef<Map<string, L.Layer>>(new Map())
   const zipLayersRef = useRef<Map<string, L.Layer>>(new Map())
@@ -92,6 +93,14 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [])
 
+  // Ensure tile layer stays visible — re-add if missing
+  const ensureTiles = useCallback(() => {
+    if (!mapInstance.current || !L || !tileLayerRef.current) return
+    if (!mapInstance.current.hasLayer(tileLayerRef.current)) {
+      tileLayerRef.current.addTo(mapInstance.current)
+    }
+  }, [])
+
   // Initialize map
   useEffect(() => {
     if (!leafletReady || !L || !mapRef.current || mapInstance.current) return
@@ -122,8 +131,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
 
     L.control.zoom({ position: 'bottomleft' }).addTo(map)
-    L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
+    tileLayerRef.current = L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
     map.attributionControl.setPrefix('')
+
+    // Force light background on the Leaflet container itself
+    map.getContainer().style.background = '#f2f2f2'
 
     map.on('zoomend', () => {
       setMapZoom(map.getZoom())
@@ -145,6 +157,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     return () => {
       map.remove()
       mapInstance.current = null
+      tileLayerRef.current = null
       countyLayersRef.current.clear()
       selectedLayersRef.current.clear()
       zipLayersRef.current.clear()
@@ -152,26 +165,79 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
 
+  // Invalidate map size after render to handle container resizing
+  useEffect(() => {
+    if (!mapInstance.current) return
+    const timer = setTimeout(() => {
+      mapInstance.current?.invalidateSize()
+    }, 100)
+    return () => clearTimeout(timer)
+  })
+
   // Determine which state(s) are visible on the map
   const updateVisibleStates = useCallback((map: L.Map) => {
-    const bounds = map.getBounds()
-    const centerLat = bounds.getCenter().lat
-    const centerLng = bounds.getCenter().lng
-
-    // Find states whose rough center falls within bounds
-    // Simple heuristic: use the map center to determine the primary state
     const stateGuesses: string[] = []
     for (const [fips] of Object.entries(FIPS_TO_STATE)) {
       stateGuesses.push(fips)
     }
-    setVisibleStateFips(stateGuesses) // we'll render counties lazily based on viewport
+    setVisibleStateFips(stateGuesses)
   }, [])
+
+  // ═══════════════════════════════════════
+  // CLEAR ALL DATA LAYERS on tab switch
+  // ═══════════════════════════════════════
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    // Always clear ALL data layers first
+    countyLayersRef.current.forEach((layer) => map.removeLayer(layer))
+    countyLayersRef.current.clear()
+    selectedLayersRef.current.forEach((layer) => map.removeLayer(layer))
+    selectedLayersRef.current.clear()
+    zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
+    zipLayersRef.current.clear()
+    if (zipClusterLayerRef.current) {
+      map.removeLayer(zipClusterLayerRef.current)
+      zipClusterLayerRef.current = null
+    }
+    if (drawnLayerRef.current) {
+      map.removeLayer(drawnLayerRef.current)
+      drawnLayerRef.current = null
+    }
+
+    // Re-add tile layer if it got removed
+    ensureTiles()
+
+    // Show drawn polygons if switching to draw mode
+    if (activeTab === 'draw' && value.drawnPolygon.length > 0) {
+      const group = L.featureGroup()
+      for (const coords of value.drawnPolygon) {
+        if (coords.length >= 3) {
+          L.polygon(coords as L.LatLngExpression[], {
+            color: '#f59e0b',
+            weight: 2.5,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.25,
+          }).addTo(group)
+        }
+      }
+      group.addTo(map)
+      drawnLayerRef.current = group
+    }
+
+    onChange({ ...value, mode: activeTab })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
+
+  // ═══════════════════════════════════════
+  // COUNTY MODE
+  // ═══════════════════════════════════════
 
   // Render county boundaries when in county mode and zoomed in enough
   useEffect(() => {
     if (!mapInstance.current || !L || activeTab !== 'county' || allCounties.size === 0) return
     if (mapZoom < 6) {
-      // Clear county layers at low zoom
       countyLayersRef.current.forEach((layer) => mapInstance.current?.removeLayer(layer))
       countyLayersRef.current.clear()
       return
@@ -180,15 +246,13 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     const map = mapInstance.current
     const bounds = map.getBounds()
 
-    // Only render counties that intersect the viewport
     allCounties.forEach((feat, fips) => {
-      if (countyLayersRef.current.has(fips)) return // already rendered
-      if (selectedLayersRef.current.has(fips)) return // selected counties shown separately
+      if (countyLayersRef.current.has(fips)) return
+      if (selectedLayersRef.current.has(fips)) return
 
       const bbox = getFeatureBbox(feat)
       if (!bbox) return
 
-      // Check if county bbox intersects viewport
       const [minLng, minLat, maxLng, maxLat] = bbox
       if (maxLat < bounds.getSouth() || minLat > bounds.getNorth() ||
           maxLng < bounds.getWest() || minLng > bounds.getEast()) return
@@ -203,29 +267,28 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         },
       })
 
-      // Add county name tooltip
       const name = countyNames.get(fips)
       if (name) {
-        layer.bindTooltip(name, { permanent: false, direction: 'center', className: 'county-label' })
+        layer.bindTooltip(name, { permanent: false, direction: 'center', className: 'territory-tooltip' })
       }
 
       layer.on('click', () => handleCountyClick(fips, feat))
       layer.addTo(map)
       countyLayersRef.current.set(fips, layer)
     })
+
+    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, mapZoom, allCounties, countyNames])
 
-  // Re-render selected counties whenever they change
+  // Re-render selected counties
   useEffect(() => {
-    if (!mapInstance.current || !L || allCounties.size === 0) return
+    if (!mapInstance.current || !L || activeTab !== 'county' || allCounties.size === 0) return
     const map = mapInstance.current
 
-    // Remove old selected layers
     selectedLayersRef.current.forEach((layer) => map.removeLayer(layer))
     selectedLayersRef.current.clear()
 
-    // Remove matching county outline layers (we'll replace with selected style)
     for (const fips of value.selectedCounties) {
       const countyLayer = countyLayersRef.current.get(fips)
       if (countyLayer) {
@@ -234,7 +297,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       }
     }
 
-    // Add selected county layers
     for (const fips of value.selectedCounties) {
       const feat = allCounties.get(fips)
       if (!feat) continue
@@ -248,25 +310,28 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         },
       })
 
-      // Add county name as permanent label on selected counties
       const name = countyNames.get(fips)
       if (name) {
-        layer.bindTooltip(name, { permanent: true, direction: 'center', className: 'county-label' })
+        layer.bindTooltip(name, { permanent: true, direction: 'center', className: 'territory-tooltip' })
       }
 
       layer.on('click', () => handleCountyClick(fips, feat))
       layer.addTo(map)
       selectedLayersRef.current.set(fips, layer)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.selectedCounties, allCounties, countyNames])
 
-  // Handle draw mode toggle
+    ensureTiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.selectedCounties, activeTab, allCounties, countyNames])
+
+  // ═══════════════════════════════════════
+  // DRAW MODE
+  // ═══════════════════════════════════════
+
   useEffect(() => {
     if (!mapInstance.current || !L) return
     const map = mapInstance.current
 
-    // Clean up draw control when switching away
     if (activeTab !== 'draw') {
       if (drawControlRef.current) {
         map.removeControl(drawControlRef.current)
@@ -275,11 +340,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       return
     }
 
-    // Dynamically import leaflet-draw
     import('leaflet-draw').then(() => {
       if (!mapInstance.current || !L || activeTab !== 'draw') return
 
-      // Remove existing draw control
       if (drawControlRef.current) {
         map.removeControl(drawControlRef.current)
       }
@@ -287,7 +350,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       const drawnItems = new L.FeatureGroup()
       map.addLayer(drawnItems)
 
-      // Add existing drawn polygons back
       for (const coords of value.drawnPolygon) {
         if (coords.length >= 3) {
           const poly = L.polygon(coords as L.LatLngExpression[], {
@@ -334,7 +396,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         const drawnLayer = event.layer
         drawnItems.addLayer(drawnLayer)
 
-        // Extract coordinates and append to existing polygons
         const latLngs = drawnLayer.getLatLngs()[0] as L.LatLng[]
         const coords: LatLng[] = latLngs.map((ll) => [ll.lat, ll.lng])
         const newDrawnPolygons = [...value.drawnPolygon, coords]
@@ -346,12 +407,10 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           polygon: newDrawnPolygons,
         })
 
-        // Resolve which zip codes intersect the newly drawn polygon
         resolvePolygonToZips(coords)
       })
 
       map.on('draw:deleted', () => {
-        // Read whatever remains in drawnItems after the deletion
         const remainingPolygons: LatLng[][] = []
         drawnItems.getLayers().forEach((layer) => {
           const poly = layer as L.Polygon
@@ -373,6 +432,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           polygon: remainingPolygons,
         })
       })
+
+      ensureTiles()
     })
 
     return () => {
@@ -384,50 +445,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, leafletReady])
 
-  // Clear non-active mode layers when switching tabs
-  useEffect(() => {
-    if (!mapInstance.current || !L) return
-    const map = mapInstance.current
-
-    if (activeTab !== 'county') {
-      // Clear county outline layers (keep selected ones)
-      countyLayersRef.current.forEach((layer) => map.removeLayer(layer))
-      countyLayersRef.current.clear()
-    }
-
-    if (activeTab !== 'zip') {
-      // Clear zip boundary layers
-      zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
-      zipLayersRef.current.clear()
-    }
-
-    if (activeTab !== 'draw') {
-      if (drawnLayerRef.current) {
-        map.removeLayer(drawnLayerRef.current)
-        drawnLayerRef.current = null
-      }
-    }
-
-    // Show drawn polygons if switching back to draw mode
-    if (activeTab === 'draw' && value.drawnPolygon.length > 0 && !drawnLayerRef.current) {
-      const group = L.featureGroup()
-      for (const coords of value.drawnPolygon) {
-        if (coords.length >= 3) {
-          L.polygon(coords as L.LatLngExpression[], {
-            color: '#f59e0b',
-            weight: 2.5,
-            fillColor: '#f59e0b',
-            fillOpacity: 0.25,
-          }).addTo(group)
-        }
-      }
-      group.addTo(map)
-      drawnLayerRef.current = group
-    }
-
-    onChange({ ...value, mode: activeTab })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
+  // ═══════════════════════════════════════
+  // ZIP MODE
+  // ═══════════════════════════════════════
 
   const handleCountyClick = useCallback((fips: string, feat: GeoJSON.Feature) => {
     const isSelected = value.selectedCounties.includes(fips)
@@ -435,7 +455,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       ? value.selectedCounties.filter((f) => f !== fips)
       : [...value.selectedCounties, fips]
 
-    // Build polygon from selected counties
     const polygonRings = buildPolygonFromCounties(newCounties, allCounties)
 
     onChange({
@@ -475,7 +494,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         return
       }
 
-      // Cache the boundary for map rendering
       zipBoundariesRef.current.set(zip, ring)
 
       const newZips = [...value.selectedZips, zip]
@@ -492,7 +510,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         polygon: polygonRings,
       })
 
-      // Center map on the new zip
       if (mapInstance.current) {
         const center = getCentroid(ring)
         mapInstance.current.flyTo(center, 12, { duration: 0.8 })
@@ -518,7 +535,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   const removeZip = useCallback((zip: string) => {
     const newZips = value.selectedZips.filter((z) => z !== zip)
-    // Rebuild polygon from remaining zip boundaries
     const polygonRings: LatLng[][] = []
     for (const z of newZips) {
       const ring = zipBoundariesRef.current.get(z)
@@ -532,7 +548,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     })
   }, [value, onChange])
 
-  /** Given a drawn polygon, sample points inside it and resolve zip codes via Census API */
   const resolvePolygonToZips = useCallback(async (coords: LatLng[]) => {
     if (coords.length < 3) return
 
@@ -540,7 +555,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     setPolygonZipsMessage('Identifying zip codes in your drawn area...')
 
     try {
-      // Calculate bounding box
       const lats = coords.map(([lat]) => lat)
       const lngs = coords.map(([, lng]) => lng)
       const minLat = Math.min(...lats)
@@ -548,7 +562,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
       const minLng = Math.min(...lngs)
       const maxLng = Math.max(...lngs)
 
-      // Generate grid sample points ~0.02 degrees apart
       const step = 0.02
       const samplePoints: LatLng[] = []
       for (let lat = minLat; lat <= maxLat; lat += step) {
@@ -559,10 +572,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         }
       }
 
-      // Cap at 60 sample points to avoid too many API calls
       const capped = samplePoints.slice(0, 60)
 
-      // Batch calls with small delays to avoid hammering the Census API
       const uniqueZips = new Set<string>()
       const batchSize = 5
       for (let i = 0; i < capped.length; i += batchSize) {
@@ -573,7 +584,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         for (const zip of results) {
           if (zip) uniqueZips.add(zip)
         }
-        // Small delay between batches
         if (i + batchSize < capped.length) {
           await new Promise((r) => setTimeout(r, 200))
         }
@@ -589,10 +599,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       setPolygonZipsMessage(`Based on your drawn area, ${zipsArray.length} zip code${zipsArray.length > 1 ? 's' : ''} will be included:`)
 
-      // Merge with existing selected zips (avoid duplicates)
       const mergedZips = Array.from(new Set([...value.selectedZips, ...zipsArray]))
 
-      // Fetch boundaries for new zips and build polygon rings
       const polygonRings: LatLng[][] = []
       for (const zip of mergedZips) {
         if (!zipBoundariesRef.current.has(zip)) {
@@ -603,7 +611,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         if (ring) polygonRings.push(ring)
       }
 
-      // Append the newly drawn shape to existing polygons (value is stale but consistent with draw:created)
       const newDrawnPolygons = [...value.drawnPolygon, coords]
 
       onChange({
@@ -614,7 +621,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         polygon: polygonRings.length > 0 ? polygonRings : newDrawnPolygons,
       })
 
-      // Trigger zip layer re-render
       setZipLoadTrigger((c) => c + 1)
     } catch (err) {
       console.error('[polygon-to-zip] Error:', err)
@@ -640,7 +646,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         }
       }
       if (loaded > 0) {
-        // Trigger re-render of zip layers
         setZipLoadTrigger((c) => c + 1)
       }
     }
@@ -650,7 +655,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
   const ZIP_CLUSTER_ZOOM = 9
 
-  // Fit map to selected zips — only when zip list or tab changes, NOT on zoom
+  // Fit map to selected zips
   useEffect(() => {
     if (!mapInstance.current || !L || activeTab !== 'zip' || value.selectedZips.length === 0) return
     const map = mapInstance.current
@@ -663,8 +668,10 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (allBounds.length > 0) {
       let combined = allBounds[0]
       for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
-      map.fitBounds(combined, { padding: [40, 40], maxZoom: ZIP_CLUSTER_ZOOM })
+      map.fitBounds(combined, { padding: [40, 40], maxZoom: 12 })
     }
+    // Ensure tiles after zoom
+    setTimeout(() => ensureTiles(), 300)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger])
 
@@ -673,7 +680,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     if (!mapInstance.current || !L) return
     const map = mapInstance.current
 
-    // Remove old zip layers and cluster marker
     zipLayersRef.current.forEach((layer) => map.removeLayer(layer))
     zipLayersRef.current.clear()
     if (zipClusterLayerRef.current) {
@@ -683,7 +689,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
     if (activeTab !== 'zip' || value.selectedZips.length === 0) return
 
-    // Below threshold with multiple zips: show a single cluster marker
     if (mapZoom < ZIP_CLUSTER_ZOOM && value.selectedZips.length > 1) {
       let totalLat = 0, totalLng = 0, count = 0
       for (const zip of value.selectedZips) {
@@ -705,10 +710,10 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         marker.addTo(map)
         zipClusterLayerRef.current = marker
       }
+      ensureTiles()
       return
     }
 
-    // At or above threshold: show individual zip boundaries
     for (const zip of value.selectedZips) {
       const ring = zipBoundariesRef.current.get(zip)
       if (!ring) continue
@@ -718,15 +723,17 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         fillColor: '#f59e0b',
         fillOpacity: 0.25,
       })
-      layer.bindTooltip(zip, { permanent: false, direction: 'center' })
+      layer.bindTooltip(zip, { permanent: true, direction: 'center', className: 'territory-tooltip' })
       layer.on('click', () => removeZip(zip))
       layer.addTo(map)
       zipLayersRef.current.set(zip, layer)
     }
+
+    ensureTiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.selectedZips, activeTab, zipLoadTrigger, mapZoom])
 
-  // Click-to-add zip codes: click anywhere on the map in zip mode to look up + add that zip
+  // Click-to-add zip codes
   useEffect(() => {
     if (!mapInstance.current || !L || activeTab !== 'zip') return
     const map = mapInstance.current
@@ -747,7 +754,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           return
         }
         if (value.selectedZips.includes(zip)) {
-          // Already selected — clicking a selected zip removes it (handled by layer click)
           return
         }
         if (value.selectedZips.length >= 30) {
@@ -823,7 +829,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Enter zip codes to add them to your territory.
+              Enter zip codes or click the map to add them.
             </p>
             <span className="text-xs text-muted-foreground font-medium">
               Max 30 zip codes
@@ -879,14 +885,14 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       {/* Map */}
       <div className="relative rounded-xl border border-border overflow-hidden">
-        <div ref={mapRef} className={`w-full h-[400px] bg-[#f2f2f2] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} />
+        <div ref={mapRef} className={`w-full h-[400px] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
         {!leafletReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#f2f2f2]">
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#f2f2f2' }}>
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         )}
         {activeTab === 'zip' && mapClickLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/40 pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ background: 'rgba(255,255,255,0.4)' }}>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-gray-700">
               <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
               Looking up zip code...
@@ -894,18 +900,18 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           </div>
         )}
         {activeTab === 'zip' && mapClickMessage && !mapClickLoading && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm z-[1000]">
             {mapClickMessage}
           </div>
         )}
         {activeTab === 'zip' && !mapClickLoading && !mapClickMessage && leafletReady && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm pointer-events-none">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm pointer-events-none z-[1000]">
             <MapPin className="w-3 h-3 inline mr-1.5" />
             Click the map to add a zip code
           </div>
         )}
         {activeTab === 'county' && mapZoom < 6 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-xs font-medium text-gray-500 shadow-sm z-[1000]">
             <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
             Zoom in to see county boundaries
           </div>
@@ -969,7 +975,6 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
             {value.drawnPolygon.length} custom shape{value.drawnPolygon.length !== 1 ? 's' : ''} drawn
           </div>
 
-          {/* Polygon-to-zip loading / results */}
           {polygonZipsLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
