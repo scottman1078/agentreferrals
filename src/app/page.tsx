@@ -618,25 +618,23 @@ export default function LandingPage() {
               {authMode === 'signin' ? 'Sign in to your referral network' : 'Join the invite-only referral network'}
             </p>
 
-            {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg bg-muted mb-6">
+            {/* Sign In link — only show when in signup mode */}
+            {authMode === 'signup' && (
               <button
                 onClick={() => { setAuthMode('signin'); setAuthError(null); resetSignupState() }}
-                className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
-                  authMode === 'signin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className="text-xs text-muted-foreground hover:text-foreground mb-4"
               >
-                Sign In
+                Already have an account? <span className="font-semibold underline">Sign In</span>
               </button>
+            )}
+            {authMode === 'signin' && (
               <button
                 onClick={() => { setAuthMode('signup'); setAuthError(null); resetSignupState() }}
-                className={`flex-1 h-8 rounded-md text-xs font-semibold transition-all ${
-                  authMode === 'signup' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className="text-xs text-muted-foreground hover:text-foreground mb-4"
               >
-                Sign Up
+                Don&apos;t have an account? <span className="font-semibold underline">Sign Up</span>
               </button>
-            </div>
+            )}
 
             {authError && (
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium mb-4">
