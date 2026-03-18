@@ -28,7 +28,11 @@ export default function AdminTierSwitcher() {
         {PLANS.map((plan) => (
           <button
             key={plan.id}
-            onClick={() => setAdminTier(plan.id)}
+            onClick={() => {
+              setAdminTier(plan.id)
+              // Small delay to let state persist, then reload to reflect feature changes
+              setTimeout(() => window.location.reload(), 100)
+            }}
             className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold transition-all ${
               tier === plan.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
             }`}
