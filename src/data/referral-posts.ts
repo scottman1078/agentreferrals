@@ -64,7 +64,7 @@ export const referralPosts: ReferralPost[] = [
   {
     id: 'rp-1',
     postingAgentId: 'jason',
-    postingAgentName: "Jason O'Brien",
+    postingAgentName: "Jason Smith",
     postingAgentBrokerage: 'Real Broker LLC',
     postingAgentColor: '#f0a500',
     clientInitials: 'M.F.',
@@ -89,7 +89,7 @@ export const referralPosts: ReferralPost[] = [
   {
     id: 'rp-2',
     postingAgentId: 'jason',
-    postingAgentName: "Jason O'Brien",
+    postingAgentName: "Jason Smith",
     postingAgentBrokerage: 'Real Broker LLC',
     postingAgentColor: '#f0a500',
     clientInitials: 'R.P.',
@@ -190,7 +190,7 @@ export const referralPosts: ReferralPost[] = [
   {
     id: 'rp-6',
     postingAgentId: 'jason',
-    postingAgentName: "Jason O'Brien",
+    postingAgentName: "Jason Smith",
     postingAgentBrokerage: 'Real Broker LLC',
     postingAgentColor: '#f0a500',
     clientInitials: 'D.H.',
@@ -299,7 +299,7 @@ export const referralBids: ReferralBid[] = [
     id: 'bid-3b',
     postId: 'rp-3',
     agentId: 'jason',
-    agentName: "Jason O'Brien",
+    agentName: "Jason Smith",
     agentBrokerage: 'Real Broker LLC',
     agentColor: '#f0a500',
     agentReferNetScore: 92,

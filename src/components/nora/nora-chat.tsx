@@ -46,9 +46,9 @@ function buildNoraResponses(agentList: Agent[]) {
 
     // ── Pipeline command ──
     { patterns: ['my pipeline', 'pipeline status', 'active referrals', 'show pipeline'], response: (() => {
-      const active = mockReferrals.filter((r) => (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) && r.stage !== 'Fee Received')
+      const active = mockReferrals.filter((r) => (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) && r.stage !== 'Fee Received')
       if (active.length === 0) return "Your pipeline is empty! Want to post a referral opportunity or find a partner?"
-      return `📊 Your Active Pipeline:\n\n${active.map((r) => `• ${r.clientName} — ${r.market} — ${r.stage}\n  ${r.fromAgent.includes("O'Brien") ? `→ To: ${r.toAgent}` : `← From: ${r.fromAgent}`} · ${r.feePercent}% · Est. $${(r.estimatedPrice / 1000).toFixed(0)}k`).join('\n\n')}\n\nWant me to draft updates for any of these?`
+      return `📊 Your Active Pipeline:\n\n${active.map((r) => `• ${r.clientName} — ${r.market} — ${r.stage}\n  ${r.fromAgent.includes("Smith") ? `→ To: ${r.toAgent}` : `← From: ${r.fromAgent}`} · ${r.feePercent}% · Est. $${(r.estimatedPrice / 1000).toFixed(0)}k`).join('\n\n')}\n\nWant me to draft updates for any of these?`
     })(), matchLogic: undefined },
 
     // ── Comm score command ──
@@ -115,11 +115,11 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const verifiedCount = getVerifiedCount('jason')
   const pendingVerifications = getPendingCount('jason')
   const activeReferrals = mockReferrals.filter((r) =>
-    (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) &&
+    (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) &&
     r.stage !== 'Fee Received'
   )
   const closedReferrals = mockReferrals.filter((r) =>
-    (r.fromAgent.includes("O'Brien") || r.toAgent.includes("O'Brien")) &&
+    (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) &&
     (r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')
   )
   const allCommNudges = getCommNudges('jason')

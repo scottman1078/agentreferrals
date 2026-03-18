@@ -3,7 +3,7 @@ import { Referral } from '@/types'
 export const referrals: Referral[] = [
   {
     id: 'ref001', clientName: 'The Martinez Family',
-    fromAgent: "Jason O'Brien", toAgent: 'Ashley Monroe',
+    fromAgent: "Jason Smith", toAgent: 'Ashley Monroe',
     market: 'Nashville, TN', feePercent: 25,
     estCloseDate: 'Apr 15, 2025', stage: 'Under Contract',
     estimatedPrice: 620000,
@@ -11,7 +11,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref002', clientName: 'Sarah Kowalski',
-    fromAgent: 'Megan Torres', toAgent: "Jason O'Brien",
+    fromAgent: 'Megan Torres', toAgent: "Jason Smith",
     market: 'Plainwell, MI', feePercent: 25,
     estCloseDate: 'Mar 28, 2025', stage: 'Agreement Executed',
     estimatedPrice: 265000,
@@ -19,7 +19,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref003', clientName: 'Dr. & Mrs. Hoffman',
-    fromAgent: "Jason O'Brien", toAgent: 'Derek Chung',
+    fromAgent: "Jason Smith", toAgent: 'Derek Chung',
     market: 'Holland, MI', feePercent: 25,
     estCloseDate: 'May 10, 2025', stage: 'Client Introduced',
     estimatedPrice: 620000,
@@ -27,7 +27,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref004', clientName: 'Marcus Webb',
-    fromAgent: 'Priya Nair', toAgent: "Jason O'Brien",
+    fromAgent: 'Priya Nair', toAgent: "Jason Smith",
     market: 'Allegan County, MI', feePercent: 20,
     estCloseDate: 'Feb 20, 2025', stage: 'Fee Received',
     estimatedPrice: 310000,
@@ -35,7 +35,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref005', clientName: 'The Chen-Williams Couple',
-    fromAgent: "Jason O'Brien", toAgent: 'Priya Nair',
+    fromAgent: "Jason Smith", toAgent: 'Priya Nair',
     market: 'Kalamazoo, MI', feePercent: 25,
     estCloseDate: 'Apr 30, 2025', stage: 'Agreement Sent',
     estimatedPrice: 295000,
@@ -43,7 +43,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref006', clientName: 'Robert & Linda Trask',
-    fromAgent: 'Derek Chung', toAgent: "Jason O'Brien",
+    fromAgent: 'Derek Chung', toAgent: "Jason Smith",
     market: 'Plainwell / Otsego, MI', feePercent: 25,
     estCloseDate: 'Mar 15, 2025', stage: 'Closed - Fee Pending',
     estimatedPrice: 340000,
@@ -51,7 +51,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref007', clientName: 'Taylor & Jordan Watts',
-    fromAgent: "Jason O'Brien", toAgent: 'Darius King',
+    fromAgent: "Jason Smith", toAgent: 'Darius King',
     market: 'Scottsdale, AZ', feePercent: 25,
     estCloseDate: 'Jun 1, 2025', stage: 'Agreement Executed',
     estimatedPrice: 785000,
@@ -59,7 +59,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref008', clientName: 'The Henderson Family',
-    fromAgent: 'Carlos Vega', toAgent: "Jason O'Brien",
+    fromAgent: 'Carlos Vega', toAgent: "Jason Smith",
     market: 'West Michigan', feePercent: 25,
     estCloseDate: 'May 20, 2025', stage: 'Agreement Sent',
     estimatedPrice: 395000,
@@ -67,7 +67,7 @@ export const referrals: Referral[] = [
   },
   {
     id: 'ref009', clientName: 'Patricia Nguyen',
-    fromAgent: "Jason O'Brien", toAgent: 'Lily Park',
+    fromAgent: "Jason Smith", toAgent: 'Lily Park',
     market: 'Denver, CO', feePercent: 25,
     estCloseDate: 'May 5, 2025', stage: 'Client Introduced',
     estimatedPrice: 710000,

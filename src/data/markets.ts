@@ -27,7 +27,7 @@ export const markets: Market[] = [
     monthlyPrice: 29,
     maxVerifiedAgents: 5,
     currentVerifiedCount: 1,
-    verifiedAgents: [{ name: "Jason O'Brien", brokerageId: 'real' }],
+    verifiedAgents: [{ name: "Jason Smith", brokerageId: 'real' }],
     centerLat: 42.5319,
     centerLng: -85.8939,
   },

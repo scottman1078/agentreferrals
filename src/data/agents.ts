@@ -3,9 +3,9 @@ import { Agent } from '@/types'
 export const agents: Agent[] = [
   // MICHIGAN (home base) — Real Broker agents
   {
-    id: 'jason', name: "Jason O'Brien", brokerage: 'PREMIERE Group at Real Broker LLC', brokerageId: 'real',
+    id: 'jason', name: "Jason Smith", brokerage: 'Sweet Home Realty', brokerageId: 'real',
     area: '49080, 49348', tags: ['Homes for Heroes', 'First-Time Buyers'],
-    status: 'active', phone: '(269) 555-0147', email: 'jason@jobrienhomes.com',
+    status: 'active', phone: '(269) 555-0147', email: 'jason@sweethomerealty.com',
     dealsPerYear: 32, yearsLicensed: 8, avgSalePrice: 285000,
     polygon: [],
     color: '#f0a500', isPrimary: true, referNetScore: 92, responseTime: '< 1hr', closedReferrals: 8,

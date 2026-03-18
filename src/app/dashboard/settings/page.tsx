@@ -98,11 +98,11 @@ export default function SettingsPage() {
         }))
       }
     } else if (!isAuthenticated) {
-      setFullName("Jason O'Brien")
-      setEmail('jason@jobrienhomes.com')
+      setFullName("Jason Smith")
+      setEmail('jason@sweethomerealty.com')
       setPhone('(269) 555-0147')
       setServiceArea('Plainwell / Allegan County, MI')
-      setBrokerageName('PREMIERE Group at Real Broker LLC')
+      setBrokerageName('Sweet Home Realty')
     }
   }, [profile, isAuthenticated])
 

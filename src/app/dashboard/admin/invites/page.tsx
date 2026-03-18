@@ -21,25 +21,25 @@ interface WaitlistEntry {
 }
 
 const mockInvites: Invite[] = [
-  { id: 'inv-1', name: 'Sarah Chen', email: 'sarah.chen@compass.com', invitedBy: "Jason O'Brien", status: 'accepted', acceptedBy: 'Sarah Chen', code: 'AR-JO-4821', sentDate: '2026-02-15' },
-  { id: 'inv-2', name: 'Mike Torres', email: 'mtorres@kwrealty.com', invitedBy: "Jason O'Brien", status: 'accepted', acceptedBy: 'Mike Torres', code: 'AR-JO-4822', sentDate: '2026-02-16' },
+  { id: 'inv-1', name: 'Sarah Chen', email: 'sarah.chen@compass.com', invitedBy: "Jason Smith", status: 'accepted', acceptedBy: 'Sarah Chen', code: 'AR-JO-4821', sentDate: '2026-02-15' },
+  { id: 'inv-2', name: 'Mike Torres', email: 'mtorres@kwrealty.com', invitedBy: "Jason Smith", status: 'accepted', acceptedBy: 'Mike Torres', code: 'AR-JO-4822', sentDate: '2026-02-16' },
   { id: 'inv-3', name: 'Lauren Webb', email: 'lwebb@remax.com', invitedBy: 'Ashley Monroe', status: 'accepted', acceptedBy: 'Lauren Webb', code: 'AR-AM-3391', sentDate: '2026-02-18' },
   { id: 'inv-4', name: 'David Park', email: 'd.park@sothebys.com', invitedBy: 'Derek Chung', status: 'pending', code: 'AR-DC-7710', sentDate: '2026-03-01' },
-  { id: 'inv-5', name: 'Nina Patel', email: 'nina@exprealty.com', invitedBy: "Jason O'Brien", status: 'accepted', acceptedBy: 'Nina Rodriguez', code: 'AR-JO-4823', sentDate: '2026-02-20' },
+  { id: 'inv-5', name: 'Nina Patel', email: 'nina@exprealty.com', invitedBy: "Jason Smith", status: 'accepted', acceptedBy: 'Nina Rodriguez', code: 'AR-JO-4823', sentDate: '2026-02-20' },
   { id: 'inv-6', name: 'Brendan Walsh', email: 'bwalsh@sothebys.com', invitedBy: 'Ashley Monroe', status: 'accepted', acceptedBy: 'Brendan Walsh', code: 'AR-AM-3392', sentDate: '2026-02-22' },
-  { id: 'inv-7', name: 'Rachel Kim', email: 'rkim@sothebys.com', invitedBy: "Jason O'Brien", status: 'accepted', acceptedBy: 'Rachel Kim', code: 'AR-JO-4824', sentDate: '2026-01-28' },
+  { id: 'inv-7', name: 'Rachel Kim', email: 'rkim@sothebys.com', invitedBy: "Jason Smith", status: 'accepted', acceptedBy: 'Rachel Kim', code: 'AR-JO-4824', sentDate: '2026-01-28' },
   { id: 'inv-8', name: 'Tom Nguyen', email: 'tnguyen@coldwellbanker.com', invitedBy: 'Darius King', status: 'pending', code: 'AR-DK-5501', sentDate: '2026-03-05' },
   { id: 'inv-9', name: 'James Foster', email: 'jfoster@compass.com', invitedBy: 'Lily Park', status: 'expired', code: 'AR-LP-2201', sentDate: '2025-12-01' },
-  { id: 'inv-10', name: 'Alicia Gomez', email: 'agomez@remax.com', invitedBy: "Jason O'Brien", status: 'accepted', acceptedBy: 'Alicia Gomez', code: 'AR-JO-4825', sentDate: '2026-02-10' },
+  { id: 'inv-10', name: 'Alicia Gomez', email: 'agomez@remax.com', invitedBy: "Jason Smith", status: 'accepted', acceptedBy: 'Alicia Gomez', code: 'AR-JO-4825', sentDate: '2026-02-10' },
   { id: 'inv-11', name: 'Kevin Murphy', email: 'kmurphy@bhhs.com', invitedBy: 'Tanya Hill', status: 'pending', code: 'AR-TH-8801', sentDate: '2026-03-10' },
   { id: 'inv-12', name: 'Emily Zhang', email: 'ezhang@compass.com', invitedBy: 'Marcus Reid', status: 'accepted', acceptedBy: 'Emily Zhang', code: 'AR-MR-6601', sentDate: '2026-02-25' },
-  { id: 'inv-13', name: 'Robert Lee', email: 'rlee@coldwell.com', invitedBy: "Jason O'Brien", status: 'expired', code: 'AR-JO-4826', sentDate: '2025-11-15' },
+  { id: 'inv-13', name: 'Robert Lee', email: 'rlee@coldwell.com', invitedBy: "Jason Smith", status: 'expired', code: 'AR-JO-4826', sentDate: '2025-11-15' },
   { id: 'inv-14', name: 'Stephanie Cruz', email: 'scruz@kwrealty.com', invitedBy: 'Elena Vasquez', status: 'pending', code: 'AR-EV-4401', sentDate: '2026-03-12' },
   { id: 'inv-15', name: 'Anthony Brooks', email: 'abrooks@remax.com', invitedBy: 'Derek Chung', status: 'accepted', acceptedBy: 'Anthony Brooks', code: 'AR-DC-7711', sentDate: '2026-02-28' },
   { id: 'inv-16', name: 'Priya Sharma', email: 'psharma@exprealty.com', invitedBy: 'Ashley Monroe', status: 'pending', code: 'AR-AM-3393', sentDate: '2026-03-08' },
-  { id: 'inv-17', name: 'Carlos Mendez', email: 'cmendez@remax.com', invitedBy: "Jason O'Brien", status: 'expired', code: 'AR-JO-4827', sentDate: '2025-12-20' },
+  { id: 'inv-17', name: 'Carlos Mendez', email: 'cmendez@remax.com', invitedBy: "Jason Smith", status: 'expired', code: 'AR-JO-4827', sentDate: '2025-12-20' },
   { id: 'inv-18', name: 'Lisa Wang', email: 'lwang@compass.com', invitedBy: 'Steve Nakamura', status: 'accepted', acceptedBy: 'Lisa Wang', code: 'AR-SN-9901', sentDate: '2026-03-02' },
-  { id: 'inv-19', name: 'Tyler Jensen', email: 'tjensen@bhhs.com', invitedBy: "Jason O'Brien", status: 'pending', code: 'AR-JO-4828', sentDate: '2026-03-14' },
+  { id: 'inv-19', name: 'Tyler Jensen', email: 'tjensen@bhhs.com', invitedBy: "Jason Smith", status: 'pending', code: 'AR-JO-4828', sentDate: '2026-03-14' },
   { id: 'inv-20', name: 'Hannah Moore', email: 'hmoore@sothebys.com', invitedBy: 'Lily Park', status: 'pending', code: 'AR-LP-2202', sentDate: '2026-03-13' },
 ]
 

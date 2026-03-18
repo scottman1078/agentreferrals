@@ -10,6 +10,7 @@ import SearchModal from '@/components/search/search-modal'
 import { Search, Command, LogOut, Gift } from 'lucide-react'
 import { AppLogo } from '@/components/ui/app-logo'
 import { useAuth } from '@/contexts/auth-context'
+import { useDemo } from '@/contexts/demo-context'
 
 export default function TopBar() {
   const pathname = usePathname()
@@ -18,6 +19,7 @@ export default function TopBar() {
   const [showAvatarMenu, setShowAvatarMenu] = useState(false)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
   const { profile, signOut } = useAuth()
+  const { isDemoMode } = useDemo()
   const [inviteCount, setInviteCount] = useState<number | null>(null)
 
   // Fetch invite count
@@ -60,9 +62,9 @@ export default function TopBar() {
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'JO'
+    : 'JS'
 
-  const displayName = profile?.full_name || 'Jason O\'Brien'
+  const displayName = profile?.full_name || 'Jason Smith'
 
   return (
     <>
@@ -142,6 +144,8 @@ export default function TopBar() {
             >
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+              ) : isDemoMode ? (
+                <img src="/demo/avatar-jason.jpg" alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 initials
               )}
@@ -152,7 +156,7 @@ export default function TopBar() {
                 <div className="px-4 py-3 border-b border-border">
                   <div className="font-semibold text-sm">{displayName}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
-                    {profile?.email || 'jason@realbrokerage.com'}
+                    {profile?.email || 'jason@sweethomerealty.com'}
                   </div>
                 </div>
                 <div className="p-1">

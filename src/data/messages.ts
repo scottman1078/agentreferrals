@@ -23,7 +23,7 @@ export interface Conversation {
   participantColors?: string[]
 }
 
-// Current user is always Jason O'Brien (id: 'jason')
+// Current user is always Jason Smith (id: 'jason')
 const JASON = 'jason'
 
 function msg(

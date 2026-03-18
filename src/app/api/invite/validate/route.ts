@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         valid: true,
         inviteId: `demo-${code}`,
-        inviterName: "Jason O'Brien",
-        inviterEmail: 'jason@realbrokerage.com',
+        inviterName: "Jason Smith",
+        inviterEmail: 'jason@sweethomerealty.com',
       })
     }
 

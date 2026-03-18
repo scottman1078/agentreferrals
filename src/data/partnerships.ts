@@ -4,7 +4,7 @@ import type { AgentNeedingPartner, CoverageGapOpportunity, PartnershipRequest } 
 // AGENTS WHO NEED YOU (inbound opportunities)
 // These are agents from across the country who do NOT have
 // a referral partner in Plainwell / Allegan County, MI
-// (Jason O'Brien's territory)
+// (Jason Smith's territory)
 // Sorted by referNetScore descending
 // ══════════════════════════════════════
 
@@ -132,7 +132,7 @@ export const agentsNeedingPartner: AgentNeedingPartner[] = [
 
 // ══════════════════════════════════════
 // YOUR COVERAGE GAPS (outbound needs)
-// Markets where Jason O'Brien doesn't have a partner yet,
+// Markets where Jason Smith doesn't have a partner yet,
 // with suggested agents in each market
 // ══════════════════════════════════════
 
