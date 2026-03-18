@@ -237,11 +237,13 @@ export default function AgentMap() {
     if (!mapInstance.current || !L) return
     setScopeLoading(true)
     const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
-    renderAgents(filtered, mapInstance.current, true)
     setSelectedAgent(null)
     setHoveredAgent(null)
-    // Brief delay to let Leaflet render markers before hiding loader
-    setTimeout(() => setScopeLoading(false), 400)
+    // Let the loading overlay paint before doing heavy DOM work
+    requestAnimationFrame(() => {
+      renderAgents(filtered, mapInstance.current!, true)
+      setTimeout(() => setScopeLoading(false), 200)
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTag, filteredAgents, scope, countyLoadCount, zipLoadCount])
 
@@ -668,13 +670,13 @@ export default function AgentMap() {
       markerLayersRef.current.push(marker)
     })
 
-    // Fit map to actual agent locations on initial load
+    // Fit map to show all agents — animate when switching scopes
     if (fitBounds && allBounds.length > 0) {
       let combined = allBounds[0]
       for (let i = 1; i < allBounds.length; i++) {
         combined = combined.extend(allBounds[i])
       }
-      map.fitBounds(combined, { padding: [60, 60], maxZoom: 8 })
+      map.flyToBounds(combined, { padding: [60, 60], maxZoom: 8, duration: 0.8 })
     }
     // agentsReady is handled by polling useEffect above
   // eslint-disable-next-line react-hooks/exhaustive-deps
