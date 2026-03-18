@@ -159,8 +159,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">
-              A
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg>
             </div>
             <span className="font-extrabold text-lg tracking-tight">
               Agent<span className="text-primary">Referrals</span>
@@ -528,6 +528,8 @@ export default function LandingPage() {
           </div>
           <a
             href="/demo"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -540,7 +542,7 @@ export default function LandingPage() {
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center font-extrabold text-xs text-primary-foreground">A</div>
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center"><svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
             <span className="font-bold text-sm">Agent<span className="text-primary">Referrals</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -560,7 +562,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center"><svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-primary">Referrals</span>
               </span>
@@ -1202,7 +1204,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center font-extrabold text-sm text-primary-foreground">A</div>
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center"><svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-primary">Referrals</span>
               </span>
