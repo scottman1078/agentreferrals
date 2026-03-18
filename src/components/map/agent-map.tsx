@@ -28,6 +28,7 @@ export default function AgentMap() {
   const mapInstance = useRef<L.Map | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
   const markerLayersRef = useRef<L.Layer[]>([])
+  const clusterGroupRef = useRef<L.LayerGroup | null>(null)
   const polygonLayersRef = useRef<L.Layer[]>([])
   const voidLayersRef = useRef<L.Layer[]>([])
   const searchLayersRef = useRef<L.Layer[]>([])
@@ -99,21 +100,25 @@ export default function AgentMap() {
     })
   }, [filteredAgents])
 
-  // Preload zip code boundaries for agents that have zip-based areas
+  // Preload zip code boundaries for agents that have zip-based areas (parallel)
   useEffect(() => {
     const loadZipBoundaries = async () => {
-      let loaded = 0
-      for (const agent of filteredAgents) {
-        if (agent.polygon && agent.polygon.length >= 3) continue
-        if (agentZipPolygonsRef.current.has(agent.id)) continue
-        const firstZip = agent.area?.match(/\b(\d{5})\b/)?.[1]
-        if (!firstZip) continue
-        const ring = await getZipBoundary(firstZip)
-        if (ring) {
-          agentZipPolygonsRef.current.set(agent.id, ring)
-          loaded++
-        }
-      }
+      const tasks = filteredAgents
+        .filter((agent) => {
+          if (agent.polygon && agent.polygon.length >= 3) return false
+          if (agentZipPolygonsRef.current.has(agent.id)) return false
+          const firstZip = agent.area?.match(/\b(\d{5})\b/)?.[1]
+          return !!firstZip
+        })
+        .map(async (agent) => {
+          const firstZip = agent.area!.match(/\b(\d{5})\b/)![1]
+          const ring = await getZipBoundary(firstZip)
+          if (ring) agentZipPolygonsRef.current.set(agent.id, ring)
+          return ring ? 1 : 0
+        })
+
+      const results = await Promise.all(tasks)
+      const loaded = results.reduce((a: number, b: number) => a + b, 0)
       if (loaded > 0) {
         console.log(`[ZipBoundaries] Loaded ${loaded} agent zip boundaries`)
         setZipLoadCount((c) => c + 1)
@@ -123,7 +128,7 @@ export default function AgentMap() {
   }, [filteredAgents])
 
   useEffect(() => {
-    import('leaflet').then((leaflet) => {
+    import('leaflet').then(async (leaflet) => {
       L = leaflet
       delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
       L.Icon.Default.mergeOptions({
@@ -131,6 +136,18 @@ export default function AgentMap() {
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       })
+      // Load markercluster plugin
+      // @ts-expect-error — leaflet.markercluster has no type declarations
+      await import('leaflet.markercluster')
+      // Load markercluster CSS
+      const mcCss = document.createElement('link')
+      mcCss.rel = 'stylesheet'
+      mcCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css'
+      document.head.appendChild(mcCss)
+      const mcDefaultCss = document.createElement('link')
+      mcDefaultCss.rel = 'stylesheet'
+      mcDefaultCss.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css'
+      document.head.appendChild(mcDefaultCss)
       setLeafletLoaded(true)
     })
   }, [])
@@ -239,11 +256,9 @@ export default function AgentMap() {
     const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
     setSelectedAgent(null)
     setHoveredAgent(null)
-    // Let the loading overlay paint before doing heavy DOM work
-    requestAnimationFrame(() => {
-      renderAgents(filtered, mapInstance.current!, true)
-      setTimeout(() => setScopeLoading(false), 200)
-    })
+    renderAgents(filtered, mapInstance.current, true)
+    const timer = setTimeout(() => setScopeLoading(false), 300)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTag, filteredAgents, scope, countyLoadCount, zipLoadCount])
 
@@ -515,6 +530,7 @@ export default function AgentMap() {
     if (!L) return
     markerLayersRef.current.forEach((l) => map.removeLayer(l))
     polygonLayersRef.current.forEach((l) => map.removeLayer(l))
+    if (clusterGroupRef.current) { map.removeLayer(clusterGroupRef.current); clusterGroupRef.current = null }
     markerLayersRef.current = []
     polygonLayersRef.current = []
 
@@ -590,42 +606,68 @@ export default function AgentMap() {
       }
 
       const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
-      const markerSize = 32
-      // Partners: show photo if available, colored background with white text
-      // Non-partners: always show initials with colored background
-      const markerHtml = isPartner
-        ? `<div style="
+      const is1Degree = oneDegreeIds.includes(agent.id)
+      const is2Degree = twoDegreeIds.includes(agent.id)
+
+      // Option A: Photo-based hierarchy with size + ring
+      let markerSize: number
+      let markerHtml: string
+
+      if (isPartner) {
+        // Partners: large, photo with colored ring
+        markerSize = 36
+        const content = agent.photoUrl && !scopeLocked
+          ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+          : `<span style="font-size:12px;font-weight:700;color:white;">${initials}</span>`
+        markerHtml = `<div style="
+            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+            background:${agent.photoUrl && !scopeLocked ? '#fff' : agent.color};
+            border:3px solid ${agent.color};
+            box-shadow:0 2px 10px rgba(0,0,0,0.3);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;overflow:hidden;
+          ">${content}</div>`
+      } else if (is1Degree) {
+        // 1-degree: medium, initials with colored background
+        markerSize = 30
+        markerHtml = `<div style="
+            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+            background:${agent.color};
+            border:2.5px solid ${agent.color}44;
+            box-shadow:0 2px 8px rgba(0,0,0,0.2);
+            display:flex;align-items:center;justify-content:center;
+            font-size:10px;font-weight:700;color:white;
+            font-family:var(--font-dm-sans),system-ui,sans-serif;
+            cursor:pointer;
+          ">${initials}</div>`
+      } else if (is2Degree) {
+        // 2-degree: smaller, full color
+        markerSize = 28
+        markerHtml = `<div style="
             width:${markerSize}px;height:${markerSize}px;border-radius:50%;
             background:${agent.color};
             border:2px solid white;
-            box-shadow:0 2px 8px rgba(0,0,0,0.3);
+            box-shadow:0 1px 6px rgba(0,0,0,0.15);
             display:flex;align-items:center;justify-content:center;
-            font-size:11px;font-weight:700;color:white;
+            font-size:9px;font-weight:700;color:white;
             font-family:var(--font-dm-sans),system-ui,sans-serif;
-            cursor:pointer;overflow:hidden;
-          ">${agent.photoUrl && !scopeLocked ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />` : initials}</div>`
-        : isDegreeAgent
-          ? `<div style="
-              width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-              background:${agent.color};
-              border:2.5px dashed white;
-              box-shadow:0 2px 8px rgba(0,0,0,0.15);
-              display:flex;align-items:center;justify-content:center;
-              font-size:10px;font-weight:700;color:white;
-              opacity:0.85;
-              font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;
-            ">${initials}</div>`
-          : `<div style="
-              width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-              background:${agent.color};
-              border:2.5px solid white;
-              box-shadow:0 2px 8px rgba(0,0,0,0.15);
-              display:flex;align-items:center;justify-content:center;
-              font-size:10px;font-weight:700;color:white;
-              font-family:var(--font-dm-sans),system-ui,sans-serif;
-              cursor:pointer;
-            ">${initials}</div>`
+            cursor:pointer;
+          ">${initials}</div>`
+      } else {
+        // Not connected: smallest, full color
+        markerSize = 26
+        markerHtml = `<div style="
+            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+            background:${agent.color};
+            border:2px solid white;
+            box-shadow:0 1px 4px rgba(0,0,0,0.12);
+            display:flex;align-items:center;justify-content:center;
+            font-size:9px;font-weight:600;color:white;
+            font-family:var(--font-dm-sans),system-ui,sans-serif;
+            cursor:pointer;
+          ">${initials}</div>`
+      }
+
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
         html: markerHtml,
@@ -633,7 +675,7 @@ export default function AgentMap() {
         iconAnchor: [markerSize / 2, markerSize / 2],
       })
 
-      const marker = L!.marker(center, { icon: markerIcon }).addTo(map)
+      const marker = L!.marker(center, { icon: markerIcon })
 
       // ── Marker hover → show lightweight preview ──
       marker.on('mouseover', (e: L.LeafletMouseEvent) => {
@@ -669,6 +711,41 @@ export default function AgentMap() {
 
       markerLayersRef.current.push(marker)
     })
+
+    // Use marker clustering for large agent sets, direct add for small ones
+    const useCluster = agentList.length > 40 && (L as unknown as Record<string, unknown>).MarkerClusterGroup
+    if (useCluster) {
+      const MarkerClusterGroup = (L as unknown as Record<string, unknown>).MarkerClusterGroup as new (opts: Record<string, unknown>) => L.LayerGroup
+      const cluster = new MarkerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: (c: { getChildCount: () => number }) => {
+          const count = c.getChildCount()
+          const size = count > 50 ? 44 : count > 20 ? 38 : 32
+          return L!.divIcon({
+            html: `<div style="
+              width:${size}px;height:${size}px;border-radius:50%;
+              background:var(--color-primary, #f0a500);
+              border:3px solid white;
+              box-shadow:0 2px 10px rgba(0,0,0,0.3);
+              display:flex;align-items:center;justify-content:center;
+              font-size:${count > 50 ? 13 : 11}px;font-weight:800;color:white;
+              font-family:var(--font-dm-sans),system-ui,sans-serif;
+            ">${count}</div>`,
+            className: 'agent-cluster',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+          })
+        },
+      })
+      markerLayersRef.current.forEach((m) => cluster.addLayer(m))
+      cluster.addTo(map)
+      clusterGroupRef.current = cluster
+    } else {
+      markerLayersRef.current.forEach((m) => (m as L.Marker).addTo(map))
+    }
 
     // Fit map to show all agents — animate when switching scopes
     if (fitBounds && allBounds.length > 0) {
@@ -948,7 +1025,7 @@ export default function AgentMap() {
 
       {/* Scope change loading overlay */}
       {agentsReady && scopeLoading && (
-        <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+        <div className="absolute inset-0 z-[50] flex items-center justify-center bg-background/50 pointer-events-none">
           <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-5 py-3 shadow-lg">
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
             <span className="text-sm font-semibold text-muted-foreground">Updating map...</span>
