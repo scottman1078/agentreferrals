@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Shield,
   History,
+  Megaphone,
 } from 'lucide-react'
 import { getUnreadCount } from '@/data/messages'
 import { useAuth } from '@/contexts/auth-context'
@@ -30,6 +31,7 @@ const pillItems = [
   { href: '/dashboard/pipeline', icon: BarChart3, label: 'Pipeline' },
   { href: '/dashboard/partnerships', icon: Handshake, label: 'Partners' },
   { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+  { href: '/dashboard/marketplace', icon: Megaphone, label: 'Marketplace' },
   { href: '/dashboard/roi', icon: TrendingUp, label: 'ROI' },
 ]
 
@@ -106,7 +108,7 @@ export default function PillNav() {
       )}
 
       {/* Pill nav bar */}
-      <div className="flex items-center gap-0.5 h-[52px] px-2 bg-card/95 backdrop-blur-xl shadow-2xl border border-border rounded-full">
+      <div className="flex items-center gap-1.5 h-[52px] px-3 bg-card/95 backdrop-blur-xl shadow-2xl border border-border rounded-full">
         {pillItems.map((item) => {
           const active = isActive(item.href)
           const showBadge = item.label === 'Messages' && unreadCount > 0

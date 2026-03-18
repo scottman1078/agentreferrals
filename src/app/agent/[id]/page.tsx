@@ -24,12 +24,16 @@ import {
   Building2,
   ArrowLeft,
   GraduationCap,
+  ThumbsUp,
+  Video,
 } from 'lucide-react'
 import Link from 'next/link'
-import { ClientReviews, ClientMap, ClientNotes } from './client-sections'
+import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore, getCommScoreColor } from '@/data/communication-score'
 import { getVerifiedCount } from '@/data/verified-referrals'
+import { getEndorsementCount, getTopEndorsements, ENDORSEMENT_ICONS } from '@/data/endorsements'
+import { getVideoIntro, getPublicInterviews } from '@/data/video-intros'
 import ContactInfoGate from './contact-info-gate'
 import AuthGate from './auth-gate'
 import ProfileViewGate from './profile-view-gate'
@@ -73,6 +77,10 @@ export default async function AgentProfilePage({ params }: PageProps) {
   const mentorProfile = getMentorProfile(agent.id)
   const commScore = getCommScore(agent.id)
   const verifiedRefCount = getVerifiedCount(agent.id)
+  const endorsementCount = getEndorsementCount(agent.id)
+  const topEndorsements = getTopEndorsements(agent.id, 3)
+  const videoIntro = getVideoIntro(agent.id)
+  const publicInterviewCount = getPublicInterviews(agent.id).length
 
   return (
     <AgentAuthWrapper>
@@ -179,6 +187,27 @@ export default async function AgentProfilePage({ params }: PageProps) {
                     {agent.responseTime}
                   </span>
                 )}
+
+                {/* Endorsements badge */}
+                {endorsementCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                    <ThumbsUp className="w-3.5 h-3.5" />
+                    {endorsementCount} Endorsement{endorsementCount !== 1 ? 's' : ''}
+                    {topEndorsements.length > 0 && (
+                      <span className="ml-0.5">
+                        {topEndorsements.map((e) => ENDORSEMENT_ICONS[e.skill]).join('')}
+                      </span>
+                    )}
+                  </span>
+                )}
+
+                {/* Video intro badge */}
+                {videoIntro && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    <Video className="w-3.5 h-3.5" />
+                    Video Intro
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -238,6 +267,13 @@ export default async function AgentProfilePage({ params }: PageProps) {
               color: 'text-emerald-500',
               sublabel: undefined as string | undefined,
             }] : []),
+            ...(endorsementCount > 0 ? [{
+              icon: ThumbsUp,
+              label: 'Endorsements',
+              value: endorsementCount.toString(),
+              color: 'text-violet-500',
+              sublabel: topEndorsements.length > 0 ? topEndorsements.map((e) => ENDORSEMENT_ICONS[e.skill]).join(' ') : undefined as string | undefined,
+            }] : []),
           ].map((stat) => (
             <div
               key={stat.label}
@@ -293,6 +329,28 @@ export default async function AgentProfilePage({ params }: PageProps) {
             </p>
           </div>
         </section>
+
+        {/* ═══ ENDORSEMENTS ═══ */}
+        <AuthGate agentName={agent.name} section="endorsements">
+          <section>
+            <h2 className="text-lg font-bold mb-3">Endorsements</h2>
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <ClientEndorsements agentId={agent.id} agentName={agent.name} />
+            </div>
+          </section>
+        </AuthGate>
+
+        {/* ═══ VIDEO ═══ */}
+        <AuthGate agentName={agent.name} section="video">
+          <section>
+            <h2 className="text-lg font-bold mb-3">
+              Video{videoIntro ? ' & Interviews' : ' Interviews'}
+            </h2>
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <ClientVideoSection agentId={agent.id} agentName={agent.name} agentColor={agent.color} />
+            </div>
+          </section>
+        </AuthGate>
 
         {/* ═══ REVIEWS ═══ */}
         <AuthGate agentName={agent.name} section="referral reviews">
