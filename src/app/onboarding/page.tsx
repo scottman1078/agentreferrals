@@ -257,6 +257,7 @@ export default function OnboardingPage() {
   const [phoneInputValue, setPhoneInputValue] = useState('')
   const [phoneCodeValue, setPhoneCodeValue] = useState('')
   const [normalizedPhone, setNormalizedPhone] = useState('')
+  const normalizedPhoneRef = useRef('')
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
@@ -819,6 +820,7 @@ export default function OnboardingPage() {
 
       const normalized = result.normalizedPhone || phone
       setNormalizedPhone(normalized)
+      normalizedPhoneRef.current = normalized
       updateData({ phone: normalized })
       addUserMessage(phone)
 
@@ -880,8 +882,8 @@ export default function OnboardingPage() {
 
   // ── Handle phone verification: resend code ──
   const handleResendPhoneCode = useCallback(async () => {
-    const phone = normalizedPhone || data.phone || phoneInputValue
-    console.log('[ResendCode] phone:', phone, 'normalizedPhone:', normalizedPhone, 'data.phone:', data.phone, 'phoneInputValue:', phoneInputValue)
+    // Use ref to avoid stale closure — the callback may have been created before the phone was set
+    const phone = normalizedPhoneRef.current || normalizedPhone || data.phone || phoneInputValue
     if (!phone) {
       setPhoneError('No phone number found. Please re-enter your number.')
       return
