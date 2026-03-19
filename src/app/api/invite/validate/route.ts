@@ -45,26 +45,40 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient()
 
-    // Look up the code in ar_invites where status = 'pending' and referral_code matches
+    // First check ar_profiles.referral_code (the primary referral code system)
+    const { data: profileByCode } = await supabase
+      .from('ar_profiles')
+      .select('id, full_name, email, avatar_url, primary_area, tags, refernet_score, deals_per_year, years_licensed, brokerage:ar_brokerages(name)')
+      .eq('referral_code', code)
+      .limit(1)
+      .single()
+
+    if (profileByCode) {
+      return NextResponse.json({
+        valid: true,
+        inviteId: `profile-${profileByCode.id}`,
+        inviterName: profileByCode.full_name || 'An AgentReferrals member',
+        inviterEmail: profileByCode.email || null,
+        inviterPhoto: profileByCode.avatar_url || null,
+        inviterBrokerage: (profileByCode.brokerage as { name?: string } | null)?.name || null,
+        inviterMarket: profileByCode.primary_area || null,
+        inviterTags: profileByCode.tags || null,
+        inviterRcsScore: profileByCode.refernet_score || null,
+        inviterDealsPerYear: profileByCode.deals_per_year || null,
+        inviterYearsLicensed: profileByCode.years_licensed || null,
+      })
+    }
+
+    // Fallback: check ar_invites.referral_code (legacy individual invite codes)
     const { data: invite } = await supabase
       .from('ar_invites')
-      .select(`
-        id,
-        invited_by,
-        invitee_name,
-        invitee_email,
-        referral_code,
-        status
-      `)
+      .select('id, invited_by, invitee_name, invitee_email, referral_code, status')
       .eq('referral_code', code)
-      .eq('status', 'pending')
       .limit(1)
       .single()
 
     if (invite) {
-      // Found a valid invite — look up inviter profile with rich data
       const inviterData = await fetchInviterProfile(supabase, invite.invited_by)
-
       return NextResponse.json({
         valid: true,
         inviteId: invite.id,

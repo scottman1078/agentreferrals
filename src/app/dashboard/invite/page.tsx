@@ -13,6 +13,7 @@ import {
   Users, Gift, TrendingUp, Clock, Eye, UserCheck, Sparkles,
   X, Share2, Loader2, MailPlus, Lock
 } from 'lucide-react'
+import { ReferralCodeEditor } from '@/components/ui/referral-code-editor'
 
 const STATUS_CONFIG: Record<Invite['status'], { label: string; color: string; bg: string; icon: React.ElementType }> = {
   pending: { label: 'Available', color: 'text-muted-foreground', bg: 'bg-secondary', icon: Clock },
@@ -54,7 +55,8 @@ export default function InvitePage() {
   const { invites: initialInvites, referralCode: REFERRAL_CODE_MOCK, referralLink: REFERRAL_LINK_MOCK, invitesLoading } = useAppData()
   const { profile, user } = useAuth()
   // Use real profile referral code, falling back to mock data
-  const REFERRAL_CODE = profile?.referral_code || REFERRAL_CODE_MOCK
+  const [customReferralCode, setCustomReferralCode] = useState<string | null>(null)
+  const REFERRAL_CODE = customReferralCode || profile?.referral_code || REFERRAL_CODE_MOCK
   const REFERRAL_LINK = REFERRAL_CODE
     ? `https://agentreferrals.ai/invite/${REFERRAL_CODE}`
     : REFERRAL_LINK_MOCK
@@ -257,6 +259,13 @@ export default function InvitePage() {
           </div>
           <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
             <span>Referral code: <span className="font-semibold text-foreground">{REFERRAL_CODE}</span></span>
+            {user?.id && REFERRAL_CODE && (
+              <ReferralCodeEditor
+                currentCode={REFERRAL_CODE}
+                userId={user.id}
+                onSaved={(newCode) => setCustomReferralCode(newCode)}
+              />
+            )}
             <span>&middot;</span>
             <span>{stats.signedUp + stats.active} agents joined via your link</span>
           </div>

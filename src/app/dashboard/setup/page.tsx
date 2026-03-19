@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { ReferralCodeEditor } from '@/components/ui/referral-code-editor'
 import type { OnboardingData, PastReferralEntry } from '@/types/onboarding'
 
 let L: typeof import('leaflet') | null = null
@@ -107,6 +108,7 @@ export default function SetupPage() {
   }>({ referralCode: null, summary: { totalEarned: 0, count: 0 } })
   const [linkCopied, setLinkCopied] = useState(false)
   const [fetchedReferralCode, setFetchedReferralCode] = useState<string | null>(null)
+  const [customReferralCode, setCustomReferralCode] = useState<string | null>(null)
 
   // Load existing zips from profile
   useEffect(() => {
@@ -993,7 +995,7 @@ export default function SetupPage() {
   }, [router, saveStepProgress])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
-  const referralCode = affiliateData.referralCode || profile?.referral_code || fetchedReferralCode || null
+  const referralCode = customReferralCode || affiliateData.referralCode || profile?.referral_code || fetchedReferralCode || null
 
   if (isLoading || currentStep === -1) {
     return (
@@ -1715,7 +1717,17 @@ export default function SetupPage() {
           {/* Shareable Link */}
           {referralCode && (
             <div className="mb-6">
-              <label className="text-sm font-medium mb-2 block">Your Invite Link</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium block">Your Invite Link</label>
+                {profile?.id && (
+                  <ReferralCodeEditor
+                    currentCode={referralCode}
+                    userId={profile.id}
+                    onSaved={(newCode) => setCustomReferralCode(newCode)}
+                    compact
+                  />
+                )}
+              </div>
               <div className="flex gap-2">
                 <div className="flex-1 flex items-center gap-2 h-10 px-3 rounded-lg border border-input bg-muted/50 text-sm">
                   <Link2 className="w-4 h-4 text-muted-foreground shrink-0" />
