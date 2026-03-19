@@ -51,8 +51,13 @@ function InviteSkeleton() {
 
 export default function InvitePage() {
   const demoGuard = useDemoGuard()
-  const { invites: initialInvites, referralCode: REFERRAL_CODE, referralLink: REFERRAL_LINK, invitesLoading } = useAppData()
+  const { invites: initialInvites, referralCode: REFERRAL_CODE_MOCK, referralLink: REFERRAL_LINK_MOCK, invitesLoading } = useAppData()
   const { profile, user } = useAuth()
+  // Use real profile referral code, falling back to mock data
+  const REFERRAL_CODE = profile?.referral_code || REFERRAL_CODE_MOCK
+  const REFERRAL_LINK = REFERRAL_CODE
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://agentreferrals.ai'}/invite/${REFERRAL_CODE}`
+    : REFERRAL_LINK_MOCK
   const [inviteList, setInviteList] = useState<Invite[]>(initialInvites)
 
   // Sync when data source changes
@@ -193,7 +198,7 @@ export default function InvitePage() {
               <h1 className="font-bold text-2xl">Your Invites</h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              AgentReferrals is invite-only. Share your link with agents you trust.
+              Share your referral link with agents you trust to grow your network.
             </p>
           </div>
         </div>
@@ -229,7 +234,7 @@ export default function InvitePage() {
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
               <Gift className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-semibold text-primary">Earn 1 free month per signup</span>
+              <span className="text-xs font-semibold text-primary">Earn 10% of their subscription for 2 years</span>
             </div>
           </div>
           <div className="flex gap-2">
