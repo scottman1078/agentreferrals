@@ -55,6 +55,7 @@ export default function AgentMap() {
   const myZipLayersRef = useRef<L.Layer[]>([])
   const myZipClusterRef = useRef<L.Layer | null>(null)
   const renderMyZipLayersRef = useRef<() => void>(() => {})
+  const territoryOverlayRef = useRef<L.Layer[]>([])
   const zipBoundaryCache = useRef<Map<string, [number, number][]>>(new Map())
   const { hasFeature } = useFeatureGate()
   const { profile, refreshProfile } = useAuth()
@@ -301,6 +302,52 @@ export default function AgentMap() {
       })
     }
   }, [profile])
+
+  // Show user's territory as a subtle background overlay on the normal map
+  useEffect(() => {
+    if (!mapInstance.current || !L || showMyZips) return
+    if (!profile?.territory_zips || !Array.isArray(profile.territory_zips)) return
+    const map = mapInstance.current
+    const zips = profile.territory_zips as string[]
+    if (zips.length === 0) return
+
+    // Clear previous overlay
+    territoryOverlayRef.current.forEach((l) => {
+      try { map.removeLayer(l) } catch { /* */ }
+    })
+    territoryOverlayRef.current = []
+
+    const renderOverlay = async () => {
+      for (const zip of zips) {
+        if (!L) return
+        let ring = zipBoundaryCache.current.get(zip)
+        if (!ring) {
+          ring = (await getZipBoundary(zip)) ?? undefined
+          if (ring) zipBoundaryCache.current.set(zip, ring)
+        }
+        if (!ring || !L) continue
+
+        const poly = L.polygon(ring as L.LatLngExpression[], {
+          color: '#f59e0b',
+          weight: 1,
+          fillColor: '#f59e0b',
+          fillOpacity: 0.08,
+          interactive: false,
+        })
+        poly.addTo(map)
+        territoryOverlayRef.current.push(poly)
+      }
+    }
+    renderOverlay()
+
+    return () => {
+      territoryOverlayRef.current.forEach((l) => {
+        try { map.removeLayer(l) } catch { /* */ }
+      })
+      territoryOverlayRef.current = []
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.territory_zips, leafletLoaded, showMyZips])
 
   // Toggle "My Zips" mode — hide/show agents, add WMS overlay, enable click-to-select
   useEffect(() => {
