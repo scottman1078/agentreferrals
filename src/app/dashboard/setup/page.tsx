@@ -190,8 +190,13 @@ export default function SetupPage() {
         })
       })
       .catch(() => {})
-    // Also fetch the user's referral code as a fallback
-    fetch(`/api/invites/mine?userId=${profile.id}`)
+    // Ensure referral code exists (POST creates if missing), then fetch it
+    fetch('/api/invites/mine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: profile.id }),
+    })
+      .then(() => fetch(`/api/invites/mine?userId=${profile.id}`))
       .then((r) => r.json())
       .then((data) => {
         if (data.referralCode) {
