@@ -303,13 +303,15 @@ export default function AgentMap() {
     }
   }, [profile])
 
-  // Show user's territory as a subtle background overlay on the normal map
+  // Show user's territory as a background overlay on the normal map
+  const territoryRenderedRef = useRef(false)
   useEffect(() => {
     if (!mapInstance.current || !L || showMyZips) return
     if (!profile?.territory_zips || !Array.isArray(profile.territory_zips)) return
     const map = mapInstance.current
     const zips = profile.territory_zips as string[]
     if (zips.length === 0) return
+    let cancelled = false
 
     // Clear previous overlay
     territoryOverlayRef.current.forEach((l) => {
@@ -318,29 +320,50 @@ export default function AgentMap() {
     territoryOverlayRef.current = []
 
     const renderOverlay = async () => {
-      for (const zip of zips) {
-        if (!L) return
-        let ring = zipBoundaryCache.current.get(zip)
-        if (!ring) {
-          ring = (await getZipBoundary(zip)) ?? undefined
-          if (ring) zipBoundaryCache.current.set(zip, ring)
-        }
-        if (!ring || !L) continue
+      const allBounds: L.LatLngBounds[] = []
 
-        const poly = L.polygon(ring as L.LatLngExpression[], {
-          color: '#f59e0b',
-          weight: 1,
-          fillColor: '#f59e0b',
-          fillOpacity: 0.08,
-          interactive: false,
-        })
-        poly.addTo(map)
-        territoryOverlayRef.current.push(poly)
+      // Fetch boundaries in parallel batches of 10
+      for (let i = 0; i < zips.length; i += 10) {
+        if (cancelled) return
+        const batch = zips.slice(i, i + 10)
+        const results = await Promise.all(
+          batch.map(async (zip) => {
+            let ring = zipBoundaryCache.current.get(zip)
+            if (!ring) {
+              ring = (await getZipBoundary(zip)) ?? undefined
+              if (ring) zipBoundaryCache.current.set(zip, ring)
+            }
+            return { zip, ring }
+          })
+        )
+
+        for (const { ring } of results) {
+          if (!ring || !L || cancelled) continue
+          const poly = L.polygon(ring as L.LatLngExpression[], {
+            color: '#f59e0b',
+            weight: 1.5,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.12,
+            interactive: false,
+          })
+          poly.addTo(map)
+          territoryOverlayRef.current.push(poly)
+          allBounds.push(poly.getBounds())
+        }
+      }
+
+      // Center map on territory on first render
+      if (!cancelled && allBounds.length > 0 && !territoryRenderedRef.current) {
+        territoryRenderedRef.current = true
+        let combined = allBounds[0]
+        for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
+        map.fitBounds(combined, { padding: [60, 60], maxZoom: 10, animate: false })
       }
     }
     renderOverlay()
 
     return () => {
+      cancelled = true
       territoryOverlayRef.current.forEach((l) => {
         try { map.removeLayer(l) } catch { /* */ }
       })
