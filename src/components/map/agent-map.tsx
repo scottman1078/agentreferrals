@@ -303,28 +303,84 @@ export default function AgentMap() {
     }
   }, [profile])
 
-  // Show user's territory as a background overlay on the normal map
-  const territoryRenderedRef = useRef(false)
+  // Place "Me" marker at user's primary area — instant, no boundary fetching
+  const myMarkerRef = useRef<L.Marker | null>(null)
+  useEffect(() => {
+    if (!mapInstance.current || !L || showMyZips) return
+    if (!profile?.primary_area) return
+    const map = mapInstance.current
+
+    // Remove old marker
+    if (myMarkerRef.current) {
+      try { map.removeLayer(myMarkerRef.current) } catch { /* */ }
+      myMarkerRef.current = null
+    }
+
+    // Geocode primary area to get coordinates
+    fetch(`/api/geocode?q=${encodeURIComponent(profile.primary_area)}`)
+      .then((r) => r.json())
+      .then((geo) => {
+        if (!geo.lat || !geo.lng || !L || !mapInstance.current) return
+
+        const avatarUrl = profile?.avatar_url
+        const initials = (profile?.full_name || 'ME').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+        const markerHtml = avatarUrl
+          ? `<div style="width:44px;height:44px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);overflow:hidden;background:#fff;">
+              <img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" />
+            </div>
+            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.9);">My Territory</div>`
+          : `<div style="width:44px;height:44px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);background:#3b82f6;display:flex;align-items:center;justify-content:center;">
+              <span style="color:#fff;font-weight:800;font-size:13px;">${initials}</span>
+            </div>
+            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.9);">My Territory</div>`
+
+        const icon = L!.divIcon({
+          html: markerHtml,
+          className: 'my-territory-marker',
+          iconSize: [56, 60],
+          iconAnchor: [28, 30],
+        })
+
+        myMarkerRef.current = L!.marker([geo.lat, geo.lng], { icon, interactive: false, zIndexOffset: -100 }).addTo(map)
+      })
+      .catch(() => {})
+
+    return () => {
+      if (myMarkerRef.current && mapInstance.current) {
+        try { mapInstance.current.removeLayer(myMarkerRef.current) } catch { /* */ }
+        myMarkerRef.current = null
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.primary_area, profile?.avatar_url, leafletLoaded, showMyZips])
+
+  // Show territory zip polygons only when zoomed in (same threshold as other agents)
+  const TERRITORY_ZOOM_THRESHOLD = POLYGON_ZOOM_THRESHOLD
   useEffect(() => {
     if (!mapInstance.current || !L || showMyZips) return
     if (!profile?.territory_zips || !Array.isArray(profile.territory_zips)) return
     const map = mapInstance.current
     const zips = profile.territory_zips as string[]
     if (zips.length === 0) return
-    let cancelled = false
 
-    // Clear previous overlay
-    territoryOverlayRef.current.forEach((l) => {
-      try { map.removeLayer(l) } catch { /* */ }
-    })
-    territoryOverlayRef.current = []
+    let rendering = false
 
-    const renderOverlay = async () => {
-      const allBounds: L.LatLngBounds[] = []
+    const renderTerritoryPolygons = async () => {
+      if (rendering) return
+      const zoom = map.getZoom()
 
-      // Fetch boundaries in parallel batches of 10
+      // Clear existing
+      territoryOverlayRef.current.forEach((l) => {
+        try { map.removeLayer(l) } catch { /* */ }
+      })
+      territoryOverlayRef.current = []
+
+      // Only render when zoomed in
+      if (zoom < TERRITORY_ZOOM_THRESHOLD) return
+
+      rendering = true
       for (let i = 0; i < zips.length; i += 10) {
-        if (cancelled) return
         const batch = zips.slice(i, i + 10)
         const results = await Promise.all(
           batch.map(async (zip) => {
@@ -333,12 +389,11 @@ export default function AgentMap() {
               ring = (await getZipBoundary(zip)) ?? undefined
               if (ring) zipBoundaryCache.current.set(zip, ring)
             }
-            return { zip, ring }
+            return ring
           })
         )
-
-        for (const { ring } of results) {
-          if (!ring || !L || cancelled) continue
+        for (const ring of results) {
+          if (!ring || !L) continue
           const poly = L.polygon(ring as L.LatLngExpression[], {
             color: '#3b82f6',
             weight: 1.5,
@@ -349,46 +404,16 @@ export default function AgentMap() {
           })
           poly.addTo(map)
           territoryOverlayRef.current.push(poly)
-          allBounds.push(poly.getBounds())
         }
       }
-
-      // Add "Me" marker at the center of the territory (don't zoom — let the map stay at default view)
-      if (!cancelled && allBounds.length > 0 && !territoryRenderedRef.current) {
-        territoryRenderedRef.current = true
-        let combined = allBounds[0]
-        for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
-
-        // Add a "Me" marker at the center of the territory
-        const center = combined.getCenter()
-        const avatarUrl = profile?.avatar_url
-        const initials = (profile?.full_name || 'ME').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-
-        const markerHtml = avatarUrl
-          ? `<div style="width:48px;height:48px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);overflow:hidden;background:#fff;">
-              <img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" />
-            </div>
-            <div style="text-align:center;margin-top:2px;font-size:10px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.8);">My Territory</div>`
-          : `<div style="width:48px;height:48px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);background:#3b82f6;display:flex;align-items:center;justify-content:center;">
-              <span style="color:#fff;font-weight:800;font-size:14px;">${initials}</span>
-            </div>
-            <div style="text-align:center;margin-top:2px;font-size:10px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.8);">My Territory</div>`
-
-        const icon = L!.divIcon({
-          html: markerHtml,
-          className: 'my-territory-marker',
-          iconSize: [60, 64],
-          iconAnchor: [30, 32],
-        })
-
-        const marker = L!.marker(center, { icon, interactive: false, zIndexOffset: -100 }).addTo(map)
-        territoryOverlayRef.current.push(marker)
-      }
+      rendering = false
     }
-    renderOverlay()
+
+    map.on('zoomend', renderTerritoryPolygons)
+    renderTerritoryPolygons() // render if already zoomed in
 
     return () => {
-      cancelled = true
+      map.off('zoomend', renderTerritoryPolygons)
       territoryOverlayRef.current.forEach((l) => {
         try { map.removeLayer(l) } catch { /* */ }
       })
