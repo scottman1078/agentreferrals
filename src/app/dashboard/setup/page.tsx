@@ -268,13 +268,16 @@ export default function SetupPage() {
           fillColor: '#f59e0b',
           fillOpacity: isCountyMode ? 0.15 : 0.25,
         })
-        if (!isCountyMode) {
+        if (isCountyMode) {
+          // County mode: show zip on hover only, still clickable to remove
+          poly.bindTooltip(`${zip} ✕`, { permanent: false, direction: 'center', className: 'zip-label' })
+        } else {
           poly.bindTooltip(`${zip} ✕`, { permanent: true, direction: 'center', className: 'zip-label' })
-          poly.on('click', (e) => {
-            L!.DomEvent.stopPropagation(e)
-            setSelectedZips((prev) => prev.filter((z) => z !== zip))
-          })
         }
+        poly.on('click', (e) => {
+          L!.DomEvent.stopPropagation(e)
+          setSelectedZips((prev) => prev.filter((z) => z !== zip))
+        })
         poly.addTo(map)
         zipLayersRef.current.push(poly)
         bounds.push(poly.getBounds())
