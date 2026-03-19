@@ -21,13 +21,21 @@ interface InviteStats {
   signedUp: number
   conversionRate: string
   pending: number
-  totalGenerated: number
 }
 
 interface RewardStats {
   totalEarned: number
   totalPaid: number
+  outstanding: number
   count: number
+}
+
+interface Referrer {
+  name: string
+  invitesSent: number
+  signedUp: number
+  earned: number
+  paid: number
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -41,6 +49,7 @@ export default function AdminInvitesPage() {
   const [invites, setInvites] = useState<Invite[]>([])
   const [stats, setStats] = useState<InviteStats | null>(null)
   const [rewards, setRewards] = useState<RewardStats | null>(null)
+  const [referrers, setReferrers] = useState<Referrer[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'signed_up' | 'active'>('all')
 
@@ -52,6 +61,7 @@ export default function AdminInvitesPage() {
         setInvites(data.invites || [])
         setStats(data.stats || null)
         setRewards(data.rewards || null)
+        setReferrers(data.referrers || [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -95,9 +105,9 @@ export default function AdminInvitesPage() {
       color: 'text-amber-500',
     },
     {
-      label: 'Codes Generated',
-      value: stats?.totalGenerated ?? 0,
-      icon: Users,
+      label: 'Outstanding',
+      value: `$${rewards?.outstanding ?? 0}`,
+      icon: DollarSign,
       color: 'text-cyan-500',
     },
   ]
@@ -279,6 +289,39 @@ export default function AdminInvitesPage() {
               </div>
             )}
           </div>
+
+          {/* Referrer Earnings */}
+          {referrers.length > 0 && (
+            <div className="border border-border rounded-xl p-5">
+              <h2 className="text-base font-bold mb-4">Referrer Earnings</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Referrer</th>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Invites Sent</th>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Signed Up</th>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Earned</th>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Paid Out</th>
+                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Outstanding</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {referrers.map((r, i) => (
+                      <tr key={i} className="border-t border-border">
+                        <td className="py-2.5 font-semibold">{r.name}</td>
+                        <td className="py-2.5 text-muted-foreground">{r.invitesSent}</td>
+                        <td className="py-2.5 text-muted-foreground">{r.signedUp}</td>
+                        <td className="py-2.5 font-semibold text-emerald-600">${r.earned.toFixed(2)}</td>
+                        <td className="py-2.5 text-muted-foreground">${r.paid.toFixed(2)}</td>
+                        <td className="py-2.5 font-semibold">${(r.earned - r.paid).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
