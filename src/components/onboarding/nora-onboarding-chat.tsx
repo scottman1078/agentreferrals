@@ -877,7 +877,7 @@ export default function NoraOnboardingChat({
       }).catch(() => {})
     }
 
-    // Generate invite codes
+    // Ensure user has a referral code on their profile
     try {
       await fetch('/api/invites/mine', {
         method: 'POST',

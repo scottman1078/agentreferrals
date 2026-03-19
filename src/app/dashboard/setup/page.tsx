@@ -106,7 +106,7 @@ export default function SetupPage() {
     summary: { totalEarned: number; count: number }
   }>({ referralCode: null, summary: { totalEarned: 0, count: 0 } })
   const [linkCopied, setLinkCopied] = useState(false)
-  const [inviteCodes, setInviteCodes] = useState<{ referral_code: string }[]>([])
+  const [fetchedReferralCode, setFetchedReferralCode] = useState<string | null>(null)
 
   // Load existing zips from profile
   useEffect(() => {
@@ -190,12 +190,12 @@ export default function SetupPage() {
         })
       })
       .catch(() => {})
-    // Also fetch invite codes for the shareable link fallback
+    // Also fetch the user's referral code as a fallback
     fetch(`/api/invites/mine?userId=${profile.id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.codes?.length > 0) {
-          setInviteCodes(data.codes)
+        if (data.referralCode) {
+          setFetchedReferralCode(data.referralCode)
         }
       })
       .catch(() => {})
@@ -871,14 +871,14 @@ export default function SetupPage() {
 
   // Copy affiliate link
   const handleCopyLink = useCallback(() => {
-    const code = affiliateData.referralCode || profile?.referral_code || inviteCodes[0]?.referral_code
+    const code = affiliateData.referralCode || profile?.referral_code || fetchedReferralCode
     if (!code) return
     const link = `${window.location.origin}/invite/${code}`
     navigator.clipboard.writeText(link).then(() => {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 3000)
     })
-  }, [affiliateData.referralCode, profile?.referral_code, inviteCodes])
+  }, [affiliateData.referralCode, profile?.referral_code, fetchedReferralCode])
 
   // NORA complete handler — advance to Profile Builder
   const handleNoraComplete = useCallback(async () => {
@@ -988,7 +988,7 @@ export default function SetupPage() {
   }, [router, saveStepProgress])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
-  const referralCode = affiliateData.referralCode || profile?.referral_code || inviteCodes[0]?.referral_code || null
+  const referralCode = affiliateData.referralCode || profile?.referral_code || fetchedReferralCode || null
 
   if (isLoading || currentStep === -1) {
     return (
@@ -1568,6 +1568,118 @@ export default function SetupPage() {
             </p>
           </div>
 
+          {/* Past Referrals */}
+          <div className="mb-8">
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-bold">Past Referrals</h3>
+                <button
+                  onClick={() => setShowPastReferralForm(true)}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-semibold hover:bg-accent shrink-0"
+                >
+                  <Plus className="w-3 h-3" /> Add Referral
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Add referral deals you&apos;ve done to build your verified track record. We&apos;ll send your partner an invitation to join and verify the transaction.</p>
+            </div>
+
+            {pastReferrals.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {pastReferrals.map((ref, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      ref.direction === 'sent' ? 'bg-blue-500/10 text-blue-600' : 'bg-emerald-500/10 text-emerald-600'
+                    }`}>
+                      <ArrowUpRight className={`w-4 h-4 ${ref.direction === 'received' ? 'rotate-180' : ''}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold truncate">{ref.partnerName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {ref.direction === 'sent' ? 'Sent' : 'Received'} &middot; {ref.market || 'Unknown market'} &middot; {ref.closeYear}
+                      </div>
+                    </div>
+                    {referralVerifyStatus[i] === 'sending' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Sending...
+                      </span>
+                    )}
+                    {referralVerifyStatus[i] === 'sent' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        <Mail className="w-3 h-3" /> Verification sent
+                      </span>
+                    )}
+                    {referralVerifyStatus[i] === 'error' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        Pending verification
+                      </span>
+                    )}
+                    {!referralVerifyStatus[i] && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+                        <Clock className="w-3 h-3" /> Pending verification
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setPastReferrals((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showPastReferralForm && (
+              <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPrDirection('sent')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      prDirection === 'sent'
+                        ? 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
+                        : 'border border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    I sent
+                  </button>
+                  <button
+                    onClick={() => setPrDirection('received')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      prDirection === 'received'
+                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
+                        : 'border border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    I received
+                  </button>
+                </div>
+                <input type="text" value={prPartnerName} onChange={(e) => setPrPartnerName(e.target.value)} placeholder="Partner name" className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <input type="email" value={prPartnerEmail} onChange={(e) => setPrPartnerEmail(e.target.value)} placeholder="Partner email" className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <input type="text" value={prMarket} onChange={(e) => setPrMarket(e.target.value)} placeholder="Market (e.g. Nashville, TN)" className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Approximate sale price</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[{ label: '$100k-250k', value: 175000 }, { label: '$250k-500k', value: 375000 }, { label: '$500k-750k', value: 625000 }, { label: '$750k+', value: 1000000 }].map((opt) => (
+                      <button key={opt.label} onClick={() => setPrSalePrice(opt.value)} className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${prSalePrice === opt.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>{opt.label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Close year</label>
+                  <div className="flex gap-2">
+                    {[2024, 2025, 2026].map((year) => (
+                      <button key={year} onClick={() => setPrCloseYear(year)} className={`px-4 py-1.5 rounded-full border text-xs font-medium transition-all ${prCloseYear === year ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>{year}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={handleAddPastReferral} disabled={!prPartnerName || !prPartnerEmail} className="flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-50">Add Referral</button>
+                  <button onClick={() => setShowPastReferralForm(false)} className="text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Affiliate Rewards Banner */}
           <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -1842,180 +1954,6 @@ export default function SetupPage() {
                   {bulkResult.skipped > 0 && <span className="text-muted-foreground"> &middot; {bulkResult.skipped} already invited</span>}
                   {bulkResult.errors > 0 && <span className="text-destructive"> &middot; {bulkResult.errors} failed</span>}
                 </p>
-              </div>
-            )}
-          </div>
-
-          {/* Past Referrals */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-bold">Past Referrals</h3>
-                <p className="text-xs text-muted-foreground">Add referral deals you&apos;ve done to build your verified track record. We&apos;ll send your partner an invitation to join and verify the transaction.</p>
-              </div>
-              <button
-                onClick={() => setShowPastReferralForm(true)}
-                className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-semibold hover:bg-accent"
-              >
-                <Plus className="w-3 h-3" /> Add Referral
-              </button>
-            </div>
-
-            {pastReferrals.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {pastReferrals.map((ref, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      ref.direction === 'sent' ? 'bg-blue-500/10 text-blue-600' : 'bg-emerald-500/10 text-emerald-600'
-                    }`}>
-                      <ArrowUpRight className={`w-4 h-4 ${ref.direction === 'received' ? 'rotate-180' : ''}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate">{ref.partnerName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {ref.direction === 'sent' ? 'Sent' : 'Received'} &middot; {ref.market || 'Unknown market'} &middot; {ref.closeYear}
-                      </div>
-                    </div>
-                    {/* Verification status badge */}
-                    {referralVerifyStatus[i] === 'sending' && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full shrink-0">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Sending...
-                      </span>
-                    )}
-                    {referralVerifyStatus[i] === 'sent' && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
-                        <Mail className="w-3 h-3" /> Verification sent
-                      </span>
-                    )}
-                    {referralVerifyStatus[i] === 'error' && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full shrink-0">
-                        Pending verification
-                      </span>
-                    )}
-                    {!referralVerifyStatus[i] && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
-                        <Clock className="w-3 h-3" /> Pending verification
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setPastReferrals((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Past referral form */}
-            {showPastReferralForm && (
-              <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPrDirection('sent')}
-                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      prDirection === 'sent'
-                        ? 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
-                        : 'border border-border bg-card hover:bg-accent'
-                    }`}
-                  >
-                    I sent
-                  </button>
-                  <button
-                    onClick={() => setPrDirection('received')}
-                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      prDirection === 'received'
-                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
-                        : 'border border-border bg-card hover:bg-accent'
-                    }`}
-                  >
-                    I received
-                  </button>
-                </div>
-
-                <input
-                  type="text"
-                  value={prPartnerName}
-                  onChange={(e) => setPrPartnerName(e.target.value)}
-                  placeholder="Partner name"
-                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-
-                <input
-                  type="email"
-                  value={prPartnerEmail}
-                  onChange={(e) => setPrPartnerEmail(e.target.value)}
-                  placeholder="Partner email"
-                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-
-                <input
-                  type="text"
-                  value={prMarket}
-                  onChange={(e) => setPrMarket(e.target.value)}
-                  placeholder="Market (e.g. Nashville, TN)"
-                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Approximate sale price</label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: '$100k-250k', value: 175000 },
-                      { label: '$250k-500k', value: 375000 },
-                      { label: '$500k-750k', value: 625000 },
-                      { label: '$750k+', value: 1000000 },
-                    ].map((opt) => (
-                      <button
-                        key={opt.label}
-                        onClick={() => setPrSalePrice(opt.value)}
-                        className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
-                          prSalePrice === opt.value
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'border-border bg-card hover:bg-accent'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Close year</label>
-                  <div className="flex gap-2">
-                    {[2024, 2025, 2026].map((year) => (
-                      <button
-                        key={year}
-                        onClick={() => setPrCloseYear(year)}
-                        className={`px-4 py-1.5 rounded-full border text-xs font-medium transition-all ${
-                          prCloseYear === year
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'border-border bg-card hover:bg-accent'
-                        }`}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleAddPastReferral}
-                    disabled={!prPartnerName || !prPartnerEmail}
-                    className="flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-50"
-                  >
-                    Add Referral
-                  </button>
-                  <button
-                    onClick={() => setShowPastReferralForm(false)}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Cancel
-                  </button>
-                </div>
               </div>
             )}
           </div>

@@ -6,6 +6,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // POST /api/invites/bulk
 // Bulk-send invite emails (for CSV/paste import)
+// Uses the inviter's profile referral_code (not individual codes)
 export async function POST(request: NextRequest) {
   try {
     const { userId, userName, emails } = await request.json()
@@ -28,15 +29,16 @@ export async function POST(request: NextRequest) {
     const { sendInviteEmail } = await import('@/lib/postmark')
     const supabase = createAdminClient()
 
-    // Get user's profile for invite context
+    // Get user's profile for invite context and referral_code
     const { data: profile } = await supabase
       .from('ar_profiles')
-      .select('full_name, primary_area, brokerage_id')
+      .select('full_name, primary_area, brokerage_id, referral_code')
       .eq('id', userId)
       .single()
 
     const inviterName = profile?.full_name || userName || 'An AgentReferrals member'
     const inviterArea = profile?.primary_area || ''
+    const referralCode = profile?.referral_code || null
 
     // Get brokerage name
     let brokerageName = 'AgentReferrals'
@@ -78,15 +80,11 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Generate invite code
-      const firstName = inviterName.split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '') || 'AR'
-      const code = `${firstName}-${Date.now().toString(36).toUpperCase()}`
-
-      // Create ar_invites record
+      // Create ar_invites record using the profile's referral_code
       const { error: insertError } = await supabase.from('ar_invites').insert({
         invited_by: userId,
         invitee_email: email,
-        referral_code: code,
+        referral_code: referralCode,
         method: 'email',
         status: 'pending',
       })
@@ -100,7 +98,9 @@ export async function POST(request: NextRequest) {
       // Send email via Postmark
       const isDev = process.env.NODE_ENV === 'development'
       const baseUrl = isDev ? 'http://localhost:5500' : 'https://agentreferrals.ai'
-      const referralLink = `${baseUrl}/?invite=${code}`
+      const referralLink = referralCode
+        ? `${baseUrl}/invite/${referralCode}`
+        : `${baseUrl}/`
 
       try {
         await sendInviteEmail({

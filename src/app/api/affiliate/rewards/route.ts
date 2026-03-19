@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const DISCOUNT_PER_REFERRAL = 10 // 10% per referral
-const MAX_DISCOUNT = 100 // Cap at 100%
-const REWARDS_PER_FREE_MONTH = MAX_DISCOUNT / DISCOUNT_PER_REFERRAL // 10 rewards = 1 free month
+import { getAffiliateSettings } from '@/lib/affiliate-settings'
 
 // GET /api/affiliate/rewards?userId=xxx
 // Returns the user's affiliate reward summary including discount calculations
@@ -15,6 +12,9 @@ export async function GET(request: NextRequest) {
   try {
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = createAdminClient()
+
+    // Read configurable values from ar_settings
+    const { discountPerReferral: DISCOUNT_PER_REFERRAL, maxDiscount: MAX_DISCOUNT, rewardsPerFreeMonth: REWARDS_PER_FREE_MONTH } = await getAffiliateSettings()
 
     // Get all rewards for this user
     const { data: rewards, error } = await supabase

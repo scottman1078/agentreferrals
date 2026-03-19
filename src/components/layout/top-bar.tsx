@@ -20,16 +20,6 @@ export default function TopBar() {
   const avatarMenuRef = useRef<HTMLDivElement>(null)
   const { profile, signOut } = useAuth()
   const { isDemoMode } = useDemo()
-  const [inviteCount, setInviteCount] = useState<number | null>(null)
-
-  // Fetch invite count
-  useEffect(() => {
-    if (!profile?.id) return
-    fetch(`/api/invites/mine?userId=${profile.id}`)
-      .then(r => r.json())
-      .then(data => setInviteCount(data.remaining ?? null))
-      .catch(() => {})
-  }, [profile?.id])
 
   // Cmd+K / Ctrl+K global shortcut
   useEffect(() => {
@@ -97,16 +87,14 @@ export default function TopBar() {
           </kbd>
         </button>
 
-        {/* Invite callout */}
-        {inviteCount !== null && inviteCount > 0 && (
-          <Link
-            href="/dashboard/invite"
-            className="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shrink-0"
-          >
-            <Gift className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[11px] font-semibold text-primary">{inviteCount} Invite{inviteCount !== 1 ? 's' : ''} Left</span>
-          </Link>
-        )}
+        {/* Invite link */}
+        <Link
+          href="/dashboard/invite"
+          className="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shrink-0"
+        >
+          <Gift className="w-3.5 h-3.5 text-primary" />
+          <span className="text-[11px] font-semibold text-primary">Invite Agents</span>
+        </Link>
 
         <div className="flex-1" />
 

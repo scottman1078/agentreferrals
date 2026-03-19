@@ -1,7 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { Save, AlertTriangle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Save, AlertTriangle, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+
+/* ── Affiliate Program settings ────────────────────────────── */
+interface AffiliateField {
+  key: string
+  label: string
+  suffix: string
+  min: number
+  max: number
+  defaultValue: number
+}
+
+const AFFILIATE_FIELDS: AffiliateField[] = [
+  { key: 'affiliate_commission_rate', label: 'Commission Rate', suffix: '%', min: 1, max: 100, defaultValue: 10 },
+  { key: 'affiliate_commission_duration_months', label: 'Commission Duration', suffix: 'months', min: 1, max: 120, defaultValue: 24 },
+  { key: 'affiliate_max_discount', label: 'Max Discount Cap', suffix: '%', min: 1, max: 100, defaultValue: 100 },
+]
 
 function Toggle({
   checked,
@@ -35,6 +51,69 @@ export default function AdminSettingsPage() {
   const [noraEnabled, setNoraEnabled] = useState(true)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [toast, setToast] = useState('')
+
+  // Affiliate settings state
+  const [affValues, setAffValues] = useState<Record<string, number>>({})
+  const [affOriginal, setAffOriginal] = useState<Record<string, number>>({})
+  const [affLoading, setAffLoading] = useState(true)
+  const [affSaving, setAffSaving] = useState(false)
+  const [affFeedback, setAffFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  useEffect(() => {
+    fetchAffiliateSettings()
+  }, [])
+
+  async function fetchAffiliateSettings() {
+    setAffLoading(true)
+    try {
+      const res = await fetch('/api/admin/settings')
+      const data = await res.json()
+      const settings = data.settings ?? {}
+      const vals: Record<string, number> = {}
+      for (const field of AFFILIATE_FIELDS) {
+        const stored = settings[field.key]
+        vals[field.key] = typeof stored?.value === 'number' ? stored.value : field.defaultValue
+      }
+      setAffValues(vals)
+      setAffOriginal(vals)
+    } catch {
+      setAffFeedback({ type: 'error', message: 'Failed to load affiliate settings' })
+    }
+    setAffLoading(false)
+  }
+
+  function handleAffChange(key: string, raw: string) {
+    const num = parseInt(raw, 10)
+    if (!isNaN(num)) {
+      setAffValues((prev) => ({ ...prev, [key]: num }))
+    }
+  }
+
+  const affHasChanges = AFFILIATE_FIELDS.some((f) => affValues[f.key] !== affOriginal[f.key])
+
+  async function handleAffSave() {
+    setAffSaving(true)
+    setAffFeedback(null)
+    try {
+      const changed = AFFILIATE_FIELDS.filter((f) => affValues[f.key] !== affOriginal[f.key])
+      for (const field of changed) {
+        const res = await fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: field.key, value: affValues[field.key] }),
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.error || 'Failed to save')
+      }
+      setAffOriginal({ ...affValues })
+      setAffFeedback({ type: 'success', message: `Saved ${changed.length} setting${changed.length > 1 ? 's' : ''}` })
+      setTimeout(() => setAffFeedback(null), 4000)
+    } catch (err) {
+      setAffFeedback({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save' })
+      setTimeout(() => setAffFeedback(null), 4000)
+    }
+    setAffSaving(false)
+  }
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -134,6 +213,68 @@ export default function AdminSettingsPage() {
           <Save className="w-4 h-4" />
           Save Settings
         </button>
+      </div>
+
+      {/* Affiliate Program */}
+      <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+        <h2 className="text-sm font-bold">Affiliate Program</h2>
+
+        {affLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading affiliate settings...
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {AFFILIATE_FIELDS.map((field) => (
+                <div key={field.key} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-sm font-medium w-48 shrink-0">{field.label}</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={field.min}
+                      max={field.max}
+                      value={affValues[field.key] ?? field.defaultValue}
+                      onChange={(e) => handleAffChange(field.key, e.target.value)}
+                      className="w-24 h-10 px-3 rounded-lg border border-input bg-background text-sm text-right"
+                    />
+                    <span className="text-sm text-muted-foreground">{field.suffix}</span>
+                    {affValues[field.key] !== affOriginal[field.key] && (
+                      <span className="text-[10px] font-semibold text-orange-500">changed</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-border">
+              <button
+                onClick={handleAffSave}
+                disabled={!affHasChanges || affSaving}
+                className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                {affSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {affSaving ? 'Saving...' : 'Save Affiliate Settings'}
+              </button>
+
+              {affFeedback && (
+                <div className={`flex items-center gap-1.5 text-xs font-medium ${
+                  affFeedback.type === 'success'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {affFeedback.type === 'success' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5" />
+                  )}
+                  {affFeedback.message}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Feature Flags */}

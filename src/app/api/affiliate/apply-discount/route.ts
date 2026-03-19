@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripeServer } from '@/lib/stripe-server'
-
-const DISCOUNT_PER_REFERRAL = 10 // 10% per referral
-const MAX_DISCOUNT = 100 // Cap at 100%
+import { getAffiliateSettings } from '@/lib/affiliate-settings'
 
 /**
  * POST /api/affiliate/apply-discount
@@ -25,6 +23,9 @@ export async function POST(request: NextRequest) {
 
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = createAdminClient()
+
+    // Read configurable values from ar_settings
+    const { discountPerReferral: DISCOUNT_PER_REFERRAL, maxDiscount: MAX_DISCOUNT } = await getAffiliateSettings()
 
     // 1. Get all 'earned' (unapplied) rewards for this user
     const { data: earnedRewards, error: rewardsError } = await supabase
