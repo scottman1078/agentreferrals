@@ -114,7 +114,7 @@ function InvalidInvite() {
           </div>
           <h1 className="text-2xl font-bold mb-3">Invite Not Found</h1>
           <p className="text-muted-foreground mb-6">
-            This invite link may have expired or already been used. AgentReferrals is an invite-only network
+            This invite link may have expired or already been used. AgentReferrals is an trusted network
             -- ask a current member for a fresh invite code.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -210,18 +210,25 @@ export default function InviteLandingPage() {
           </h1>
 
           <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto mb-8">
-            {firstName} wants you in their referral network. Join the invite-only platform where
+            {firstName} wants you in their referral network. Join the platform where
             top agents exchange referrals, build trust, and grow their business together.
           </p>
 
           {/* Inviter Details Card */}
-          <div className="max-w-md mx-auto p-6 rounded-2xl border border-border bg-card shadow-sm mb-8">
+          <div className="max-w-lg mx-auto p-6 rounded-2xl border border-border bg-card shadow-sm mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-primary">
-                  {inviter.inviterName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
-                </span>
-              </div>
+              {inviter.inviterPhoto ? (
+                <div className="w-14 h-14 rounded-full border-2 border-primary/20 overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={inviter.inviterPhoto} alt={inviter.inviterName} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0">
+                  <span className="text-base font-bold text-primary">
+                    {inviter.inviterName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="text-left min-w-0">
                 <div className="font-bold text-sm flex items-center gap-1.5">
                   {inviter.inviterName}
@@ -318,7 +325,7 @@ export default function InviteLandingPage() {
           <BenefitCard
             icon={Users}
             title="Verified Partner Network"
-            description="Connect with pre-vetted agents across all 50 states. Every member is invite-only and license-verified."
+            description="Connect with pre-vetted agents across all 50 states. Every member is trusted and license-verified."
             color="bg-primary/10 text-primary"
           />
           <BenefitCard
@@ -395,7 +402,7 @@ export default function InviteLandingPage() {
       <footer className="border-t border-border py-6 px-6">
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <AppLogo size="sm" href="/" />
-          <span>The invite-only referral network for real estate agents</span>
+          <span>The trusted referral network for real estate agents</span>
         </div>
       </footer>
     </div>
