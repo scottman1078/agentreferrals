@@ -116,64 +116,83 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   useEffect(() => {
     if (!leafletReady || !L || !mapRef.current || mapInstance.current) return
 
-    // Inject Leaflet CSS
-    if (!document.querySelector('link[href*="leaflet@1.9.4"]')) {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      document.head.appendChild(link)
-    }
-
-    // Inject Leaflet Draw CSS
-    if (!document.querySelector('link[href*="leaflet-draw"]')) {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css'
-      document.head.appendChild(link)
-    }
-
-    const map = L.map(mapRef.current, {
-      center: [39.5, -96.5],
-      zoom: 4,
-      zoomControl: false,
-      maxBounds: L.latLngBounds([15, -175], [75, -45]),
-      maxBoundsViscosity: 1.0,
-      minZoom: 4,
-    })
-
-    L.control.zoom({ position: 'bottomleft' }).addTo(map)
-    L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
-    map.attributionControl.setPrefix('')
-
-    // Force light background on the Leaflet container itself
-    map.getContainer().style.background = '#f2f2f2'
-
-    map.on('zoomend', () => {
-      setMapZoom(map.getZoom())
-      updateVisibleStates(map)
-    })
-    map.on('moveend', () => updateVisibleStates(map))
-
-    mapInstance.current = map
-
-    // Leaflet needs invalidateSize after the container is fully rendered
-    setTimeout(() => map.invalidateSize(), 200)
-
-    // Try to center on primaryArea
-    if (initialCenter) {
-      geocodeLocation(initialCenter).then((coords) => {
-        if (coords && mapInstance.current) {
-          mapInstance.current.setView(coords, 5, { animate: false })
-          // Invalidate again after view change
-          setTimeout(() => mapInstance.current?.invalidateSize(), 100)
+    // Inject Leaflet CSS and wait for it to load
+    const ensureCss = (): Promise<void> => {
+      return new Promise((resolve) => {
+        if (document.querySelector('link[href*="leaflet@1.9.4"]')) {
+          resolve()
+          return
         }
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        link.onload = () => resolve()
+        link.onerror = () => resolve() // proceed even if fails
+        document.head.appendChild(link)
       })
     }
 
+    // Inject Leaflet Draw CSS (fire and forget)
+    if (!document.querySelector('link[href*="leaflet-draw"]')) {
+      const drawLink = document.createElement('link')
+      drawLink.rel = 'stylesheet'
+      drawLink.href = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css'
+      document.head.appendChild(drawLink)
+    }
+
+    let cancelled = false
+    ensureCss().then(() => {
+      if (cancelled || !mapRef.current || mapInstance.current) return
+      initMap()
+    })
+
+    function initMap() {
+      if (!L || !mapRef.current) return
+
+      const map = L.map(mapRef.current, {
+        center: [39.5, -96.5],
+        zoom: 4,
+        zoomControl: false,
+        maxBounds: L.latLngBounds([15, -175], [75, -45]),
+        maxBoundsViscosity: 1.0,
+        minZoom: 4,
+      })
+
+      L.control.zoom({ position: 'bottomleft' }).addTo(map)
+      L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
+      map.attributionControl.setPrefix('')
+
+      map.getContainer().style.background = '#f2f2f2'
+
+      map.on('zoomend', () => {
+        setMapZoom(map.getZoom())
+        updateVisibleStates(map)
+      })
+      map.on('moveend', () => updateVisibleStates(map))
+
+      mapInstance.current = map
+
+      // Invalidate size after a short delay to ensure container is fully laid out
+      setTimeout(() => map.invalidateSize(), 300)
+      setTimeout(() => map.invalidateSize(), 800)
+
+      if (initialCenter) {
+        geocodeLocation(initialCenter).then((coords) => {
+          if (coords && mapInstance.current) {
+            mapInstance.current.setView(coords, 5, { animate: false })
+            setTimeout(() => mapInstance.current?.invalidateSize(), 200)
+          }
+        })
+      }
+    }
+
     return () => {
-      map.remove()
-      mapInstance.current = null
-      dataLayersRef.current = []
+      cancelled = true
+      if (mapInstance.current) {
+        mapInstance.current.remove()
+        mapInstance.current = null
+        dataLayersRef.current = []
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leafletReady])
