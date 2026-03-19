@@ -12,7 +12,7 @@ import {
   Video, ThumbsUp, UserCheck, Megaphone
 } from 'lucide-react'
 
-const TOTAL_SPOTS = 5000
+const TOTAL_FOUNDING_SPOTS = 1000
 
 export default function LandingPage() {
   const router = useRouter()
@@ -46,7 +46,7 @@ export default function LandingPage() {
   const [checkingAccount, setCheckingAccount] = useState(false)
 
   // Spots counter — live from DB
-  const [spotsRemaining, setSpotsRemaining] = useState(TOTAL_SPOTS)
+  const [spotsRemaining, setSpotsRemaining] = useState(TOTAL_FOUNDING_SPOTS)
   useEffect(() => {
     fetch('/api/spots')
       .then((r) => r.json())
@@ -149,15 +149,15 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-primary/20 bg-card shadow-lg">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                 </span>
                 <span className="font-extrabold text-2xl sm:text-3xl tracking-tight tabular-nums">
                   {spotsRemaining.toLocaleString()}
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                of {TOTAL_SPOTS.toLocaleString()} founding spots remaining
+                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots — <span className="font-semibold text-emerald-600">50% off for 6 months</span>
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
