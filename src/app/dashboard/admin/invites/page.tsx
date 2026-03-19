@@ -1,7 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Mail, CheckCircle, Clock, Users, DollarSign, TrendingUp, Loader2, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Mail, DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle, Clock } from 'lucide-react'
+import { AgGridReact } from 'ag-grid-react'
+import { AllCommunityModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
+
+ModuleRegistry.registerModules([AllCommunityModule])
 
 interface Invite {
   id: string
@@ -11,9 +15,15 @@ interface Invite {
   status: string
   created_at: string
   signed_up_at: string | null
-  signed_up_user_id: string | null
-  invited_by: string | null
   inviter_name: string
+}
+
+interface Referrer {
+  name: string
+  invitesSent: number
+  signedUp: number
+  earned: number
+  paid: number
 }
 
 interface InviteStats {
@@ -30,28 +40,13 @@ interface RewardStats {
   count: number
 }
 
-interface Referrer {
-  name: string
-  invitesSent: number
-  signedUp: number
-  earned: number
-  paid: number
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  signed_up: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  expired: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-}
-
 export default function AdminInvitesPage() {
   const [invites, setInvites] = useState<Invite[]>([])
+  const [referrers, setReferrers] = useState<Referrer[]>([])
   const [stats, setStats] = useState<InviteStats | null>(null)
   const [rewards, setRewards] = useState<RewardStats | null>(null)
-  const [referrers, setReferrers] = useState<Referrer[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'signed_up' | 'active'>('all')
+  const [activeTab, setActiveTab] = useState<'invites' | 'earnings'>('invites')
 
   function loadData() {
     setLoading(true)
@@ -59,266 +54,223 @@ export default function AdminInvitesPage() {
       .then((r) => r.json())
       .then((data) => {
         setInvites(data.invites || [])
+        setReferrers(data.referrers || [])
         setStats(data.stats || null)
         setRewards(data.rewards || null)
-        setReferrers(data.referrers || [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
-  // Filter invites for display — hide placeholder invites unless showing all
-  const displayInvites = invites.filter((inv) => {
-    const isPlaceholder = inv.invitee_email?.startsWith('placeholder-')
-    if (filter === 'all') return !isPlaceholder
-    if (filter === 'pending') return inv.status === 'pending' && !isPlaceholder
-    return inv.status === filter
-  })
+  // Invite table columns
+  const inviteColumns = useMemo<ColDef<Invite>[]>(() => [
+    {
+      field: 'inviter_name',
+      headerName: 'Inviter',
+      flex: 1,
+      minWidth: 140,
+      filter: true,
+    },
+    {
+      field: 'invitee_email',
+      headerName: 'Invitee Email',
+      flex: 1.5,
+      minWidth: 200,
+      filter: true,
+    },
+    {
+      field: 'referral_code',
+      headerName: 'Code',
+      width: 160,
+      filter: true,
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 120,
+      filter: true,
+      cellRenderer: (params: { value: string }) => {
+        const styles: Record<string, string> = {
+          pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+          signed_up: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+          active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+        }
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${styles[params.value] || 'bg-muted text-muted-foreground'}">${params.value}</span>`
+      },
+    },
+    {
+      field: 'created_at',
+      headerName: 'Sent',
+      width: 130,
+      sort: 'desc' as const,
+      valueFormatter: (params: { value: string }) =>
+        params.value ? new Date(params.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+    },
+    {
+      field: 'signed_up_at',
+      headerName: 'Signed Up',
+      width: 130,
+      valueFormatter: (params: { value: string | null }) =>
+        params.value ? new Date(params.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+    },
+  ], [])
+
+  // Earnings table columns
+  const earningsColumns = useMemo<ColDef<Referrer>[]>(() => [
+    {
+      field: 'name',
+      headerName: 'Referrer',
+      flex: 1,
+      minWidth: 160,
+      filter: true,
+    },
+    {
+      field: 'invitesSent',
+      headerName: 'Invites Sent',
+      width: 120,
+      sort: 'desc' as const,
+    },
+    {
+      field: 'signedUp',
+      headerName: 'Conversions',
+      width: 120,
+    },
+    {
+      headerName: 'Conv. Rate',
+      width: 110,
+      valueGetter: (params: { data: Referrer | undefined }) => {
+        if (!params.data || params.data.invitesSent === 0) return '0%'
+        return `${((params.data.signedUp / params.data.invitesSent) * 100).toFixed(0)}%`
+      },
+    },
+    {
+      field: 'earned',
+      headerName: 'Earned',
+      width: 120,
+      valueFormatter: (params: { value: number }) => `$${(params.value || 0).toFixed(2)}`,
+      cellClass: 'font-semibold text-emerald-600',
+    },
+    {
+      field: 'paid',
+      headerName: 'Paid Out',
+      width: 120,
+      valueFormatter: (params: { value: number }) => `$${(params.value || 0).toFixed(2)}`,
+    },
+    {
+      headerName: 'Outstanding',
+      width: 120,
+      valueGetter: (params: { data: Referrer | undefined }) =>
+        params.data ? params.data.earned - params.data.paid : 0,
+      valueFormatter: (params: { value: number }) => `$${(params.value || 0).toFixed(2)}`,
+      cellClass: 'font-semibold',
+    },
+  ], [])
+
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    resizable: true,
+  }), [])
 
   const statCards = [
-    {
-      label: 'Total Invites Sent',
-      value: stats?.totalSent ?? 0,
-      icon: Mail,
-      color: 'text-blue-500',
-    },
-    {
-      label: 'Signed Up',
-      value: stats?.signedUp ?? 0,
-      icon: CheckCircle,
-      color: 'text-emerald-500',
-    },
-    {
-      label: 'Conversion Rate',
-      value: `${stats?.conversionRate ?? '0.0'}%`,
-      icon: TrendingUp,
-      color: 'text-violet-500',
-    },
-    {
-      label: 'Pending',
-      value: stats?.pending ?? 0,
-      icon: Clock,
-      color: 'text-amber-500',
-    },
-    {
-      label: 'Outstanding',
-      value: `$${rewards?.outstanding ?? 0}`,
-      icon: DollarSign,
-      color: 'text-cyan-500',
-    },
+    { label: 'Total Invites', value: stats?.totalSent ?? 0, icon: Mail, color: 'text-blue-500' },
+    { label: 'Signed Up', value: stats?.signedUp ?? 0, icon: CheckCircle, color: 'text-emerald-500' },
+    { label: 'Conversion Rate', value: `${stats?.conversionRate ?? '0.0'}%`, icon: TrendingUp, color: 'text-primary' },
+    { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500' },
+    { label: 'Total Earned', value: `$${rewards?.totalEarned ?? 0}`, icon: DollarSign, color: 'text-emerald-500' },
+    { label: 'Outstanding', value: `$${rewards?.outstanding ?? 0}`, icon: DollarSign, color: 'text-cyan-500' },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight">Invites</h1>
+          <h1 className="text-xl font-extrabold tracking-tight">Referral Management</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Track invitations and affiliate rewards across all users
+            Track invitations, conversions, and affiliate earnings
           </p>
         </div>
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading invite data...
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : (
         <>
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {statCards.map((s) => (
-              <div key={s.label} className="p-5 rounded-xl border border-border bg-card">
-                <s.icon className={`w-4 h-4 ${s.color} mb-2`} />
-                <div className="text-2xl font-extrabold">{s.value}</div>
-                <div className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                  {s.label}
-                </div>
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {statCards.map((card) => (
+              <div key={card.label} className="border border-border rounded-xl p-4">
+                <card.icon className={`w-4 h-4 ${card.color} mb-2`} />
+                <div className="text-2xl font-extrabold">{card.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{card.label}</div>
               </div>
             ))}
           </div>
 
-          {/* Affiliate Rewards Summary */}
-          {rewards && (rewards.totalEarned > 0 || rewards.count > 0) && (
-            <div className="p-5 rounded-xl border border-primary/20 bg-primary/5">
-              <div className="flex items-center gap-2 mb-3">
-                <DollarSign className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-bold">Affiliate Rewards</h2>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <div className="text-lg font-extrabold">
-                    ${rewards.totalEarned.toFixed(2)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground font-medium">
-                    Total Earned
-                  </div>
-                </div>
-                <div>
-                  <div className="text-lg font-extrabold">
-                    ${rewards.totalPaid.toFixed(2)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground font-medium">
-                    Total Paid Out
-                  </div>
-                </div>
-                <div>
-                  <div className="text-lg font-extrabold">
-                    ${(rewards.totalEarned - rewards.totalPaid).toFixed(2)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground font-medium">
-                    Outstanding
-                  </div>
-                </div>
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border w-fit">
+            <button
+              onClick={() => setActiveTab('invites')}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'invites'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
+            >
+              Invites ({invites.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('earnings')}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'earnings'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
+            >
+              Earnings ({referrers.length})
+            </button>
+          </div>
+
+          {/* Invites Tab */}
+          {activeTab === 'invites' && (
+            <div className="border border-border rounded-xl overflow-hidden">
+              <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
+                <AgGridReact
+                  rowData={invites}
+                  columnDefs={inviteColumns}
+                  defaultColDef={defaultColDef}
+                  pagination={true}
+                  paginationPageSize={20}
+                  quickFilterText=""
+                  domLayout="normal"
+                />
               </div>
             </div>
           )}
 
-          {/* Filter Bar */}
-          <div className="flex items-center gap-2">
-            {(['all', 'pending', 'signed_up', 'active'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors ${
-                  filter === f
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
-                }`}
-              >
-                {f === 'all'
-                  ? 'All Sent'
-                  : f === 'signed_up'
-                    ? 'Signed Up'
-                    : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* Invites Table */}
-          <div className="p-5 rounded-xl border border-border bg-card">
-            <h2 className="text-sm font-bold mb-3">
-              Recent Invites ({displayInvites.length})
-            </h2>
-            {displayInvites.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                No invites found for this filter.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">
-                        Inviter
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">
-                        Invitee Email
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden md:table-cell">
-                        Code
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">
-                        Status
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden sm:table-cell">
-                        Sent
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden lg:table-cell">
-                        Signed Up
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayInvites.map((inv) => (
-                      <tr
-                        key={inv.id}
-                        className="border-b border-border/50 last:border-0"
-                      >
-                        <td className="py-2.5 font-medium">
-                          {inv.inviter_name}
-                        </td>
-                        <td className="py-2.5 text-muted-foreground max-w-[200px] truncate">
-                          {inv.invitee_email}
-                        </td>
-                        <td className="py-2.5 text-muted-foreground font-mono text-xs hidden md:table-cell">
-                          {inv.referral_code || '—'}
-                        </td>
-                        <td className="py-2.5">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                              STATUS_STYLES[inv.status] || STATUS_STYLES.pending
-                            }`}
-                          >
-                            {inv.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="py-2.5 text-muted-foreground hidden sm:table-cell">
-                          {inv.created_at
-                            ? new Date(inv.created_at).toLocaleDateString(
-                                'en-US',
-                                { month: 'short', day: 'numeric', year: 'numeric' }
-                              )
-                            : '—'}
-                        </td>
-                        <td className="py-2.5 text-muted-foreground hidden lg:table-cell">
-                          {inv.signed_up_at
-                            ? new Date(inv.signed_up_at).toLocaleDateString(
-                                'en-US',
-                                { month: 'short', day: 'numeric', year: 'numeric' }
-                              )
-                            : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Referrer Earnings */}
-          {referrers.length > 0 && (
-            <div className="border border-border rounded-xl p-5">
-              <h2 className="text-base font-bold mb-4">Referrer Earnings</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Referrer</th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Invites Sent</th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Signed Up</th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Earned</th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Paid Out</th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Outstanding</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {referrers.map((r, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="py-2.5 font-semibold">{r.name}</td>
-                        <td className="py-2.5 text-muted-foreground">{r.invitesSent}</td>
-                        <td className="py-2.5 text-muted-foreground">{r.signedUp}</td>
-                        <td className="py-2.5 font-semibold text-emerald-600">${r.earned.toFixed(2)}</td>
-                        <td className="py-2.5 text-muted-foreground">${r.paid.toFixed(2)}</td>
-                        <td className="py-2.5 font-semibold">${(r.earned - r.paid).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Earnings Tab */}
+          {activeTab === 'earnings' && (
+            <div className="border border-border rounded-xl overflow-hidden">
+              <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
+                <AgGridReact
+                  rowData={referrers}
+                  columnDefs={earningsColumns}
+                  defaultColDef={defaultColDef}
+                  pagination={true}
+                  paginationPageSize={20}
+                  domLayout="normal"
+                />
               </div>
             </div>
           )}
