@@ -1,6 +1,7 @@
 'use client'
 
 import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { usePathname } from 'next/navigation'
 import { PLANS, type SubscriptionTier } from '@/lib/stripe'
 import { Shield } from 'lucide-react'
 
@@ -13,8 +14,10 @@ const TIER_COLORS: Record<SubscriptionTier, string> = {
 
 export default function AdminTierSwitcher() {
   const { canSwitchTier, tier, setAdminTier, isDemoMode } = useFeatureGate()
+  const pathname = usePathname()
 
   if (!canSwitchTier) return null
+  if (pathname === '/dashboard/setup') return null
 
   return (
     <div className="fixed bottom-[120px] left-4 z-[900]">
