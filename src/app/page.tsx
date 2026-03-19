@@ -157,7 +157,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots — <span className="font-semibold text-emerald-600">50% off for 6 months</span>
+                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-emerald-600">50% off for 6 months</span>
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
