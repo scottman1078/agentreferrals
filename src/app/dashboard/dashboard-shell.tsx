@@ -169,8 +169,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Nudge banner removed — check-ins now handled by NORA + map badge */}
 
-        {/* NORA FAB — positioned above the pill nav */}
-        <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />
+        {/* NORA FAB — positioned above the pill nav, hidden on setup page */}
+        {!isSetupPage && <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />}
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
 

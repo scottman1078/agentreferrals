@@ -49,6 +49,7 @@ export default function SetupPage() {
   const [radiusMode, setRadiusMode] = useState(false)
   const [radiusMiles, setRadiusMiles] = useState(25)
   const [radiusLoading, setRadiusLoading] = useState(false)
+  const radiusCenterRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Step 2: Invites
   const [emails, setEmails] = useState<string[]>([''])
@@ -376,10 +377,25 @@ export default function SetupPage() {
     document.body.dataset.radiusMiles = String(radiusMiles)
   }, [radiusMode, radiusMiles])
 
+  // Re-run radius search when miles changes and we have a center point
+  const radiusMilesRef = useRef(radiusMiles)
+  useEffect(() => {
+    if (radiusMilesRef.current === radiusMiles) return
+    radiusMilesRef.current = radiusMiles
+    if (radiusCenterRef.current && radiusMode) {
+      handleRadiusSelect(radiusCenterRef.current.lat, radiusCenterRef.current.lng, radiusMiles)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [radiusMiles])
+
   // Handle radius selection
   const handleRadiusSelect = useCallback(async (lat: number, lng: number, miles: number) => {
     if (!mapInstance.current || !L) return
+    radiusCenterRef.current = { lat, lng }
     setRadiusLoading(true)
+
+    // Clear previous zips when re-running radius (fresh selection)
+    setSelectedZips([])
 
     if (radiusCircleRef.current) mapInstance.current.removeLayer(radiusCircleRef.current)
     const radiusMeters = miles * 1609.34
@@ -394,33 +410,40 @@ export default function SetupPage() {
     radiusCircleRef.current = circle
     mapInstance.current.fitBounds(circle.getBounds(), { padding: [20, 20] })
 
+    // Use parallel batch lookups for speed
     const uniqueZips = new Set<string>()
     const degPerMile = 1 / 69
-    const gridStep = Math.max(miles / 8, 2) * degPerMile
+    const gridStep = Math.max(miles / 6, 3) * degPerMile
 
+    const points: { lat: number; lng: number }[] = []
     for (let dlat = -miles * degPerMile; dlat <= miles * degPerMile; dlat += gridStep) {
       for (let dlng = -miles * degPerMile; dlng <= miles * degPerMile; dlng += gridStep) {
         const dist = Math.sqrt(dlat * dlat + dlng * dlng) / degPerMile
         if (dist > miles) continue
-        const zip = await getZipAtPoint(lat + dlat, lng + dlng)
-        if (zip) uniqueZips.add(zip)
+        points.push({ lat: lat + dlat, lng: lng + dlng })
       }
     }
 
-    for (const zip of uniqueZips) {
-      if (!zipBoundariesRef.current.has(zip)) {
-        const ring = await getZipBoundary(zip)
-        if (ring) zipBoundariesRef.current.set(zip, ring)
-      }
+    // Process in parallel batches of 10
+    for (let i = 0; i < points.length; i += 10) {
+      const batch = points.slice(i, i + 10)
+      const results = await Promise.all(batch.map((p) => getZipAtPoint(p.lat, p.lng)))
+      results.forEach((zip) => { if (zip) uniqueZips.add(zip) })
     }
 
-    setSelectedZips((prev) => {
-      const combined = new Set([...prev, ...uniqueZips])
-      return Array.from(combined).slice(0, 100)
-    })
+    // Fetch boundaries in parallel batches
+    const newZips = Array.from(uniqueZips).filter((z) => !zipBoundariesRef.current.has(z))
+    for (let i = 0; i < newZips.length; i += 10) {
+      const batch = newZips.slice(i, i + 10)
+      const results = await Promise.all(batch.map((z) => getZipBoundary(z)))
+      results.forEach((ring, idx) => {
+        if (ring) zipBoundariesRef.current.set(batch[idx], ring)
+      })
+    }
+
+    setSelectedZips(Array.from(uniqueZips).slice(0, 100))
 
     setRadiusLoading(false)
-    setRadiusMode(false)
   }, [])
 
   // Save territory
