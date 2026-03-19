@@ -134,7 +134,7 @@ export default function LandingPage() {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-6">
             <Zap className="w-3.5 h-3.5" />
-            Now Open
+            AI-Powered Referral Network for Real Estate Agents
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             The Referral Network<br />
