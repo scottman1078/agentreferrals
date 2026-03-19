@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Uses admin client to bypass RLS
 export async function POST(request: NextRequest) {
   try {
-    const { userId, polygon, territory_zips } = await request.json()
+    const { userId, polygon, territory_zips, territory_meta } = await request.json()
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
 
     if (territory_zips !== undefined) {
       updateData.territory_zips = territory_zips
+    }
+
+    if (territory_meta !== undefined) {
+      updateData.territory_meta = territory_meta
     }
 
     const { error } = await supabase

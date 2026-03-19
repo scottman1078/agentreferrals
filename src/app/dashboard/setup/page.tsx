@@ -51,6 +51,7 @@ export default function SetupPage() {
 
   // Territory mode tabs
   const [territoryMode, setTerritoryMode] = useState<'city' | 'county' | 'zip' | 'radius'>('city')
+  const [territorySelections, setTerritorySelections] = useState<string[]>([])
 
   // Radius picker
   const [radiusMode, setRadiusMode] = useState(false)
@@ -248,6 +249,8 @@ export default function SetupPage() {
 
     if (selectedZips.length === 0) return
 
+    const isCountyMode = territoryMode === 'county'
+
     const renderZips = async () => {
       const bounds: L.LatLngBounds[] = []
       for (const zip of selectedZips) {
@@ -261,15 +264,17 @@ export default function SetupPage() {
 
         const poly = L.polygon(ring as L.LatLngExpression[], {
           color: '#f59e0b',
-          weight: 2.5,
+          weight: isCountyMode ? 0.5 : 2.5,
           fillColor: '#f59e0b',
-          fillOpacity: 0.25,
+          fillOpacity: isCountyMode ? 0.15 : 0.25,
         })
-        poly.bindTooltip(`${zip} ✕`, { permanent: true, direction: 'center', className: 'zip-label' })
-        poly.on('click', (e) => {
-          L!.DomEvent.stopPropagation(e)
-          setSelectedZips((prev) => prev.filter((z) => z !== zip))
-        })
+        if (!isCountyMode) {
+          poly.bindTooltip(`${zip} ✕`, { permanent: true, direction: 'center', className: 'zip-label' })
+          poly.on('click', (e) => {
+            L!.DomEvent.stopPropagation(e)
+            setSelectedZips((prev) => prev.filter((z) => z !== zip))
+          })
+        }
         poly.addTo(map)
         zipLayersRef.current.push(poly)
         bounds.push(poly.getBounds())
@@ -279,12 +284,12 @@ export default function SetupPage() {
       if (bounds.length > 0) {
         let combined = bounds[0]
         for (let i = 1; i < bounds.length; i++) combined = combined.extend(bounds[i])
-        map.fitBounds(combined, { padding: [40, 40], maxZoom: 12, animate: false })
+        map.fitBounds(combined, { padding: [40, 40], maxZoom: isCountyMode ? 9 : 12, animate: false })
       }
     }
     renderZips()
     return () => { cancelled = true }
-  }, [selectedZips])
+  }, [selectedZips, territoryMode])
 
   // Autocomplete suggestions
   const fetchSuggestions = useCallback((query: string) => {
@@ -543,6 +548,7 @@ export default function SetupPage() {
 
     // Clear previous zips when re-running radius (fresh selection)
     setSelectedZips([])
+    setTerritorySelections([])
 
     if (radiusCircleRef.current) mapInstance.current.removeLayer(radiusCircleRef.current)
     const radiusMeters = miles * 1609.34
@@ -618,6 +624,10 @@ export default function SetupPage() {
           userId: profile.id,
           polygon: polygonRings,
           territory_zips: selectedZips,
+          territory_meta: {
+            mode: territoryMode,
+            selections: territorySelections,
+          },
         }),
       })
 
@@ -894,6 +904,7 @@ export default function SetupPage() {
                                 if (mapInstance.current) {
                                   mapInstance.current.setView([s.lat, s.lng], 9, { animate: true })
                                 }
+                                setTerritorySelections((prev) => [...prev, s.label])
                               }
                             } catch {
                               setZipError('Failed to load county zip codes.')
@@ -980,14 +991,23 @@ export default function SetupPage() {
           {/* Zip count + clear */}
           <div className="flex items-center justify-between mb-2">
             {selectedZips.length > 0 ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-sm font-semibold text-primary">{selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}</span>
+                  <span className="text-sm font-semibold text-primary">
+                    {territorySelections.length > 0
+                      ? territorySelections.join(', ')
+                      : `${selectedZips.length} zip code${selectedZips.length !== 1 ? 's' : ''}`
+                    }
+                  </span>
+                  {territorySelections.length > 0 && (
+                    <span className="text-xs text-primary/60">({selectedZips.length} zips)</span>
+                  )}
                 </div>
                 <button
                   onClick={() => {
                     setSelectedZips([])
+                    setTerritorySelections([])
                     radiusCenterRef.current = null
                     if (radiusCircleRef.current && mapInstance.current) {
                       mapInstance.current.removeLayer(radiusCircleRef.current)
