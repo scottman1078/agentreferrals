@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
-import { X, Send, MessageSquare, MessageSquareMore, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban } from 'lucide-react'
+import { X, Send, MessageSquare, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { getConnectionPath, getPartnerAgentIds, existingRequests } from '@/data/partnerships'
 import AgentNotes from '@/components/agent-notes'
-import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import { getCommScore } from '@/data/communication-score'
 import { addBlock, isBlocked } from '@/data/report-block'
 import ReportAgentModal from '@/components/report-agent-modal'
 import { maskName } from '@/lib/agent-display-name'
@@ -92,11 +92,18 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const displayName = getDisplayNameFn(agent)
   const initials = getInitials(agent.name) // initials always from full name
   const reviewStats = getAgentReviewStats(agent.id)
-  const score = agent.rcsScore ?? 0
-  const scoreColor =
-    score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
   const commScore = getCommScore(agent.id)
-  const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
+  // Consolidated RCS: prefer agent.rcsScore, fall back to commScore.overall
+  const rcsValue = agent.rcsScore ?? commScore?.overall ?? 0
+  const rcsColorClasses =
+    rcsValue >= 90
+      ? 'text-emerald-500 border-emerald-500 bg-emerald-500/10'
+      : rcsValue >= 70
+        ? 'text-amber-500 border-amber-500 bg-amber-500/10'
+        : 'text-red-500 border-red-500 bg-red-500/10'
+  const rcsRingColor =
+    rcsValue >= 90 ? '#10b981' : rcsValue >= 70 ? '#f59e0b' : '#ef4444'
+  const rcsLabel = commScore?.label ?? (rcsValue >= 90 ? 'Highly Responsive' : rcsValue >= 70 ? 'Responsive' : 'Needs Improvement')
 
   // Connection path for degree-of-separation agents
   const { scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
@@ -187,8 +194,8 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
         </div>
 
         <div className="px-4 pb-4">
-          {/* Agent info row */}
-          <div className="flex items-start gap-3">
+          {/* Agent info row with prominent RCS */}
+          <div className="flex items-center gap-3">
             {/* Avatar */}
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden"
@@ -201,24 +208,30 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               )}
             </div>
 
+            {/* Name / brokerage / area */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base truncate">{displayName}</span>
-                {score > 0 && (
-                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${scoreColor}`}>
-                    {score}
-                  </span>
-                )}
-                {commScore && (
-                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${commScoreColor}`}>
-                    <MessageSquareMore className="w-2.5 h-2.5" />
-                    {commScore.overall}
-                  </span>
-                )}
-              </div>
+              <span className="font-bold text-base truncate block">{displayName}</span>
               <p className="text-xs text-muted-foreground">{agent.brokerage}</p>
               <p className="text-xs text-muted-foreground">{agent.area}</p>
             </div>
+
+            {/* Large RCS circular badge */}
+            {rcsValue > 0 && (
+              <div className="shrink-0 flex flex-col items-center" title="Referral Communication Score">
+                <div
+                  className={`relative w-14 h-14 rounded-full flex items-center justify-center border-[3px] ${rcsColorClasses}`}
+                  style={{ borderColor: rcsRingColor }}
+                >
+                  <span className="text-xl font-extrabold leading-none">{rcsValue}</span>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5" style={{ color: rcsRingColor }}>
+                  RCS
+                </span>
+                <span className="text-[9px] text-muted-foreground leading-tight text-center max-w-[80px]">
+                  {rcsLabel}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Review stars */}
@@ -268,35 +281,42 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             </div>
           )}
 
-          {/* Meta row */}
-          <div className="flex items-center gap-3 mt-2">
+          {/* Stats row */}
+          <div className="grid grid-cols-4 gap-1.5 mt-2.5 rounded-lg border border-border px-2 py-2">
             {agent.responseTime && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                {agent.responseTime}
-              </span>
+              <div className="flex flex-col items-center text-center">
+                <Clock className="w-3 h-3 text-muted-foreground mb-0.5" />
+                <span className="text-[11px] font-semibold">{agent.responseTime}</span>
+                <span className="text-[9px] text-muted-foreground">Response</span>
+              </div>
             )}
             {agent.closedReferrals != null && agent.closedReferrals > 0 && (
-              <span className="text-[11px] text-emerald-500 font-semibold">
-                {agent.closedReferrals} closed
-              </span>
+              <div className="flex flex-col items-center text-center">
+                <Handshake className="w-3 h-3 text-emerald-500 mb-0.5" />
+                <span className="text-[11px] font-semibold text-emerald-500">{agent.closedReferrals}</span>
+                <span className="text-[9px] text-muted-foreground">Closed</span>
+              </div>
             )}
-            <span className="text-[11px] text-muted-foreground">
-              {agent.dealsPerYear} deals/yr
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {formatCurrency(agent.avgSalePrice)} avg
-            </span>
+            <div className="flex flex-col items-center text-center">
+              <span className="text-[11px] font-semibold">{agent.dealsPerYear}</span>
+              <span className="text-[9px] text-muted-foreground">Deals/yr</span>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <span className="text-[11px] font-semibold">{formatCurrency(agent.avgSalePrice)}</span>
+              <span className="text-[9px] text-muted-foreground">Avg Price</span>
+            </div>
             {agent.yearsLicensed > 0 && (
-              <span className="text-[11px] text-muted-foreground">
-                {agent.yearsLicensed} yrs licensed
-              </span>
+              <div className="flex flex-col items-center text-center">
+                <span className="text-[11px] font-semibold">{agent.yearsLicensed} yrs</span>
+                <span className="text-[9px] text-muted-foreground">Licensed</span>
+              </div>
             )}
             {networkSize > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Users className="w-3 h-3" />
-                {networkSize} partners
-              </span>
+              <div className="flex flex-col items-center text-center">
+                <Users className="w-3 h-3 text-muted-foreground mb-0.5" />
+                <span className="text-[11px] font-semibold">{networkSize}</span>
+                <span className="text-[9px] text-muted-foreground">Partners</span>
+              </div>
             )}
           </div>
 

@@ -19,7 +19,6 @@ import {
   Send,
   Users,
   MessageCircle,
-  MessageSquareMore,
   MapPin,
   Building2,
   ArrowLeft,
@@ -30,7 +29,7 @@ import {
 import Link from 'next/link'
 import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
-import { getCommScore, getCommScoreColor } from '@/data/communication-score'
+import { getCommScore } from '@/data/communication-score'
 import { getVerifiedCount } from '@/data/verified-referrals'
 import { getEndorsementCount, getTopEndorsements, ENDORSEMENT_ICONS } from '@/data/endorsements'
 import { getVideoIntro, getPublicInterviews } from '@/data/video-intros'
@@ -116,82 +115,131 @@ export default async function AgentProfilePage({ params }: PageProps) {
             </div>
 
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">
-                {agent.name}
-              </h1>
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div className="flex-1">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">
+                    {agent.name}
+                  </h1>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm text-muted-foreground mb-3">
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5" />
-                  {agent.brokerage}
-                </span>
-                <span className="hidden sm:inline text-border">|</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {agent.area}
-                </span>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm text-muted-foreground mb-3">
+                    <span className="flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5" />
+                      {agent.brokerage}
+                    </span>
+                    <span className="hidden sm:inline text-border">|</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {agent.area}
+                    </span>
+                  </div>
+                </div>
+
+                {/* RCS Hero Score */}
+                {commScore && (
+                  <div className="flex flex-col items-center shrink-0">
+                    <div
+                      className={`relative w-[68px] h-[68px] rounded-full flex items-center justify-center font-extrabold text-2xl ${
+                        commScore.overall >= 90
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : commScore.overall >= 70
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-red-600 dark:text-red-400'
+                      }`}
+                      style={{
+                        background: `conic-gradient(${
+                          commScore.overall >= 90 ? '#10b981' : commScore.overall >= 70 ? '#f59e0b' : '#ef4444'
+                        } ${commScore.overall * 3.6}deg, transparent ${commScore.overall * 3.6}deg)`,
+                      }}
+                    >
+                      <div className="absolute inset-[4px] rounded-full bg-background flex items-center justify-center">
+                        {commScore.overall}
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-semibold mt-1.5 ${
+                      commScore.overall >= 90
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : commScore.overall >= 70
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {commScore.overall >= 90 ? 'Excellent' : commScore.overall >= 70 ? 'Good' : 'Needs Improvement'}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Referral Comm Score</span>
+                  </div>
+                )}
               </div>
 
+              {/* RCS Mini Breakdown */}
+              {commScore && (
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-[11px] text-muted-foreground mb-3">
+                  {([
+                    { label: 'Pipeline', value: commScore.pipelineActivity },
+                    { label: 'Messages', value: commScore.messageFrequency },
+                    { label: 'Response', value: commScore.responseTime },
+                    { label: 'Check-ins', value: commScore.checkInConsistency },
+                  ] as const).map((item) => (
+                    <span key={item.label} className="flex items-center gap-1">
+                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${
+                        item.value >= 90 ? 'bg-emerald-500' : item.value >= 70 ? 'bg-amber-500' : 'bg-red-500'
+                      }`} />
+                      {item.label}: {item.value}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Badges row */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
                 {/* Status badge */}
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <BadgeCheck className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <BadgeCheck className="w-3 h-3" />
                   {agent.status === 'active' ? 'Active' : 'Invited'}
                 </span>
 
                 {/* Elite badge */}
                 {isElite && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    <ShieldCheck className="w-3 h-3" />
                     Verified Elite
                   </span>
                 )}
 
                 {/* Mentor badge */}
                 {mentorProfile?.available && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                    <GraduationCap className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    <GraduationCap className="w-3 h-3" />
                     Mentor
                   </span>
                 )}
 
                 {/* Verified Referrals badge */}
                 {verifiedRefCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <BadgeCheck className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <BadgeCheck className="w-3 h-3" />
                     {verifiedRefCount} Verified Referral{verifiedRefCount !== 1 ? 's' : ''}
-                  </span>
-                )}
-
-                {/* RCS */}
-                {agent.rcsScore && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    <Zap className="w-3.5 h-3.5" />
-                    RCS: {agent.rcsScore}
                   </span>
                 )}
 
                 {/* Star rating */}
                 {stats && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-card border border-border">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-card border border-border">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                     {stats.avgRating} ({stats.count} review{stats.count !== 1 ? 's' : ''})
                   </span>
                 )}
 
                 {/* Response time */}
                 {agent.responseTime && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-card border border-border text-muted-foreground">
+                    <Clock className="w-3 h-3" />
                     {agent.responseTime}
                   </span>
                 )}
 
                 {/* Endorsements badge */}
                 {endorsementCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
-                    <ThumbsUp className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                    <ThumbsUp className="w-3 h-3" />
                     {endorsementCount} Endorsement{endorsementCount !== 1 ? 's' : ''}
                     {topEndorsements.length > 0 && (
                       <span className="ml-0.5">
@@ -203,8 +251,8 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
                 {/* Video intro badge */}
                 {videoIntro && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                    <Video className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    <Video className="w-3 h-3" />
                     Video Intro
                   </span>
                 )}
@@ -216,7 +264,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-8 sm:space-y-10">
         {/* ═══ QUICK STATS ═══ */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {[
             {
               icon: Home,
@@ -253,13 +301,6 @@ export default async function AgentProfilePage({ params }: PageProps) {
               color: 'text-primary',
               sublabel: undefined as string | undefined,
             },
-            {
-              icon: MessageSquareMore,
-              label: 'Comm Score',
-              value: commScore ? commScore.overall.toString() : '—',
-              color: commScore ? getCommScoreColor(commScore.overall).split(' ')[0] : 'text-muted-foreground',
-              sublabel: commScore?.label,
-            },
             ...(verifiedRefCount > 0 ? [{
               icon: BadgeCheck,
               label: 'Verified Referrals',
@@ -277,11 +318,11 @@ export default async function AgentProfilePage({ params }: PageProps) {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="p-4 rounded-xl border border-border bg-card text-center"
+              className="p-3 rounded-lg border border-border bg-card text-center"
             >
-              <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
-              <div className="text-lg sm:text-2xl font-extrabold">{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+              <stat.icon className={`w-4 h-4 ${stat.color} mx-auto mb-1.5`} />
+              <div className="text-base sm:text-xl font-extrabold">{stat.value}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</div>
               {stat.sublabel && (
                 <div className="text-[10px] text-muted-foreground mt-0.5">{stat.sublabel}</div>
               )}
