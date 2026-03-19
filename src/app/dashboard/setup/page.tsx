@@ -48,6 +48,9 @@ export default function SetupPage() {
   const radiusCircleRef = useRef<L.Circle | null>(null)
   const [leafletReady, setLeafletReady] = useState(false)
 
+  // Territory mode tabs
+  const [territoryMode, setTerritoryMode] = useState<'city' | 'county' | 'zip' | 'radius'>('city')
+
   // Radius picker
   const [radiusMode, setRadiusMode] = useState(false)
   const [radiusMiles, setRadiusMiles] = useState(25)
@@ -481,9 +484,11 @@ export default function SetupPage() {
 
   // Sync radius mode to DOM for the map click handler
   useEffect(() => {
-    document.body.dataset.radiusMode = radiusMode ? 'true' : 'false'
+    const isRadius = territoryMode === 'radius'
+    document.body.dataset.radiusMode = isRadius ? 'true' : 'false'
     document.body.dataset.radiusMiles = String(radiusMiles)
-  }, [radiusMode, radiusMiles])
+    setRadiusMode(isRadius)
+  }, [territoryMode, radiusMiles])
 
   // Re-run radius search when miles changes and we have a center point
   const radiusMilesRef = useRef(radiusMiles)
@@ -760,181 +765,210 @@ export default function SetupPage() {
       {currentStep === 1 && (<>
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-6 pb-4 w-full flex flex-col h-full">
-          <div className="mb-6">
+          <div className="mb-4">
             <h1 className="text-2xl font-bold">Define Your Service Area</h1>
             <p className="text-muted-foreground mt-1">
-              Type a city, county, or zip code to add your service area. You can also use the radius tool or click the map directly.
+              Choose how you want to define your territory, then use the map to refine.
             </p>
           </div>
 
-          {/* Input */}
-          <div className="flex gap-2 mb-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={zipInput}
-                onChange={(e) => {
-                  setZipInput(e.target.value)
+          {/* Mode tabs */}
+          <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border mb-4 w-fit">
+            {([
+              { key: 'city', label: 'City', icon: Search },
+              { key: 'county', label: 'County', icon: MapPin },
+              { key: 'zip', label: 'Zip Code', icon: MapPin },
+              { key: 'radius', label: 'Radius', icon: MapPin },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setTerritoryMode(key)
+                  setZipInput('')
                   setZipError('')
-                  fetchSuggestions(e.target.value)
+                  setSuggestions([])
+                  setShowSuggestions(false)
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setShowSuggestions(false)
-                    handleAddZip()
-                  }
-                  if (e.key === 'Escape') setShowSuggestions(false)
-                }}
-                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
-                onBlur={() => { setTimeout(() => setShowSuggestions(false), 200) }}
-                placeholder="City, county, or zip code (e.g. Austin TX, Travis County, 78734)"
-                className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-              {/* Autocomplete dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
-                  {suggestions.map((s, i) => (
-                    <button
-                      key={`${s.label}-${i}`}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={async () => {
-                        setShowSuggestions(false)
-                        setSuggestions([])
-
-                        // If it's a county, use dedicated county-zips API
-                        if (s.subtitle === 'County' && s.county && s.state) {
-                          setZipInput('')
-                          setZipLoading(true)
-                          try {
-                            const res = await fetch(`/api/geocode/county-zips?county=${encodeURIComponent(s.county)}&state=${encodeURIComponent(s.state)}`)
-                            const data = await res.json()
-                            if (data.zips?.length > 0) {
-                              // Fetch boundaries in parallel
-                              const newZips = data.zips.filter((z: string) => !zipBoundariesRef.current.has(z))
-                              for (let i = 0; i < newZips.length; i += 10) {
-                                const batch = newZips.slice(i, i + 10)
-                                const results = await Promise.all(batch.map((z: string) => getZipBoundary(z)))
-                                results.forEach((ring: [number, number][] | null, idx: number) => {
-                                  if (ring) zipBoundariesRef.current.set(batch[idx], ring)
-                                })
-                              }
-                              setSelectedZips((prev) => {
-                                const combined = new Set([...prev, ...data.zips])
-                                return Array.from(combined).slice(0, 100)
-                              })
-                              if (mapInstance.current) {
-                                mapInstance.current.setView([s.lat, s.lng], 9, { animate: true })
-                              }
-                            }
-                          } catch {
-                            setZipError('Failed to load county zip codes.')
-                          }
-                          setZipLoading(false)
-                        } else {
-                          // City: use geocode grid approach
-                          setZipInput(s.label)
-                          setTimeout(() => handleAddZip(), 50)
-                        }
-                      }}
-                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center gap-2 border-b border-border last:border-b-0"
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      <span className="truncate">{s.label}</span>
-                      {s.subtitle && <span className="text-xs text-muted-foreground shrink-0">{s.subtitle}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleAddZip}
-              disabled={zipLoading || !zipInput.trim()}
-              className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
-            >
-              {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-            </button>
-            <span className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
-              {selectedZips.length}/100
-            </span>
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  territoryMode === key
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* Radius picker toggle */}
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => {
-                const entering = !radiusMode
-                setRadiusMode(entering)
-                if (entering && selectedZips.length > 0) {
-                  setSelectedZips([])
-                  radiusCenterRef.current = null
-                  if (radiusCircleRef.current && mapInstance.current) {
-                    mapInstance.current.removeLayer(radiusCircleRef.current)
-                    radiusCircleRef.current = null
-                  }
-                }
-              }}
-              className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all ${
-                radiusMode
-                  ? 'bg-primary/10 border-primary/30 text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <MapPin className="w-3 h-3" />
-              {radiusMode ? 'Radius Mode ON' : 'Select by Radius'}
-            </button>
-            {radiusMode && (
+          {/* Mode-specific input */}
+          {(territoryMode === 'city' || territoryMode === 'county') && (
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={zipInput}
+                  onChange={(e) => {
+                    setZipInput(e.target.value)
+                    setZipError('')
+                    fetchSuggestions(e.target.value)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setShowSuggestions(false)
+                      handleAddZip()
+                    }
+                    if (e.key === 'Escape') setShowSuggestions(false)
+                  }}
+                  onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+                  onBlur={() => { setTimeout(() => setShowSuggestions(false), 200) }}
+                  placeholder={territoryMode === 'city' ? 'Enter a city name (e.g. Austin, TX)' : 'Enter a county name (e.g. Travis County, TX)'}
+                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                {/* Autocomplete dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                    {suggestions
+                      .filter((s) => territoryMode === 'county' ? s.subtitle === 'County' : s.subtitle === 'City')
+                      .map((s, i) => (
+                      <button
+                        key={`${s.label}-${i}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={async () => {
+                          setShowSuggestions(false)
+                          setSuggestions([])
+
+                          if (s.subtitle === 'County' && s.county && s.state) {
+                            setZipInput('')
+                            setZipLoading(true)
+                            try {
+                              const res = await fetch(`/api/geocode/county-zips?county=${encodeURIComponent(s.county)}&state=${encodeURIComponent(s.state)}`)
+                              const data = await res.json()
+                              if (data.zips?.length > 0) {
+                                const newZips = data.zips.filter((z: string) => !zipBoundariesRef.current.has(z))
+                                for (let j = 0; j < newZips.length; j += 10) {
+                                  const batch = newZips.slice(j, j + 10)
+                                  const results = await Promise.all(batch.map((z: string) => getZipBoundary(z)))
+                                  results.forEach((ring: [number, number][] | null, idx: number) => {
+                                    if (ring) zipBoundariesRef.current.set(batch[idx], ring)
+                                  })
+                                }
+                                setSelectedZips((prev) => {
+                                  const combined = new Set([...prev, ...data.zips])
+                                  return Array.from(combined).slice(0, 100)
+                                })
+                                if (mapInstance.current) {
+                                  mapInstance.current.setView([s.lat, s.lng], 9, { animate: true })
+                                }
+                              }
+                            } catch {
+                              setZipError('Failed to load county zip codes.')
+                            }
+                            setZipLoading(false)
+                          } else {
+                            setZipInput(s.label)
+                            setTimeout(() => handleAddZip(), 50)
+                          }
+                        }}
+                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center gap-2 border-b border-border last:border-b-0"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{s.label}</span>
+                        {s.subtitle && <span className="text-xs text-muted-foreground shrink-0">{s.subtitle}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleAddZip}
+                disabled={zipLoading || !zipInput.trim()}
+                className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
+              >
+                {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+              </button>
+            </div>
+          )}
+
+          {territoryMode === 'zip' && (
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={zipInput}
+                  onChange={(e) => { setZipInput(e.target.value); setZipError('') }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddZip()}
+                  placeholder="Enter zip code (e.g. 78734)"
+                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <button
+                onClick={handleAddZip}
+                disabled={zipLoading || !zipInput.trim()}
+                className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
+              >
+                {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+              </button>
+              <p className="flex items-center text-xs text-muted-foreground">
+                or click on the map to add zip codes
+              </p>
+            </div>
+          )}
+
+          {territoryMode === 'radius' && (
+            <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Radius:</span>
+                <span className="text-sm font-medium">Radius:</span>
                 {[10, 25, 50].map((mi) => (
                   <button
                     key={mi}
                     onClick={() => setRadiusMiles(mi)}
-                    className={`h-7 px-2.5 rounded-md text-xs font-semibold transition-all ${
+                    className={`h-8 px-3 rounded-lg text-sm font-semibold transition-all ${
                       radiusMiles === mi ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {mi}mi
+                    {mi} mi
                   </button>
                 ))}
-                <span className="text-xs text-muted-foreground">— click the map to set center</span>
               </div>
-            )}
-            {radiusLoading && (
-              <div className="flex items-center gap-1.5 text-xs text-primary">
-                <Loader2 className="w-3 h-3 animate-spin" /> Finding zip codes...
-              </div>
-            )}
-          </div>
+              <span className="text-xs text-muted-foreground">Click the map to set your center point</span>
+              {radiusLoading && (
+                <div className="flex items-center gap-1.5 text-xs text-primary">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Finding zip codes...
+                </div>
+              )}
+            </div>
+          )}
 
           {zipError && <p className="text-sm text-destructive mb-3">{zipError}</p>}
 
-          <p className="text-xs text-muted-foreground mb-2">
-            <MapPin className="w-3 h-3 inline mr-1" />
-            Click on the map to add zip codes, or type them above.
-          </p>
-
-          {selectedZips.length > 0 && (
-            <div className="mb-3 flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                <MapPin className="w-3.5 h-3.5 text-primary" />
-                <span className="text-sm font-semibold text-primary">{selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}</span>
+          {/* Zip count + clear */}
+          <div className="flex items-center justify-between mb-2">
+            {selectedZips.length > 0 ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-sm font-semibold text-primary">{selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedZips([])
+                    radiusCenterRef.current = null
+                    if (radiusCircleRef.current && mapInstance.current) {
+                      mapInstance.current.removeLayer(radiusCircleRef.current)
+                      radiusCircleRef.current = null
+                    }
+                  }}
+                  className="text-xs text-destructive hover:text-destructive/80 font-medium"
+                >
+                  Clear all
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setSelectedZips([])
-                  radiusCenterRef.current = null
-                  if (radiusCircleRef.current && mapInstance.current) {
-                    mapInstance.current.removeLayer(radiusCircleRef.current)
-                    radiusCircleRef.current = null
-                  }
-                }}
-                className="text-xs text-destructive hover:text-destructive/80 font-medium"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-muted-foreground">{selectedZips.length}/100 zip codes</span>
+            )}
+          </div>
 
           {/* Map */}
           <div
