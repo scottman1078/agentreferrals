@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function processInvitePartnership(
   supabase: any,
-  profile: { id: string; email: string; full_name?: string; primary_area?: string; brokerage_id?: string }
+  profile: { id: string; email: string; full_name?: string; primary_area?: string; brokerage_id?: string; subscription_tier?: string }
 ) {
   // Look for pending or signed_up invites matching this user's email
   const { data: invites, error: inviteError } = await supabase
@@ -170,20 +170,30 @@ async function processInvitePartnership(
         })
         .eq('id', invite.id)
 
-      // Create affiliate reward for the inviter ($10 per successful invite)
+      // Create affiliate reward for the inviter (10% subscription discount per invite)
+      // If the invitee has a paid subscription, reward is 'earned' immediately.
+      // If on the free tier, reward is 'pending' until they upgrade.
+      const inviteeIsPaid =
+        profile.subscription_tier && profile.subscription_tier !== 'free'
+          ? true
+          : false
+      const rewardStatus = inviteeIsPaid ? 'earned' : 'pending'
+
       await supabase
         .from('ar_affiliate_rewards')
         .insert({
           user_id: invite.invited_by,
           invite_id: invite.id,
-          reward_type: 'cash_back',
+          reward_type: 'subscription_discount',
           amount: 10.00,
-          status: 'earned',
-          earned_at: new Date().toISOString(),
+          status: rewardStatus,
+          earned_at: inviteeIsPaid ? new Date().toISOString() : null,
         })
         .then(({ error: rewardError }: { error: { message: string } | null }) => {
           if (rewardError) {
             console.error('[onboarding/save] Affiliate reward insert failed:', rewardError.message)
+          } else {
+            console.log(`[onboarding/save] Affiliate reward created: status=${rewardStatus} for inviter=${invite.invited_by}`)
           }
         })
 

@@ -54,7 +54,7 @@ export interface ArProfile {
   license_expiration: string | null
   license_type: string | null
   territory_meta: { mode: string; selections: string[] } | null
-  setup_step: string | null  // 'intake' | 'service_area' | 'invites' | 'complete' | null
+  setup_step: string | null  // 'intake' | 'profile' | 'service_area' | 'invites' | 'complete' | null
   setup_completed_at: string | null
   created_at: string
   updated_at: string

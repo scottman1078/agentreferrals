@@ -9,6 +9,7 @@ import {
   MapPin, Users, Check, ChevronRight, ChevronLeft, Plus, X, Mail, Sparkles,
   Loader2, Search, Gift, Copy, Link2, ArrowUpRight, TrendingUp, MessageSquare,
   Clock, BarChart3, CheckCircle2, LogOut, Smartphone, Download, QrCode,
+  User, Pencil, Camera, Briefcase, Award, Upload, FileText, ClipboardPaste, ContactRound,
 } from 'lucide-react'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -17,7 +18,7 @@ import type { OnboardingData, PastReferralEntry } from '@/types/onboarding'
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
-const STEPS = ['Intake', 'Service Area', 'Invite Network', 'Done'] as const
+const STEPS = ['Intake', 'Profile', 'Service Area', 'Invite Network', 'Done'] as const
 
 export default function SetupPage() {
   const router = useRouter()
@@ -66,8 +67,18 @@ export default function SetupPage() {
   const [sendingInvites, setSendingInvites] = useState(false)
   const [inviteError, setInviteError] = useState('')
 
+  // Step 2: Import contacts (CSV / paste)
+  const [importMode, setImportMode] = useState<'csv' | 'paste' | null>(null)
+  const [csvParsedEmails, setCsvParsedEmails] = useState<{ email: string; selected: boolean }[]>([])
+  const [csvFileName, setCsvFileName] = useState('')
+  const [pasteText, setPasteText] = useState('')
+  const [bulkSending, setBulkSending] = useState(false)
+  const [bulkResult, setBulkResult] = useState<{ sent: number; skipped: number; errors: number } | null>(null)
+  const csvInputRef = useRef<HTMLInputElement>(null)
+
   // Step 2: Past referrals
   const [pastReferrals, setPastReferrals] = useState<PastReferralEntry[]>([])
+  const [referralVerifyStatus, setReferralVerifyStatus] = useState<Record<number, 'sending' | 'sent' | 'error'>>({})
   const [prDirection, setPrDirection] = useState<'sent' | 'received'>('sent')
   const [prPartnerName, setPrPartnerName] = useState('')
   const [prPartnerEmail, setPrPartnerEmail] = useState('')
@@ -76,7 +87,20 @@ export default function SetupPage() {
   const [prCloseYear, setPrCloseYear] = useState<number | null>(null)
   const [showPastReferralForm, setShowPastReferralForm] = useState(false)
 
-  // Step 2: Affiliate
+  // Step 1: Profile Builder
+  const [profileBuilderLoading, setProfileBuilderLoading] = useState(false)
+  const [proposedBio, setProposedBio] = useState('')
+  const [proposedSpecializations, setProposedSpecializations] = useState<string[]>([])
+  const [proposedDealsPerYear, setProposedDealsPerYear] = useState<number | null>(null)
+  const [proposedAnnualVolume, setProposedAnnualVolume] = useState<string | null>(null)
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
+  const [editingBio, setEditingBio] = useState(false)
+  const [editingSpecs, setEditingSpecs] = useState(false)
+  const [editingVolume, setEditingVolume] = useState(false)
+  const [profileBuilderReady, setProfileBuilderReady] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+
+  // Step 3: Affiliate
   const [affiliateData, setAffiliateData] = useState<{
     referralCode: string | null
     summary: { totalEarned: number; count: number }
@@ -126,11 +150,17 @@ export default function SetupPage() {
 
     if (step === 'complete') {
       router.push('/dashboard')
-    } else if (step === 'invites' || step === 'service_area') {
-      // Already did intake + service area → go to invites
+    } else if (step === 'invites') {
+      // Already did intake + profile + service area → go to invites
+      setCurrentStep(3)
+    } else if (step === 'service_area') {
+      // Already did intake + profile + service area → go to invites
+      setCurrentStep(3)
+    } else if (step === 'profile') {
+      // Completed intake + profile → go to service area
       setCurrentStep(2)
     } else if (step === 'intake') {
-      // Completed intake → go to service area
+      // Completed intake → go to profile builder
       setCurrentStep(1)
     } else {
       // Not started or no profile → start at intake
@@ -148,9 +178,9 @@ export default function SetupPage() {
     }).catch(() => {})
   }, [profile?.id])
 
-  // Fetch affiliate data and invite codes when reaching step 2
+  // Fetch affiliate data and invite codes when reaching step 3 (Invite Network)
   useEffect(() => {
-    if (currentStep !== 2 || !profile?.id) return
+    if (currentStep !== 3 || !profile?.id) return
     fetch(`/api/affiliate/rewards?userId=${profile.id}`)
       .then((r) => r.json())
       .then((data) => {
@@ -179,9 +209,9 @@ export default function SetupPage() {
     })
   }, [])
 
-  // Initialize map when step 1 is active
+  // Initialize map when step 2 (Service Area) is active
   useEffect(() => {
-    if (currentStep !== 1) return
+    if (currentStep !== 2) return
     if (!leafletReady || !L || !mapRef.current || mapInstance.current) return
 
     if (!document.querySelector('link[href*="leaflet@1.9.4"]')) {
@@ -654,7 +684,7 @@ export default function SetupPage() {
 
       saveStepProgress('service_area')
       await refreshProfile()
-      setCurrentStep(2)
+      setCurrentStep(3)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
     } finally {
@@ -699,8 +729,95 @@ export default function SetupPage() {
     }
   }, [emails, profile?.id, profile?.full_name])
 
-  // Add past referral
-  const handleAddPastReferral = useCallback(() => {
+  // CSV file upload handler
+  const handleCsvUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCsvFileName(file.name)
+    setBulkResult(null)
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string
+      if (!text) return
+      const lines = text.split(/\r?\n/).filter(Boolean)
+      if (lines.length === 0) return
+      const header = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/['"]/g, ''))
+      const emailColNames = ['email', 'e-mail', 'email_address', 'emailaddress', 'mail', 'email address']
+      let emailIdx = header.findIndex((h) => emailColNames.includes(h))
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (emailIdx === -1) {
+        for (let ci = 0; ci < header.length; ci++) {
+          if (emailRegex.test(header[ci])) { emailIdx = ci; break }
+        }
+      }
+      const found: string[] = []
+      const startRow = emailIdx !== -1 && !emailRegex.test(header[emailIdx]) ? 1 : 0
+      if (emailIdx === -1) emailIdx = 0
+      for (let i = startRow; i < lines.length; i++) {
+        const cols = lines[i].split(',').map((c) => c.trim().replace(/['"]/g, ''))
+        const candidate = cols[emailIdx]?.toLowerCase()
+        if (candidate && emailRegex.test(candidate)) {
+          found.push(candidate)
+        } else {
+          for (const col of cols) {
+            const cleaned = col.toLowerCase().trim()
+            if (emailRegex.test(cleaned)) { found.push(cleaned); break }
+          }
+        }
+      }
+      const unique = [...new Set(found)]
+      setCsvParsedEmails(unique.map((em) => ({ email: em, selected: true })))
+      setImportMode('csv')
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }, [])
+
+  // Parse pasted emails
+  const handleParsePaste = useCallback(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const parsed = pasteText.split(/[\n,;]+/).map((l) => l.trim().toLowerCase()).filter((l) => emailRegex.test(l))
+    const unique = [...new Set(parsed)]
+    setCsvParsedEmails(unique.map((em) => ({ email: em, selected: true })))
+    setBulkResult(null)
+  }, [pasteText])
+
+  // Toggle selection of a parsed email
+  const toggleCsvEmail = useCallback((idx: number) => {
+    setCsvParsedEmails((prev) => prev.map((item, i) => i === idx ? { ...item, selected: !item.selected } : item))
+  }, [])
+
+  // Select/deselect all parsed emails
+  const toggleAllCsvEmails = useCallback((selected: boolean) => {
+    setCsvParsedEmails((prev) => prev.map((item) => ({ ...item, selected })))
+  }, [])
+
+  // Send bulk invites via /api/invites/bulk
+  const handleBulkSend = useCallback(async () => {
+    const selectedEmails = csvParsedEmails.filter((e) => e.selected).map((e) => e.email)
+    if (selectedEmails.length === 0) return
+    setBulkSending(true)
+    setBulkResult(null)
+    try {
+      const res = await fetch('/api/invites/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profile?.id, userName: profile?.full_name, emails: selectedEmails }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invites')
+      setBulkResult({ sent: data.sent, skipped: data.skipped, errors: data.errors })
+      setCsvParsedEmails([])
+      setPasteText('')
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to send bulk invites.')
+    } finally {
+      setBulkSending(false)
+    }
+  }, [csvParsedEmails, profile?.id, profile?.full_name])
+
+  // Add past referral and send verification
+  const handleAddPastReferral = useCallback(async () => {
     if (!prPartnerName || !prPartnerEmail) return
 
     const entry: PastReferralEntry = {
@@ -712,6 +829,7 @@ export default function SetupPage() {
       closeYear: prCloseYear ?? 2026,
     }
 
+    const newIndex = pastReferrals.length
     setPastReferrals((prev) => [...prev, entry])
     setPrDirection('sent')
     setPrPartnerName('')
@@ -720,7 +838,36 @@ export default function SetupPage() {
     setPrSalePrice(null)
     setPrCloseYear(null)
     setShowPastReferralForm(false)
-  }, [prDirection, prPartnerName, prPartnerEmail, prMarket, prSalePrice, prCloseYear])
+
+    // Send verification email via API
+    if (userId) {
+      setReferralVerifyStatus((prev) => ({ ...prev, [newIndex]: 'sending' }))
+      try {
+        const res = await fetch('/api/referrals/verify/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            referral: {
+              partnerName: entry.partnerName,
+              partnerEmail: entry.partnerEmail,
+              direction: entry.direction,
+              market: entry.market,
+              salePrice: entry.salePrice,
+              closeYear: entry.closeYear,
+            },
+          }),
+        })
+        if (res.ok) {
+          setReferralVerifyStatus((prev) => ({ ...prev, [newIndex]: 'sent' }))
+        } else {
+          setReferralVerifyStatus((prev) => ({ ...prev, [newIndex]: 'error' }))
+        }
+      } catch {
+        setReferralVerifyStatus((prev) => ({ ...prev, [newIndex]: 'error' }))
+      }
+    }
+  }, [prDirection, prPartnerName, prPartnerEmail, prMarket, prSalePrice, prCloseYear, pastReferrals.length, userId])
 
   // Copy affiliate link
   const handleCopyLink = useCallback(() => {
@@ -733,12 +880,106 @@ export default function SetupPage() {
     })
   }, [affiliateData.referralCode, profile?.referral_code, inviteCodes])
 
-  // NORA complete handler
+  // NORA complete handler — advance to Profile Builder
   const handleNoraComplete = useCallback(async () => {
     saveStepProgress('intake')
     await refreshProfile()
     setCurrentStep(1)
   }, [refreshProfile, saveStepProgress])
+
+  // Profile Builder: fetch proposed profile when step 1 is active
+  useEffect(() => {
+    if (currentStep !== 1 || !profile?.id) return
+    if (profileBuilderReady) return // already loaded
+
+    setProfileBuilderLoading(true)
+
+    const fetchProposedProfile = async () => {
+      try {
+        // Get brokerage name for the search
+        let brokerageName = ''
+        if (profile.brokerage) {
+          brokerageName = (profile.brokerage as { name?: string })?.name || ''
+        }
+
+        const res = await fetch('/api/profile-builder/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: profile.full_name,
+            licenseNumber: profile.license_number,
+            primaryArea: profile.primary_area,
+            brokerage: brokerageName,
+            yearsLicensed: profile.years_licensed,
+            specializations: profile.tags || [],
+            dealsPerYear: profile.deals_per_year,
+            avgSalePrice: profile.avg_sale_price,
+          }),
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setProposedBio(data.bio || '')
+          setProposedSpecializations(data.specializations || profile.tags || [])
+          setProposedDealsPerYear(data.estimatedDealsPerYear || profile.deals_per_year || null)
+          setProposedAnnualVolume(data.estimatedAnnualVolume || null)
+          setProfilePhotoUrl(profile.avatar_url || null)
+        } else {
+          // Fallback: use existing profile data
+          setProposedBio(profile.bio || '')
+          setProposedSpecializations(profile.tags || [])
+          setProposedDealsPerYear(profile.deals_per_year || null)
+          setProfilePhotoUrl(profile.avatar_url || null)
+        }
+      } catch {
+        // Fallback
+        setProposedBio(profile.bio || '')
+        setProposedSpecializations(profile.tags || [])
+        setProposedDealsPerYear(profile.deals_per_year || null)
+        setProfilePhotoUrl(profile.avatar_url || null)
+      } finally {
+        setProfileBuilderLoading(false)
+        setProfileBuilderReady(true)
+      }
+    }
+
+    fetchProposedProfile()
+  }, [currentStep, profile, profileBuilderReady])
+
+  // Save profile builder data and advance to Service Area
+  const handleProfileAccept = useCallback(async () => {
+    if (!profile?.id) return
+    setProfileSaving(true)
+
+    try {
+      const res = await fetch('/api/onboarding/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profile: {
+            id: profile.id,
+            bio: proposedBio,
+            tags: proposedSpecializations,
+            deals_per_year: proposedDealsPerYear,
+            avatar_url: profilePhotoUrl,
+          },
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to save profile')
+      }
+
+      saveStepProgress('profile')
+      await refreshProfile()
+      setCurrentStep(2)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save profile.')
+    } finally {
+      setProfileSaving(false)
+    }
+  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, saveStepProgress, refreshProfile])
 
   const handleComplete = useCallback(async () => {
     localStorage.setItem('ar_setup_wizard_completed', 'true')
@@ -768,21 +1009,19 @@ export default function SetupPage() {
             </div>
             <span className="font-extrabold text-lg hidden sm:block">Agent<span className="text-primary">Referrals</span></span>
           </div>
-          {/* Step indicator */}
-          <div className="flex items-center gap-2">
+          {/* Step indicator — compact */}
+          <div className="flex items-center gap-1">
             {STEPS.map((label, i) => (
-              <div key={label} className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                    i < currentStep ? 'bg-green-500 text-white' : i === currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {i < currentStep ? <Check className="w-3 h-3" /> : i + 1}
-                  </div>
-                  <span className={`text-xs font-medium hidden sm:block ${
-                    i === currentStep ? 'text-foreground' : 'text-muted-foreground'
-                  }`}>{label}</span>
+              <div key={label} className="flex items-center gap-1">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  i < currentStep ? 'bg-green-500 text-white' : i === currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {i < currentStep ? <Check className="w-3 h-3" /> : i + 1}
                 </div>
-                {i < STEPS.length - 1 && <div className={`w-8 h-px ${i < currentStep ? 'bg-green-500' : 'bg-border'}`} />}
+                <span className={`text-[11px] font-medium hidden lg:block ${
+                  i === currentStep ? 'text-foreground' : 'text-muted-foreground'
+                }`}>{label}</span>
+                {i < STEPS.length - 1 && <div className={`w-4 lg:w-6 h-px ${i < currentStep ? 'bg-green-500' : 'bg-border'}`} />}
               </div>
             ))}
           </div>
@@ -821,8 +1060,233 @@ export default function SetupPage() {
         </div>
       )}
 
-      {/* Step 1: Service Area */}
-      {currentStep === 1 && (<>
+      {/* Step 1: Profile Builder */}
+      {currentStep === 1 && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-6 py-8 w-full">
+            {profileBuilderLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                  <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-amber-500 animate-pulse" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">Building your profile...</h2>
+                <p className="text-muted-foreground text-sm text-center max-w-md">
+                  We&apos;re creating a professional profile based on your information. This will only take a moment.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold">Your Agent Profile</h1>
+                  <p className="text-muted-foreground mt-1">
+                    We&apos;ve built a profile based on your intake. Review and edit anything before continuing.
+                  </p>
+                </div>
+
+                {/* Profile Card */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden mb-6">
+                  {/* Header with avatar */}
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 flex items-center gap-5">
+                    <div className="relative group">
+                      {profilePhotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={profilePhotoUrl}
+                          alt="Profile photo"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-muted border-2 border-white shadow-lg flex items-center justify-center">
+                          <User className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          // Future: implement photo upload
+                        }}
+                        className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        title="Upload photo"
+                      >
+                        <Camera className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-extrabold">{profile?.full_name || 'Agent'}</h2>
+                      {profile?.primary_area && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {profile.primary_area}
+                        </p>
+                      )}
+                      {profile?.brokerage && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                          <Briefcase className="w-3.5 h-3.5" />
+                          {(profile.brokerage as { name?: string })?.name || 'Brokerage'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="p-5 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bio</label>
+                      <button
+                        onClick={() => setEditingBio(!editingBio)}
+                        className="flex items-center gap-1 text-xs text-primary font-medium hover:text-primary/80"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        {editingBio ? 'Done' : 'Edit'}
+                      </button>
+                    </div>
+                    {editingBio ? (
+                      <textarea
+                        value={proposedBio}
+                        onChange={(e) => setProposedBio(e.target.value)}
+                        rows={4}
+                        className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                        placeholder="Write a short bio about yourself..."
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {proposedBio || <span className="text-muted-foreground italic">No bio yet. Click Edit to add one.</span>}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Specializations */}
+                  <div className="p-5 border-b border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Specializations</label>
+                      <button
+                        onClick={() => setEditingSpecs(!editingSpecs)}
+                        className="flex items-center gap-1 text-xs text-primary font-medium hover:text-primary/80"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        {editingSpecs ? 'Done' : 'Edit'}
+                      </button>
+                    </div>
+                    {editingSpecs ? (
+                      <div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {proposedSpecializations.map((spec, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              {spec}
+                              <button
+                                onClick={() => setProposedSpecializations(prev => prev.filter((_, idx) => idx !== i))}
+                                className="hover:text-destructive"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Luxury', 'First-Time Buyers', 'Relocation', 'Investment', 'New Construction', 'Condos', 'Commercial', 'Land', 'Vacation Homes', 'Waterfront'].filter(s => !proposedSpecializations.includes(s)).map((spec) => (
+                            <button
+                              key={spec}
+                              onClick={() => setProposedSpecializations(prev => [...prev, spec])}
+                              className="px-2.5 py-1 rounded-full border border-border text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              + {spec}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {proposedSpecializations.length > 0 ? (
+                          proposedSpecializations.map((spec, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              <Award className="w-3 h-3" />
+                              {spec}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm text-muted-foreground italic">No specializations yet. Click Edit to add some.</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="p-5 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deals/Year</span>
+                        <button
+                          onClick={() => setEditingVolume(!editingVolume)}
+                          className="text-primary hover:text-primary/80"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {editingVolume ? (
+                        <input
+                          type="number"
+                          value={proposedDealsPerYear ?? ''}
+                          onChange={(e) => setProposedDealsPerYear(e.target.value ? parseInt(e.target.value) : null)}
+                          className="w-full h-8 px-2 rounded border border-input bg-background text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder="e.g. 15"
+                        />
+                      ) : (
+                        <div className="text-lg font-extrabold">{proposedDealsPerYear ?? '\u2014'}</div>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">Est. Volume</span>
+                      <div className="text-lg font-extrabold">{proposedAnnualVolume ?? '\u2014'}</div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">Experience</span>
+                      <div className="text-lg font-extrabold">{profile?.years_licensed ? `${profile.years_licensed} yr${profile.years_licensed !== 1 ? 's' : ''}` : '\u2014'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Web search notice */}
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-6">
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    <Sparkles className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                    Profile generated from your intake data. Web search auto-fill coming soon &mdash; we&apos;ll find your reviews, headshot, and transaction history automatically.
+                  </p>
+                </div>
+
+                {saveError && <p className="text-sm text-destructive mb-3">{saveError}</p>}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setCurrentStep(0)}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Back
+                  </button>
+                  <button
+                    onClick={handleProfileAccept}
+                    disabled={profileSaving}
+                    className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-50"
+                  >
+                    {profileSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Looks Good <ChevronRight className="w-4 h-4" /></>}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Service Area */}
+      {currentStep === 2 && (<>
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-6 pb-4 w-full flex flex-col h-full">
           <div className="mb-4">
@@ -1075,7 +1539,7 @@ export default function SetupPage() {
         <div className="border-t border-border bg-card shrink-0">
           <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
             <button
-              onClick={() => setCurrentStep(0)}
+              onClick={() => setCurrentStep(1)}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ChevronLeft className="w-4 h-4" /> Back
@@ -1093,8 +1557,8 @@ export default function SetupPage() {
         </div>
       </>)}
 
-      {/* Step 2: Invite Network */}
-      {currentStep === 2 && (
+      {/* Step 3: Invite Network */}
+      {currentStep === 3 && (
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
           <div className="mb-6">
@@ -1111,9 +1575,9 @@ export default function SetupPage() {
                 <Gift className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold">Earn 10% Off for Every Agent Who Subscribes</h3>
+                <h3 className="text-sm font-bold">Earn 10% of Every Referral&apos;s Subscription</h3>
                 <p className="text-xs text-muted-foreground">
-                  When an agent you invite becomes a paid subscriber, you earn 10% off your subscription.
+                  When an agent you invite becomes a paid subscriber, you earn 10% of their subscription payment for up to 2 years.
                 </p>
               </div>
             </div>
@@ -1237,6 +1701,151 @@ export default function SetupPage() {
             )}
           </div>
 
+          {/* ── Import Contacts ── */}
+          <div className="mb-8">
+            <label className="text-sm font-medium mb-3 block">Import Contacts</label>
+
+            {/* Mode buttons */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => { setImportMode('csv'); setBulkResult(null) }}
+                className={`flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold transition-all ${
+                  importMode === 'csv'
+                    ? 'bg-primary/10 text-primary border border-primary/30'
+                    : 'border border-border bg-card hover:bg-accent'
+                }`}
+              >
+                <Upload className="w-4 h-4" /> Upload CSV
+              </button>
+              <button
+                onClick={() => { setImportMode('paste'); setBulkResult(null) }}
+                className={`flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold transition-all ${
+                  importMode === 'paste'
+                    ? 'bg-primary/10 text-primary border border-primary/30'
+                    : 'border border-border bg-card hover:bg-accent'
+                }`}
+              >
+                <ClipboardPaste className="w-4 h-4" /> Paste Emails
+              </button>
+              <div className="relative group">
+                <button
+                  disabled
+                  className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold border border-border bg-card text-muted-foreground opacity-60 cursor-not-allowed"
+                >
+                  <ContactRound className="w-4 h-4" /> Google Contacts
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                  Coming soon — import contacts directly from Gmail
+                </div>
+              </div>
+            </div>
+
+            {/* CSV upload */}
+            {importMode === 'csv' && (
+              <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                <input
+                  ref={csvInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => csvInputRef.current?.click()}
+                  className="flex items-center gap-2 h-10 px-5 rounded-lg border-2 border-dashed border-border hover:border-primary/50 text-sm font-medium text-muted-foreground hover:text-foreground transition-all w-full justify-center"
+                >
+                  <FileText className="w-4 h-4" />
+                  {csvFileName ? csvFileName : 'Choose a .csv file'}
+                </button>
+                <p className="text-xs text-muted-foreground">
+                  CSV should have a column named &quot;email&quot;, &quot;Email&quot;, &quot;e-mail&quot;, or &quot;email_address&quot;. Max 50 per batch.
+                </p>
+              </div>
+            )}
+
+            {/* Paste emails */}
+            {importMode === 'paste' && (
+              <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                <textarea
+                  value={pasteText}
+                  onChange={(e) => setPasteText(e.target.value)}
+                  placeholder={'Paste emails here, one per line:\nagent1@example.com\nagent2@example.com'}
+                  rows={5}
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                />
+                <button
+                  onClick={handleParsePaste}
+                  disabled={!pasteText.trim()}
+                  className="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-50"
+                >
+                  <Search className="w-4 h-4" /> Find Emails
+                </button>
+              </div>
+            )}
+
+            {/* Email preview with checkboxes */}
+            {csvParsedEmails.length > 0 && (
+              <div className="mt-3 p-4 rounded-xl border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {csvParsedEmails.filter((e) => e.selected).length} of {csvParsedEmails.length} emails selected
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toggleAllCsvEmails(true)}
+                      className="text-xs text-primary font-medium hover:text-primary/80"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      onClick={() => toggleAllCsvEmails(false)}
+                      className="text-xs text-muted-foreground font-medium hover:text-foreground"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {csvParsedEmails.map((item, i) => (
+                    <label
+                      key={i}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.selected}
+                        onChange={() => toggleCsvEmail(i)}
+                        className="rounded border-border"
+                      />
+                      <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{item.email}</span>
+                    </label>
+                  ))}
+                </div>
+                <button
+                  onClick={handleBulkSend}
+                  disabled={bulkSending || csvParsedEmails.filter((e) => e.selected).length === 0}
+                  className="flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-50"
+                >
+                  {bulkSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                  Send {csvParsedEmails.filter((e) => e.selected).length} Invite{csvParsedEmails.filter((e) => e.selected).length !== 1 ? 's' : ''}
+                </button>
+              </div>
+            )}
+
+            {/* Bulk result */}
+            {bulkResult && (
+              <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-sm font-medium text-emerald-700">
+                  <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                  {bulkResult.sent} invite{bulkResult.sent !== 1 ? 's' : ''} sent
+                  {bulkResult.skipped > 0 && <span className="text-muted-foreground"> &middot; {bulkResult.skipped} already invited</span>}
+                  {bulkResult.errors > 0 && <span className="text-destructive"> &middot; {bulkResult.errors} failed</span>}
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Past Referrals */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
@@ -1267,6 +1876,27 @@ export default function SetupPage() {
                         {ref.direction === 'sent' ? 'Sent' : 'Received'} &middot; {ref.market || 'Unknown market'} &middot; {ref.closeYear}
                       </div>
                     </div>
+                    {/* Verification status badge */}
+                    {referralVerifyStatus[i] === 'sending' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Sending...
+                      </span>
+                    )}
+                    {referralVerifyStatus[i] === 'sent' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        <Mail className="w-3 h-3" /> Verification sent
+                      </span>
+                    )}
+                    {referralVerifyStatus[i] === 'error' && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-500/10 px-2 py-0.5 rounded-full shrink-0">
+                        Pending verification
+                      </span>
+                    )}
+                    {!referralVerifyStatus[i] && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+                        <Clock className="w-3 h-3" /> Pending verification
+                      </span>
+                    )}
                     <button
                       onClick={() => setPastReferrals((prev) => prev.filter((_, idx) => idx !== i))}
                       className="text-muted-foreground hover:text-destructive"
@@ -1393,13 +2023,13 @@ export default function SetupPage() {
           {/* Actions */}
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setCurrentStep(1)}
+              onClick={() => setCurrentStep(2)}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <button
-              onClick={() => setCurrentStep(3)}
+              onClick={() => setCurrentStep(4)}
               className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
             >
               Continue <ChevronRight className="w-4 h-4" />
@@ -1409,8 +2039,8 @@ export default function SetupPage() {
         </div>
       )}
 
-      {/* Step 3: Done + RCS Introduction */}
-      {currentStep === 3 && (
+      {/* Step 4: Done + RCS Introduction */}
+      {currentStep === 4 && (
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
           <div className="text-center py-6">
@@ -1530,7 +2160,7 @@ export default function SetupPage() {
             <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mb-6">
               <Gift className="w-5 h-5 text-emerald-600 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">Share your invite link to earn 10% off per subscriber</p>
+                <p className="text-sm font-semibold">Share your invite link to earn 10% of their subscription</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {typeof window !== 'undefined' ? `${window.location.origin}/invite/${referralCode}` : `/invite/${referralCode}`}
                 </p>
