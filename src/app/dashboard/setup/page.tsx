@@ -167,17 +167,10 @@ export default function SetupPage() {
     renderZips()
   }, [selectedZips])
 
-  // Add zip via input
+  // Add zip code or resolve county/city name to zip codes
   const handleAddZip = useCallback(async () => {
-    const zip = zipInput.trim()
-    if (!/^\d{5}$/.test(zip)) {
-      setZipError('Enter a valid 5-digit zip code')
-      return
-    }
-    if (selectedZips.includes(zip)) {
-      setZipError('Already added')
-      return
-    }
+    const input = zipInput.trim()
+    if (!input) return
     if (selectedZips.length >= 30) {
       setZipError('Maximum 30 zip codes')
       return
@@ -185,22 +178,83 @@ export default function SetupPage() {
 
     setZipLoading(true)
     setZipError('')
-    const ring = await getZipBoundary(zip)
-    if (!ring) {
-      setZipError('Zip code not found')
+
+    // If it's a 5-digit zip code, add directly
+    if (/^\d{5}$/.test(input)) {
+      if (selectedZips.includes(input)) {
+        setZipError('Already added')
+        setZipLoading(false)
+        return
+      }
+      const ring = await getZipBoundary(input)
+      if (!ring) {
+        setZipError('Zip code not found')
+        setZipLoading(false)
+        return
+      }
+      zipBoundariesRef.current.set(input, ring)
+      setSelectedZips((prev) => [...prev, input])
+      setZipInput('')
       setZipLoading(false)
+      if (mapInstance.current) {
+        mapInstance.current.setView(getCentroid(ring), 10, { animate: true })
+      }
       return
     }
-    zipBoundariesRef.current.set(zip, ring)
-    setSelectedZips((prev) => [...prev, zip])
-    setZipInput('')
-    setZipLoading(false)
 
-    // Fly to new zip
-    if (mapInstance.current) {
-      const center = getCentroid(ring)
-      mapInstance.current.setView(center, 10, { animate: true })
+    // Otherwise treat as county/city name — geocode and find nearby zip codes
+    try {
+      const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(input)}`)
+      const geo = await geoRes.json()
+      if (!geo.lat || !geo.lng) {
+        setZipError('Location not found. Try a zip code instead.')
+        setZipLoading(false)
+        return
+      }
+
+      // Get zip at the geocoded point
+      const centerZip = await getZipAtPoint(geo.lat, geo.lng)
+      if (centerZip && !selectedZips.includes(centerZip)) {
+        const ring = await getZipBoundary(centerZip)
+        if (ring) {
+          zipBoundariesRef.current.set(centerZip, ring)
+          setSelectedZips((prev) => [...prev, centerZip])
+        }
+      }
+
+      // Sample nearby points to find more zip codes in the area
+      const offsets = [0.05, -0.05, 0.1, -0.1, 0.08, -0.08]
+      const nearbyZips = new Set<string>(centerZip ? [centerZip] : [])
+      for (const dlat of offsets) {
+        for (const dlng of offsets) {
+          if (nearbyZips.size >= 10) break
+          const zip = await getZipAtPoint(geo.lat + dlat, geo.lng + dlng)
+          if (zip && !selectedZips.includes(zip)) nearbyZips.add(zip)
+        }
+        if (nearbyZips.size >= 10) break
+      }
+
+      // Add all found zips
+      for (const zip of nearbyZips) {
+        if (selectedZips.length + nearbyZips.size > 30) break
+        if (!zipBoundariesRef.current.has(zip)) {
+          const ring = await getZipBoundary(zip)
+          if (ring) zipBoundariesRef.current.set(zip, ring)
+        }
+      }
+      setSelectedZips((prev) => {
+        const combined = new Set([...prev, ...nearbyZips])
+        return Array.from(combined).slice(0, 30)
+      })
+
+      setZipInput('')
+      if (mapInstance.current) {
+        mapInstance.current.setView([geo.lat, geo.lng], 9, { animate: true })
+      }
+    } catch {
+      setZipError('Failed to look up location.')
     }
+    setZipLoading(false)
   }, [zipInput, selectedZips])
 
   const removeZip = useCallback((zip: string) => {
@@ -341,32 +395,31 @@ export default function SetupPage() {
             <div className="mb-6">
               <h1 className="text-2xl font-bold">Define Your Service Area</h1>
               <p className="text-muted-foreground mt-1">
-                Add the zip codes where you work. This helps other agents find you for referrals in your market.
+                Add zip codes or county names where you work. This helps other agents find you for referrals.
               </p>
             </div>
 
-            {/* Zip input */}
+            {/* Input — accepts zip codes or county/city names */}
             <div className="flex gap-2 mb-4">
-              <div className="relative flex-1 max-w-sm">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={zipInput}
-                  onChange={(e) => { setZipInput(e.target.value.replace(/\D/g, '').slice(0, 5)); setZipError('') }}
+                  onChange={(e) => { setZipInput(e.target.value); setZipError('') }}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddZip()}
-                  placeholder="Enter zip code (e.g. 49001)"
-                  maxLength={5}
+                  placeholder="Zip code or county name (e.g. 49001 or Kalamazoo)"
                   className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
               <button
                 onClick={handleAddZip}
-                disabled={zipLoading || zipInput.length !== 5 || selectedZips.length >= 30}
+                disabled={zipLoading || !zipInput.trim()}
                 className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
               >
                 {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
               </button>
-              <span className="flex items-center text-xs text-muted-foreground">
+              <span className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
                 {selectedZips.length}/30
               </span>
             </div>

@@ -44,6 +44,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const isMapPage = pathname === '/dashboard'
+  const isSetupPage = pathname === '/dashboard/setup'
 
   const handleDismissNudge = useCallback((nudgeId: string) => {
     setNudgeList((prev) => prev.map((n) => n.id === nudgeId ? { ...n, dismissed: true } : n))
@@ -138,8 +139,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <BrokerageProvider>
       <div className="h-screen flex flex-col relative">
-        {/* Slim top bar — floating on map, solid on other pages */}
-        <TopBar />
+        {/* Slim top bar — hidden on setup page */}
+        {!isSetupPage && <TopBar />}
 
         {/* New partner notifications */}
         {newPartners.map((partner) => (
@@ -166,14 +167,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         ))}
 
         {/* Main content */}
-        <div className={`flex-1 relative overflow-hidden ${isMapPage ? '' : 'pb-[76px]'}`}>
+        <div className={`flex-1 relative overflow-hidden ${isMapPage || isSetupPage ? '' : 'pb-[76px]'}`}>
           <div className="h-full">
             {children}
           </div>
         </div>
 
-        {/* Bottom pill nav — always visible */}
-        <PillNav />
+        {/* Bottom pill nav — hidden on setup page */}
+        {!isSetupPage && <PillNav />}
 
         {/* Nudge banner removed — check-ins now handled by NORA + map badge */}
 
