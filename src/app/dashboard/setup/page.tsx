@@ -131,7 +131,7 @@ export default function SetupPage() {
     }
   }, [isLoading, isAuthenticated, router])
 
-  // Resolve auth user for NORA step
+  // Resolve auth user for NORA step + ensure referral code exists early
   useEffect(() => {
     const hub = createHubClient()
     hub.auth.getUser().then(({ data: { user } }: { data: { user: { id: string; email?: string | null; user_metadata?: Record<string, string> } | null } }) => {
@@ -139,6 +139,12 @@ export default function SetupPage() {
         setUserId(user.id)
         setUserEmail(user.email ?? '')
         setUserName((user.user_metadata?.full_name as string) ?? '')
+        // Ensure referral code exists so it's ready by the invite step
+        fetch('/api/invites/mine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        }).catch(() => {})
       }
     })
   }, [])
