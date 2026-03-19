@@ -8,7 +8,7 @@ import NoraOnboardingChat from '@/components/onboarding/nora-onboarding-chat'
 import {
   MapPin, Users, Check, ChevronRight, ChevronLeft, Plus, X, Mail, Sparkles,
   Loader2, Search, Gift, Copy, Link2, ArrowUpRight, TrendingUp, MessageSquare,
-  Clock, BarChart3, CheckCircle2, LogOut,
+  Clock, BarChart3, CheckCircle2, LogOut, Smartphone, Download, QrCode,
 } from 'lucide-react'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -48,6 +48,7 @@ export default function SetupPage() {
   const radiusCircleRef = useRef<L.Circle | null>(null)
   const wmsLayersRef = useRef<L.Layer[]>([])
   const [leafletReady, setLeafletReady] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
 
   // Territory mode tabs
   const [territoryMode, setTerritoryMode] = useState<'city' | 'county' | 'zip' | 'radius'>('city')
@@ -81,6 +82,7 @@ export default function SetupPage() {
     summary: { totalEarned: number; count: number }
   }>({ referralCode: null, summary: { totalEarned: 0, count: 0 } })
   const [linkCopied, setLinkCopied] = useState(false)
+  const [inviteCodes, setInviteCodes] = useState<{ referral_code: string }[]>([])
 
   // Load existing zips from profile
   useEffect(() => {
@@ -146,7 +148,7 @@ export default function SetupPage() {
     }).catch(() => {})
   }, [profile?.id])
 
-  // Fetch affiliate data when reaching step 2
+  // Fetch affiliate data and invite codes when reaching step 2
   useEffect(() => {
     if (currentStep !== 2 || !profile?.id) return
     fetch(`/api/affiliate/rewards?userId=${profile.id}`)
@@ -156,6 +158,15 @@ export default function SetupPage() {
           referralCode: data.referralCode,
           summary: data.summary ?? { totalEarned: 0, count: 0 },
         })
+      })
+      .catch(() => {})
+    // Also fetch invite codes for the shareable link fallback
+    fetch(`/api/invites/mine?userId=${profile.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.codes?.length > 0) {
+          setInviteCodes(data.codes)
+        }
       })
       .catch(() => {})
   }, [currentStep, profile?.id])
@@ -196,6 +207,7 @@ export default function SetupPage() {
       map.attributionControl.setPrefix('')
 
       mapInstance.current = map
+      setMapReady(true)
 
       if (profile?.primary_area) {
         fetch(`/api/geocode?q=${encodeURIComponent(profile.primary_area)}`)
@@ -230,6 +242,7 @@ export default function SetupPage() {
       if (mapInstance.current) {
         mapInstance.current.remove()
         mapInstance.current = null
+        setMapReady(false)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -292,7 +305,7 @@ export default function SetupPage() {
     }
     renderZips()
     return () => { cancelled = true }
-  }, [selectedZips, territoryMode])
+  }, [selectedZips, territoryMode, mapReady])
 
   // Autocomplete suggestions
   const fetchSuggestions = useCallback((query: string) => {
@@ -711,14 +724,14 @@ export default function SetupPage() {
 
   // Copy affiliate link
   const handleCopyLink = useCallback(() => {
-    const code = affiliateData.referralCode || profile?.referral_code
+    const code = affiliateData.referralCode || profile?.referral_code || inviteCodes[0]?.referral_code
     if (!code) return
     const link = `${window.location.origin}/invite/${code}`
     navigator.clipboard.writeText(link).then(() => {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 3000)
     })
-  }, [affiliateData.referralCode, profile?.referral_code])
+  }, [affiliateData.referralCode, profile?.referral_code, inviteCodes])
 
   // NORA complete handler
   const handleNoraComplete = useCallback(async () => {
@@ -734,7 +747,7 @@ export default function SetupPage() {
   }, [router, saveStepProgress])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
-  const referralCode = affiliateData.referralCode || profile?.referral_code
+  const referralCode = affiliateData.referralCode || profile?.referral_code || inviteCodes[0]?.referral_code || null
 
   if (isLoading || currentStep === -1) {
     return (
@@ -1136,6 +1149,37 @@ export default function SetupPage() {
                   {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {linkCopied ? 'Copied!' : 'Copy'}
                 </button>
+                <a
+                  href={`sms:?body=${encodeURIComponent(`Hey! I'm using AgentReferrals to grow my referral network. Join me and let's exchange referrals: ${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
+                  className="h-10 px-4 rounded-lg bg-emerald-600 text-white text-sm font-bold flex items-center gap-2 hover:opacity-90"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Send via Text
+                </a>
+              </div>
+
+              {/* QR Code */}
+              <div className="mt-4 p-4 rounded-xl border border-border bg-card flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <QrCode className="w-4 h-4 text-primary" />
+                  Scan to join my network
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
+                  alt="QR Code for invite link"
+                  width={200}
+                  height={200}
+                  className="rounded-lg"
+                />
+                <a
+                  href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
+                  download={`agentreferrals-invite-qr.png`}
+                  className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary/80"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download QR Code
+                </a>
               </div>
             </div>
           )}
@@ -1198,7 +1242,7 @@ export default function SetupPage() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold">Past Referrals</h3>
-                <p className="text-xs text-muted-foreground">Add referral deals you&apos;ve done to build your verified track record.</p>
+                <p className="text-xs text-muted-foreground">Add referral deals you&apos;ve done to build your verified track record. We&apos;ll send your partner an invitation to join and verify the transaction.</p>
               </div>
               <button
                 onClick={() => setShowPastReferralForm(true)}

@@ -1,4 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+/**
+ * Generate a URL-friendly referral code from a user's name.
+ * Format: `firstname-lastname-abc123` (lowercase + 6 random hex chars)
+ */
+function generateReferralCode(fullName?: string | null): string {
+  const slug = (fullName || 'agent')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 30) // keep it reasonable length
+  const rand = crypto.randomBytes(3).toString('hex') // 6 hex chars
+  return `${slug}-${rand}`
+}
 
 // POST /api/onboarding/save
 // Saves the onboarding profile data using the admin client (bypasses RLS)
@@ -16,6 +33,19 @@ export async function POST(request: NextRequest) {
 
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = createAdminClient()
+
+    // ── Generate referral_code if the user doesn't already have one ──
+    if (!profile.referral_code) {
+      const { data: existing } = await supabase
+        .from('ar_profiles')
+        .select('referral_code')
+        .eq('id', profile.id)
+        .single()
+
+      if (!existing?.referral_code) {
+        profile.referral_code = generateReferralCode(profile.full_name)
+      }
+    }
 
     // Upsert ar_profiles
     const { error } = await supabase
