@@ -353,12 +353,11 @@ export default function AgentMap() {
         }
       }
 
-      // Center map on territory and add "Me" marker
+      // Add "Me" marker at the center of the territory (don't zoom — let the map stay at default view)
       if (!cancelled && allBounds.length > 0 && !territoryRenderedRef.current) {
         territoryRenderedRef.current = true
         let combined = allBounds[0]
         for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
-        map.fitBounds(combined, { padding: [60, 60], maxZoom: 10, animate: false })
 
         // Add a "Me" marker at the center of the territory
         const center = combined.getCenter()
