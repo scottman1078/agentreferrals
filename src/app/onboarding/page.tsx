@@ -1225,7 +1225,7 @@ export default function OnboardingPage() {
     // Clear saved state
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
 
-    router.push('/dashboard')
+    router.push('/dashboard/setup')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, userEmail, data, phoneVerified, avatarPreview, router])
 

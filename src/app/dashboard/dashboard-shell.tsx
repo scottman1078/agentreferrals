@@ -8,7 +8,7 @@ import TopBar from '@/components/layout/top-bar'
 import PillNav from '@/components/layout/pill-nav'
 import InviteModal from '@/components/ui/invite-modal'
 import NoraChat from '@/components/nora/nora-chat'
-import SetupWizard from '@/components/setup-wizard/setup-wizard'
+// Setup wizard replaced by /dashboard/setup full page
 import { AdminTierProvider } from '@/contexts/admin-tier-context'
 import { DemoProvider } from '@/contexts/demo-context'
 import AdminTierSwitcher from '@/components/admin/tier-switcher'
@@ -37,10 +37,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const [showInvite, setShowInvite] = useState(false)
   // sessionStorage persists the show-wizard decision across remounts within the same tab
-  const [showSetupWizard, setShowSetupWizard] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return sessionStorage.getItem('ar_show_setup_wizard') === 'true'
-  })
   const [nudgeList, setNudgeList] = useState<Nudge[]>(initialNudges)
   const [newPartners, setNewPartners] = useState<NewPartnerNotification[]>([])
   const { isLoading, profile, isAuthenticated, needsOnboarding } = useAuth()
@@ -104,76 +100,27 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAuthenticated, needsOnboarding, profile, router, isDemoMode])
 
-  // Show setup wizard if user completed onboarding but has no territory.
-  // Once decided (show or skip), a ref prevents re-evaluation on subsequent profile updates.
-  const wizardDecidedRef = useRef(false)
-
+  // Redirect to setup page if user hasn't completed territory setup
   useEffect(() => {
-    const zipCount = Array.isArray(profile?.territory_zips) ? profile!.territory_zips!.length : 'null'
-    const polygonCount = Array.isArray(profile?.polygon) ? profile!.polygon!.length : 'null'
-    console.log('[SetupWizard] effect', {
-      isLoading,
-      isAuthenticated,
-      hasProfile: !!profile,
-      needsOnboarding,
-      primary_area: profile?.primary_area,
-      zipCount,
-      polygonCount,
-      wizardCompleted: typeof window !== 'undefined' ? localStorage.getItem('ar_setup_wizard_completed') : 'ssr',
-      alreadyDecided: wizardDecidedRef.current,
-      showSetupWizard,
-    })
-
     if (isLoading || !isAuthenticated || !profile) return
-    if (needsOnboarding || !profile.primary_area) return // still needs onboarding
+    if (needsOnboarding || !profile.primary_area) return
+    if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
-    // Once we've decided (show or skip), don't re-evaluate
-    if (wizardDecidedRef.current) {
-      console.log('[SetupWizard] skipped re-evaluation — decision already made')
-      return
-    }
-
-    // Don't show if already completed the setup wizard
-    if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) {
-      console.log('[SetupWizard] skipped — localStorage flag set')
-      wizardDecidedRef.current = true
-      return
-    }
-
-    // If the user already has a real service area (more than just the onboarding zip),
-    // they've completed setup — mark the flag and skip the wizard
     const hasRealServiceArea =
       (Array.isArray(profile.territory_zips) && profile.territory_zips.length > 1) ||
       (Array.isArray(profile.polygon) && profile.polygon.length > 0)
 
-    console.log('[SetupWizard] hasRealServiceArea:', hasRealServiceArea, '(zips:', zipCount, 'polygon:', polygonCount, ')')
-
     if (hasRealServiceArea) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('ar_setup_wizard_completed', 'true')
-        sessionStorage.removeItem('ar_show_setup_wizard')
-        console.log('[SetupWizard] auto-completed — user already has service area')
-      }
-      wizardDecidedRef.current = true
+      localStorage.setItem('ar_setup_wizard_completed', 'true')
       return
     }
 
-    // Delay showing so a second profile fetch (onAuthStateChange) can cancel this
-    // before the wizard ever renders. On fire, persist to sessionStorage so a
-    // remount within the same tab restores the wizard immediately.
-    console.log('[SetupWizard] scheduling show in 400ms...')
-    const timer = setTimeout(() => {
-      console.log('[SetupWizard] showing wizard')
-      wizardDecidedRef.current = true
-      sessionStorage.setItem('ar_show_setup_wizard', 'true')
-      setShowSetupWizard(true)
-    }, 400)
-    return () => {
-      console.log('[SetupWizard] timer cancelled (profile updated before decision)')
-      clearTimeout(timer)
+    // Redirect to full-page setup instead of showing modal
+    if (pathname !== '/dashboard/setup') {
+      router.push('/dashboard/setup')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isAuthenticated, needsOnboarding, profile])
+  }, [isLoading, isAuthenticated, needsOnboarding, profile, pathname])
 
   if (isLoading) {
     return (
@@ -217,18 +164,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         ))}
-
-        {/* Post-onboarding setup wizard */}
-        {showSetupWizard && (
-          <SetupWizard
-            onComplete={() => {
-              setShowSetupWizard(false)
-              localStorage.setItem('ar_setup_wizard_completed', 'true')
-              sessionStorage.removeItem('ar_show_setup_wizard')
-            }}
-            profile={profile}
-          />
-        )}
 
         {/* Main content */}
         <div className={`flex-1 relative overflow-hidden ${isMapPage ? '' : 'pb-[76px]'}`}>
