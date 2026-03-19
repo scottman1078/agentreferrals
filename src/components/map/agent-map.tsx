@@ -340,10 +340,11 @@ export default function AgentMap() {
         for (const { ring } of results) {
           if (!ring || !L || cancelled) continue
           const poly = L.polygon(ring as L.LatLngExpression[], {
-            color: '#f59e0b',
+            color: '#3b82f6',
             weight: 1.5,
-            fillColor: '#f59e0b',
-            fillOpacity: 0.12,
+            fillColor: '#3b82f6',
+            fillOpacity: 0.08,
+            dashArray: '4, 4',
             interactive: false,
           })
           poly.addTo(map)
