@@ -241,7 +241,7 @@ function MentorCard({
         </div>
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
           <Zap className="w-3 h-3" />
-          {mentor.referNetScore}
+          {mentor.rcsScore}
         </span>
       </div>
 
@@ -373,7 +373,7 @@ function RequestMentorModal({
                 <div className="font-bold text-sm">{mentor.name}</div>
                 <div className="text-[11px] text-muted-foreground">
                   {mentor.brokerage} &middot; {mentor.yearsLicensed} yrs &middot;{' '}
-                  ReferNet {mentor.referNetScore}
+                  RCS {mentor.rcsScore}
                 </div>
               </div>
             </div>
@@ -549,11 +549,11 @@ function BecomeMentorTab() {
   const router = useRouter()
   const canBecome = hasFeature('mentorBecome')
 
-  // Demo: Jason has 8 years, 92 score — meets ReferNet but not years
+  // Demo: Jason has 8 years, 92 score — meets RCS but not years
   const yearsLicensed = 8
-  const referNetScore = 92
+  const rcsScore = 92
   const meetsYears = yearsLicensed >= 10
-  const meetsScore = referNetScore >= 85
+  const meetsScore = rcsScore >= 85
   const meetsRequirements = meetsYears && meetsScore
 
   const [available, setAvailable] = useState(false)
@@ -645,9 +645,9 @@ function BecomeMentorTab() {
               )}
             </div>
             <span className={meetsScore ? 'text-foreground' : 'text-muted-foreground'}>
-              85+ ReferNet score{' '}
+              85+ RCS{' '}
               <span className="text-muted-foreground text-xs">
-                (yours is {referNetScore})
+                (yours is {rcsScore})
               </span>
             </span>
           </div>
@@ -657,7 +657,7 @@ function BecomeMentorTab() {
       {!meetsRequirements && (
         <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-700 dark:text-amber-400">
           You don&apos;t yet meet all the requirements to become a mentor. Keep building
-          your experience and your ReferNet score, and you will be eligible soon.
+          your experience and your RCS, and you will be eligible soon.
         </div>
       )}
 

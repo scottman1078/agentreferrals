@@ -106,14 +106,14 @@ export default function PartnershipsPage() {
     )
   })
 
-  // Sort by referNetScore descending
-  const sortedAgents = [...filteredAgents].sort((a, b) => b.referNetScore - a.referNetScore)
+  // Sort by rcsScore descending
+  const sortedAgents = [...filteredAgents].sort((a, b) => b.rcsScore - a.rcsScore)
 
   // Stats
   const totalOpportunities = agentsNeedingPartner.length
   const totalGaps = coverageGapOpportunities.length
   const avgScore = agentsNeedingPartner.length > 0
-    ? Math.round(agentsNeedingPartner.reduce((s, a) => s + a.referNetScore, 0) / agentsNeedingPartner.length)
+    ? Math.round(agentsNeedingPartner.reduce((s, a) => s + a.rcsScore, 0) / agentsNeedingPartner.length)
     : 0
 
   if (agentsLoading) return <PartnershipsSkeleton />
@@ -268,7 +268,7 @@ export default function PartnershipsPage() {
                       <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10">
                         <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                         <span className="font-bold text-xs text-amber-600 dark:text-amber-400">
-                          {agent.referNetScore}
+                          {agent.rcsScore}
                         </span>
                       </div>
                     </div>
@@ -465,7 +465,7 @@ export default function PartnershipsPage() {
                                   <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10">
                                     <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                                     <span className="font-bold text-xs text-amber-600 dark:text-amber-400">
-                                      {agent.referNetScore}
+                                      {agent.rcsScore}
                                     </span>
                                   </div>
                                 </div>

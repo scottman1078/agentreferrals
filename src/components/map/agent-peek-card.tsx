@@ -92,7 +92,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const displayName = getDisplayNameFn(agent)
   const initials = getInitials(agent.name) // initials always from full name
   const reviewStats = getAgentReviewStats(agent.id)
-  const score = agent.referNetScore ?? 0
+  const score = agent.rcsScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
   const commScore = getCommScore(agent.id)

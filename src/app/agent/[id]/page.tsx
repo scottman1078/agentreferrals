@@ -73,7 +73,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
   if (!agent) notFound()
 
   const stats = getAgentReviewStats(agent.id)
-  const isElite = (agent.referNetScore ?? 0) >= 90
+  const isElite = (agent.rcsScore ?? 0) >= 90
   const mentorProfile = getMentorProfile(agent.id)
   const commScore = getCommScore(agent.id)
   const verifiedRefCount = getVerifiedCount(agent.id)
@@ -164,11 +164,11 @@ export default async function AgentProfilePage({ params }: PageProps) {
                   </span>
                 )}
 
-                {/* ReferNet Score */}
-                {agent.referNetScore && (
+                {/* RCS */}
+                {agent.rcsScore && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                     <Zap className="w-3.5 h-3.5" />
-                    ReferNet Score: {agent.referNetScore}
+                    RCS: {agent.rcsScore}
                   </span>
                 )}
 

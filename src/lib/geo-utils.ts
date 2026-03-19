@@ -31,12 +31,12 @@ export function pointInPolygon(lat: number, lng: number, polygon: [number, numbe
 
 /**
  * Find all agents whose polygon contains the given point.
- * Returns agents sorted by referNetScore descending (best first).
+ * Returns agents sorted by rcsScore descending (best first).
  */
 export function findAgentsAtPoint(
   lat: number,
   lng: number,
-  agents: { polygon: [number, number][]; referNetScore?: number }[]
+  agents: { polygon: [number, number][]; rcsScore?: number }[]
 ): number[] {
   const matchingIndices: number[] = []
 
@@ -46,10 +46,10 @@ export function findAgentsAtPoint(
     }
   }
 
-  // Sort by referNetScore descending
+  // Sort by rcsScore descending
   matchingIndices.sort((a, b) => {
-    const scoreA = agents[a].referNetScore ?? 0
-    const scoreB = agents[b].referNetScore ?? 0
+    const scoreA = agents[a].rcsScore ?? 0
+    const scoreB = agents[b].rcsScore ?? 0
     return scoreB - scoreA
   })
 

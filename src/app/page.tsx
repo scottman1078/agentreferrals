@@ -288,7 +288,7 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { value: '5,000', label: 'Founding Spots', desc: 'Exclusive invite-only network for top-producing agents' },
-              { value: '92', label: 'Avg ReferNet Score', desc: 'Every agent is vetted with performance data' },
+              { value: '92', label: 'Avg RCS', desc: 'Every agent is vetted with performance data' },
               { value: '< 1hr', label: 'Avg Response Time', desc: 'Partners who communicate and close deals' },
               { value: '25%', label: 'Referral Fee Standard', desc: 'Transparent agreements with e-signature' },
             ].map((stat) => (
@@ -347,7 +347,7 @@ export default function LandingPage() {
           <div className="space-y-12">
             {[
               { step: '01', title: 'Tell NORA the market you need', desc: '"I need a referral partner in Nashville who does luxury and relocation." NORA searches your brokerage first, then the full network.' },
-              { step: '02', title: 'Review matched agents', desc: 'See agent profiles with ReferNet Score, Communication Score, closed referrals, specializations, and reviews. Pick your partner.' },
+              { step: '02', title: 'Review matched agents', desc: 'See agent profiles with RCS, Communication Score, closed referrals, specializations, and reviews. Pick your partner.' },
               { step: '03', title: 'Send agreement & track to close', desc: 'One-click referral agreement with auto-filled terms. Track the referral through every stage — from introduction to fee received.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-6 items-start">

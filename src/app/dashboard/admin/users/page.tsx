@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 20
 
 // Assign mock tiers based on agent stats
 function getMockTier(agent: typeof agents[0]): SubscriptionTier {
-  const score = agent.referNetScore ?? 0
+  const score = agent.rcsScore ?? 0
   if (score >= 93) return 'elite'
   if (score >= 88) return 'pro'
   if (score >= 82) return 'growth'
@@ -310,7 +310,7 @@ export default function AdminUsersPage() {
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Agent</th>
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden lg:table-cell">Brokerage</th>
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden md:table-cell">Market</th>
-              <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">ReferNet</th>
+              <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">RCS</th>
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden sm:table-cell">Comm</th>
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Tier</th>
               <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2 hidden sm:table-cell">Status</th>
@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="py-2.5 text-muted-foreground hidden lg:table-cell text-xs">{agent.brokerage}</td>
                   <td className="py-2.5 text-muted-foreground hidden md:table-cell text-xs">{agent.area}</td>
-                  <td className="py-2.5 font-semibold">{agent.referNetScore ?? '-'}</td>
+                  <td className="py-2.5 font-semibold">{agent.rcsScore ?? '-'}</td>
                   <td className="py-2.5 font-semibold hidden sm:table-cell">{comm}</td>
                   <td className="py-2.5">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${TIER_COLORS[tier]}`}>

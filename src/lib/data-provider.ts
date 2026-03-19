@@ -54,7 +54,7 @@ function mapProfileToAgent(profile: ArProfile): Agent {
     avgSalePrice: profile.avg_sale_price || 0,
     polygon: [], // No polygon data from Supabase
     color: profile.brokerage?.color || '#6366f1',
-    referNetScore: profile.refernet_score || undefined,
+    rcsScore: profile.refernet_score || undefined,
   }
 }
 

@@ -20,7 +20,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const getDisplayName = useAgentDisplayName()
   const displayName = getDisplayName(agent)
   const initials = getInitials(agent.name) // initials always use full name
-  const score = agent.referNetScore ?? 0
+  const score = agent.rcsScore ?? 0
   const scoreColor =
     score >= 90 ? 'text-emerald-500 bg-emerald-500/10' : score >= 80 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
   const commScore = getCommScore(agent.id)

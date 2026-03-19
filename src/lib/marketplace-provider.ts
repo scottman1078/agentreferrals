@@ -229,7 +229,7 @@ function mapSupabaseBid(sb: Record<string, unknown>): ReferralBid {
     agentName: (agent?.full_name as string) || 'Unknown',
     agentBrokerage: brokerage?.name || 'Unknown',
     agentColor: (agent?.color as string) || '#6366f1',
-    agentReferNetScore: Number(agent?.refernet_score) || 50,
+    agentRCSScore: Number(agent?.refernet_score) || 50,
     agentClosedReferrals: Number(agent?.closed_referrals) || 0,
     agentResponseTime: responseMinutes <= 30 ? '< 30min' : responseMinutes <= 60 ? '< 1hr' : `< ${Math.ceil(responseMinutes / 60)}hr`,
     pitch: sb.pitch as string,

@@ -64,10 +64,10 @@ export default function MagicLinkPage() {
           if (arProfile && arProfile.primary_area) {
             window.location.href = '/dashboard'
           } else {
-            window.location.href = '/onboarding'
+            window.location.href = '/dashboard/setup'
           }
         } catch {
-          window.location.href = '/onboarding'
+          window.location.href = '/dashboard/setup'
         }
       } catch {
         setStatus('error')

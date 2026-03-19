@@ -24,7 +24,7 @@ export default function AdminAnalyticsPage() {
       }
       marketMap[market].count++
       marketMap[market].referrals += a.closedReferrals ?? 0
-      marketMap[market].totalScore += a.referNetScore ?? 0
+      marketMap[market].totalScore += a.rcsScore ?? 0
     })
 
     return Object.entries(marketMap)
@@ -60,7 +60,7 @@ export default function AdminAnalyticsPage() {
   const tierDistribution = useMemo(() => {
     const tiers: Record<string, number> = { starter: 0, growth: 0, pro: 0, elite: 0 }
     agents.forEach((a) => {
-      const score = a.referNetScore ?? 0
+      const score = a.rcsScore ?? 0
       if (score >= 93) tiers.elite++
       else if (score >= 88) tiers.pro++
       else if (score >= 82) tiers.growth++
@@ -109,7 +109,7 @@ export default function AdminAnalyticsPage() {
                 <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Market</th>
                 <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Agent Count</th>
                 <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Referrals</th>
-                <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Avg ReferNet</th>
+                <th className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left pb-2">Avg RCS</th>
               </tr>
             </thead>
             <tbody>

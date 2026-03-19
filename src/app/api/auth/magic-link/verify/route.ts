@@ -42,16 +42,40 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (lookupError || !linkRecord) {
-      return NextResponse.json({ valid: false, error: 'Link expired or invalid' })
+      // Also check if token exists but was already used (e.g. email scanner pre-fetched)
+      const { data: usedLink } = await supabase
+        .from('ar_magic_links')
+        .select('id, email, used, used_at, expires_at')
+        .eq('token', token)
+        .single()
+
+      // If the token was used very recently (< 2 minutes ago), it was likely a link scanner.
+      // Allow a re-use within a short window.
+      if (usedLink && usedLink.used) {
+        const usedAt = usedLink.used_at ? new Date(usedLink.used_at).getTime() : 0
+        const now = Date.now()
+        const twoMinutes = 2 * 60 * 1000
+        if (now - usedAt < twoMinutes && new Date(usedLink.expires_at).getTime() > now) {
+          // Allow re-use — fall through to sign-in flow
+          // eslint-disable-next-line no-var
+          var recoveredLink = usedLink
+        } else {
+          return NextResponse.json({ valid: false, error: 'Link expired or invalid' })
+        }
+      } else {
+        return NextResponse.json({ valid: false, error: 'Link expired or invalid' })
+      }
     }
 
-    // Mark as used
+    const activeLink = linkRecord || recoveredLink!
+
+    // Mark as used (idempotent — may already be marked by a scanner)
     await supabase
       .from('ar_magic_links')
       .update({ used: true, used_at: new Date().toISOString() })
-      .eq('id', linkRecord.id)
+      .eq('id', activeLink.id)
 
-    const email = linkRecord.email
+    const email = activeLink.email
 
     // Look up or create the user
     const { data: listData } = await hubAdmin.auth.admin.listUsers()
@@ -67,6 +91,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ valid: false, error: 'Failed to create account' }, { status: 500 })
       }
       user = newUser.user
+    }
+
+    // Ensure email is confirmed (may not be if user signed up but never confirmed)
+    if (!user.email_confirmed_at) {
+      await hubAdmin.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      })
     }
 
     // Set a temporary password — client will use this to sign in directly

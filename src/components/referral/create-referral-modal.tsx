@@ -458,15 +458,15 @@ export default function CreateReferralModal({
                             <span className="font-semibold text-sm">
                               {agent.name}
                             </span>
-                            {agent.referNetScore && (
+                            {agent.rcsScore && (
                               <span
                                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                  agent.referNetScore >= 90
+                                  agent.rcsScore >= 90
                                     ? 'bg-emerald-500/10 text-emerald-500'
                                     : 'bg-primary/10 text-primary'
                                 }`}
                               >
-                                {agent.referNetScore}
+                                {agent.rcsScore}
                               </span>
                             )}
                             <AgentReviewBadge agentId={agent.id} size="sm" />
@@ -743,16 +743,16 @@ export default function CreateReferralModal({
                         {selectedAgent.area}
                       </div>
                     </div>
-                    {selectedAgent.referNetScore && (
+                    {selectedAgent.rcsScore && (
                       <div className="ml-auto">
                         <span
                           className={`text-xs font-bold px-2 py-1 rounded-lg ${
-                            selectedAgent.referNetScore >= 90
+                            selectedAgent.rcsScore >= 90
                               ? 'bg-emerald-500/10 text-emerald-500'
                               : 'bg-primary/10 text-primary'
                           }`}
                         >
-                          {selectedAgent.referNetScore} RS
+                          {selectedAgent.rcsScore} RS
                         </span>
                       </div>
                     )}

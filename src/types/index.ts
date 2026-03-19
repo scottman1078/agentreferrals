@@ -26,7 +26,7 @@ export interface Agent {
   polygon: [number, number][]
   color: string
   isPrimary?: boolean
-  referNetScore?: number // 0-100 composite trust/performance metric
+  rcsScore?: number // 0-100 composite trust/performance metric (Referral Communication Score)
   responseTime?: string // "< 1hr", "< 4hr", etc.
   closedReferrals?: number
   photoUrl?: string
@@ -131,7 +131,7 @@ export interface AgentNeedingPartner {
   area: string
   dealsPerYear: number
   avgSalePrice: number
-  referNetScore: number
+  rcsScore: number
   responseTime: string
   closedReferrals: number
   color: string
@@ -155,7 +155,7 @@ export interface SuggestedPartner {
   area: string
   dealsPerYear: number
   avgSalePrice: number
-  referNetScore: number
+  rcsScore: number
   responseTime: string
   closedReferrals: number
   color: string

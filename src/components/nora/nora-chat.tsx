@@ -68,16 +68,16 @@ function buildNoraResponses(agentList: Agent[]) {
     { patterns: ['draft a message to ashley', 'message ashley', 'write to ashley'], response: "Here's a personalized check-in for Ashley Monroe:\n\n\"Hey Ashley, just checking in! The Nashville market looks hot right now. Have any clients considering Michigan? I'd love to help. Also congrats on the Martinez closing!\"\n\nWant me to adjust the tone or focus?", matchLogic: () => agentList.filter((a) => a.name.toLowerCase().includes('ashley')) },
     { patterns: ['who should i reach out to', 'who to contact', 'who to message', 'reach out'], response: allActiveNudges.length > 0 ? `Based on your activity, I'd prioritize these partners:\n\n${allActiveNudges.slice(0, 5).map((n, i) => `${i + 1}. ${n.agentName} — ${n.title}`).join('\n')}\n\nWant me to draft messages for any of them?` : "You're all caught up! All your partners have been contacted recently.", matchLogic: undefined },
     // Original patterns
-    { patterns: ['nashville', 'tennessee', 'tn'], response: "I found agents covering Nashville. Ashley Monroe at Real Broker is your top match — 95 ReferNet Score, Relocation & Luxury specialist, responds in < 30 min.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('nashville')) },
-    { patterns: ['chicago', 'illinois', 'il'], response: "Marcus Reid at Compass Chicago — 94 ReferNet Score, 88 deals/year, Luxury + Investment + Relocation. Responds within 30 minutes.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('chicago')) },
-    { patterns: ['luxury', 'high end', 'million'], response: "Top luxury specialists across your network:", matchLogic: () => agentList.filter((a) => a.tags.includes('Luxury')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
-    { patterns: ['relocation', 'relocat', 'moving'], response: "Relocation specialists with the highest success rates:", matchLogic: () => agentList.filter((a) => a.tags.includes('Relocation')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
-    { patterns: ['phoenix', 'scottsdale', 'arizona', 'az'], response: "Darius King at Real Broker Arizona — in your brokerage, 91 ReferNet Score, New Construction & Relocation specialist.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('phoenix') || a.area.toLowerCase().includes('scottsdale')) },
-    { patterns: ['denver', 'colorado', 'co'], response: "Lily Park at Real Broker Denver — your brokerage, 88 ReferNet Score, Luxury + Relocation + Land & Acreage.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('denver')) },
-    { patterns: ['dallas', 'fort worth', 'dfw', 'texas', 'tx'], response: "Carlos Vega at RE/MAX Dallas — 102 deals/year, 94 ReferNet Score, Luxury + New Construction + Investment.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('dallas')) },
-    { patterns: ['first time', 'first-time', 'ftb', 'starter'], response: "Best first-time buyer specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('First-Time Buyers')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
-    { patterns: ['investment', 'investor', 'rental', '1031'], response: "Investment property specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('Investment')).sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)).slice(0, 5) },
-    { patterns: ['my brokerage', 'real broker', 'our network', 'internal'], response: "Real Broker agents on AgentReferrals:", matchLogic: () => agentList.filter((a) => a.brokerageId === 'real').sort((a, b) => (b.referNetScore || 0) - (a.referNetScore || 0)) },
+    { patterns: ['nashville', 'tennessee', 'tn'], response: "I found agents covering Nashville. Ashley Monroe at Real Broker is your top match — 95 RCS, Relocation & Luxury specialist, responds in < 30 min.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('nashville')) },
+    { patterns: ['chicago', 'illinois', 'il'], response: "Marcus Reid at Compass Chicago — 94 RCS, 88 deals/year, Luxury + Investment + Relocation. Responds within 30 minutes.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('chicago')) },
+    { patterns: ['luxury', 'high end', 'million'], response: "Top luxury specialists across your network:", matchLogic: () => agentList.filter((a) => a.tags.includes('Luxury')).sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)).slice(0, 5) },
+    { patterns: ['relocation', 'relocat', 'moving'], response: "Relocation specialists with the highest success rates:", matchLogic: () => agentList.filter((a) => a.tags.includes('Relocation')).sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)).slice(0, 5) },
+    { patterns: ['phoenix', 'scottsdale', 'arizona', 'az'], response: "Darius King at Real Broker Arizona — in your brokerage, 91 RCS, New Construction & Relocation specialist.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('phoenix') || a.area.toLowerCase().includes('scottsdale')) },
+    { patterns: ['denver', 'colorado', 'co'], response: "Lily Park at Real Broker Denver — your brokerage, 88 RCS, Luxury + Relocation + Land & Acreage.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('denver')) },
+    { patterns: ['dallas', 'fort worth', 'dfw', 'texas', 'tx'], response: "Carlos Vega at RE/MAX Dallas — 102 deals/year, 94 RCS, Luxury + New Construction + Investment.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('dallas')) },
+    { patterns: ['first time', 'first-time', 'ftb', 'starter'], response: "Best first-time buyer specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('First-Time Buyers')).sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)).slice(0, 5) },
+    { patterns: ['investment', 'investor', 'rental', '1031'], response: "Investment property specialists:", matchLogic: () => agentList.filter((a) => a.tags.includes('Investment')).sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)).slice(0, 5) },
+    { patterns: ['my brokerage', 'real broker', 'our network', 'internal'], response: "Real Broker agents on AgentReferrals:", matchLogic: () => agentList.filter((a) => a.brokerageId === 'real').sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)) },
   ]
 }
 
@@ -434,9 +434,9 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-semibold">{maskName(agent.name)}</span>
-                            {agent.referNetScore && (
-                              <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${agent.referNetScore >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
-                                {agent.referNetScore}
+                            {agent.rcsScore && (
+                              <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${agent.rcsScore >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
+                                {agent.rcsScore}
                               </span>
                             )}
                           </div>

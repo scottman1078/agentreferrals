@@ -25,7 +25,7 @@ export interface MentorProfile {
   brokerage: string
   area: string
   color: string
-  referNetScore: number
+  rcsScore: number
   yearsLicensed: number
   dealsPerYear: number
   specializations: MentorSpecialization[]
@@ -36,7 +36,7 @@ export interface MentorProfile {
 }
 
 // ══════════════════════════════════════
-// Available Mentors — 10+ years, 85+ ReferNet
+// Available Mentors — 10+ years, 85+ RCS
 // ══════════════════════════════════════
 export const availableMentors: MentorProfile[] = [
   {
@@ -45,7 +45,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'BHHS Harry Norman — Atlanta',
     area: 'Atlanta Metro, GA',
     color: '#c084fc',
-    referNetScore: 96,
+    rcsScore: 96,
     yearsLicensed: 16,
     dealsPerYear: 93,
     specializations: ['Luxury Market', 'Referral Network Building', 'Negotiation'],
@@ -60,7 +60,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: "Sotheby's — Beverly Hills",
     area: 'Los Angeles Metro, CA',
     color: '#eab308',
-    referNetScore: 97,
+    rcsScore: 97,
     yearsLicensed: 16,
     dealsPerYear: 95,
     specializations: ['Luxury Market', 'Investment Properties', 'Negotiation'],
@@ -75,7 +75,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'Compass Chicago',
     area: 'Chicago Metro, IL',
     color: '#818cf8',
-    referNetScore: 94,
+    rcsScore: 94,
     yearsLicensed: 15,
     dealsPerYear: 88,
     specializations: ['Referral Network Building', 'Investment Properties', 'Lead Generation'],
@@ -90,7 +90,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'RE/MAX — Dallas',
     area: 'Dallas / Fort Worth, TX',
     color: '#f43f5e',
-    referNetScore: 94,
+    rcsScore: 94,
     yearsLicensed: 17,
     dealsPerYear: 102,
     specializations: ['New Construction', 'Lead Generation', 'Investment Properties'],
@@ -105,7 +105,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'Compass — Miami',
     area: 'Miami Metro, FL',
     color: '#16a34a',
-    referNetScore: 95,
+    rcsScore: 95,
     yearsLicensed: 15,
     dealsPerYear: 91,
     specializations: ['Luxury Market', 'Relocation', 'Referral Network Building'],
@@ -120,7 +120,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'Real Broker LLC — Nashville',
     area: 'Nashville Metro, TN',
     color: '#f472b6',
-    referNetScore: 95,
+    rcsScore: 95,
     yearsLicensed: 13,
     dealsPerYear: 74,
     specializations: ['Relocation', 'New Construction', 'First-Time Buyers'],
@@ -135,7 +135,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: "Sotheby's — Aspen",
     area: 'Aspen, CO',
     color: '#0d9488',
-    referNetScore: 98,
+    rcsScore: 98,
     yearsLicensed: 20,
     dealsPerYear: 28,
     specializations: ['Luxury Market', 'Negotiation', 'Referral Network Building'],
@@ -150,7 +150,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'Keller Williams — San Diego',
     area: 'San Diego Metro, CA',
     color: '#ef4444',
-    referNetScore: 91,
+    rcsScore: 91,
     yearsLicensed: 14,
     dealsPerYear: 72,
     specializations: ['Investment Properties', 'Lead Generation', 'Relocation'],
@@ -165,7 +165,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: "Sotheby's — Palm Beach",
     area: 'Palm Beach, FL',
     color: '#0f766e',
-    referNetScore: 96,
+    rcsScore: 96,
     yearsLicensed: 16,
     dealsPerYear: 42,
     specializations: ['Luxury Market', 'Investment Properties', 'Negotiation'],
@@ -180,7 +180,7 @@ export const availableMentors: MentorProfile[] = [
     brokerage: 'BHHS — Scottsdale',
     area: 'Scottsdale, AZ',
     color: '#7c3aed',
-    referNetScore: 92,
+    rcsScore: 92,
     yearsLicensed: 18,
     dealsPerYear: 54,
     specializations: ['Luxury Market', 'First-Time Buyers', 'Referral Network Building'],

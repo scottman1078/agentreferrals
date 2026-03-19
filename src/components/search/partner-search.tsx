@@ -73,8 +73,8 @@ export default function PartnerSearch({ onResultSelect, compact }: PartnerSearch
         pointInPolygon(geo.lat, geo.lng, agent.polygon)
       )
 
-      // Sort by referNetScore descending
-      found.sort((a, b) => (b.referNetScore ?? 0) - (a.referNetScore ?? 0))
+      // Sort by rcsScore descending
+      found.sort((a, b) => (b.rcsScore ?? 0) - (a.rcsScore ?? 0))
 
       setMatchedAgents(found)
       setPhase(found.length > 0 ? 'results' : 'no-results')
@@ -219,7 +219,7 @@ export default function PartnerSearch({ onResultSelect, compact }: PartnerSearch
 function AgentResultCard({ agent }: { agent: Agent }) {
   const demoGuard = useDemoGuard()
   const initials = getInitials(agent.name)
-  const score = agent.referNetScore ?? 0
+  const score = agent.rcsScore ?? 0
   const scoreColor = score >= 90 ? 'text-emerald-500' : score >= 80 ? 'text-amber-500' : 'text-muted-foreground'
 
   return (

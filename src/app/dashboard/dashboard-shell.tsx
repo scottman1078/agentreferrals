@@ -88,7 +88,10 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isDemoMode, disableDemo])
 
-  // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode)
+  const ADMIN_EMAILS = ['scott@agentdashboards.com']
+  const isAdminUser = ADMIN_EMAILS.includes(profile?.email ?? '')
+
+  // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode + admins)
   useEffect(() => {
     if (isDemoMode && !isAuthenticated) return
     if (isLoading) return
@@ -96,15 +99,18 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       router.push('/')
       return
     }
+    if (isAdminUser) return // admins skip setup
     if (needsOnboarding || (profile && !profile.primary_area)) {
-      router.push('/onboarding')
+      router.push('/dashboard/setup')
     }
-  }, [isLoading, isAuthenticated, needsOnboarding, profile, router, isDemoMode])
+  }, [isLoading, isAuthenticated, needsOnboarding, profile, router, isDemoMode, isAdminUser])
 
   // Redirect to setup page if user hasn't completed territory setup
   useEffect(() => {
     if (isLoading || !isAuthenticated || !profile) return
+    if (isAdminUser) return // admins skip setup
     if (needsOnboarding || !profile.primary_area) return
+    if (profile.setup_completed_at) return
     if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
     const hasRealServiceArea =
@@ -121,7 +127,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       router.push('/dashboard/setup')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isAuthenticated, needsOnboarding, profile, pathname])
+  }, [isLoading, isAuthenticated, needsOnboarding, profile, pathname, isAdminUser])
 
   if (isLoading) {
     return (

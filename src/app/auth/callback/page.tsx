@@ -141,7 +141,7 @@ export default function AuthCallback() {
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => { window.location.href = '/onboarding' }}
+              onClick={() => { window.location.href = '/dashboard/setup' }}
               className="flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity"
             >
               <UserPlus className="w-4 h-4" />

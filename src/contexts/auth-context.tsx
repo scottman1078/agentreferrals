@@ -53,6 +53,7 @@ export interface ArProfile {
   license_verified_at: string | null
   license_expiration: string | null
   license_type: string | null
+  setup_completed_at: string | null
   created_at: string
   updated_at: string
 
@@ -151,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             license_verified_at: null,
             license_expiration: null,
             license_type: null,
+            setup_completed_at: null,
             created_at: '',
             updated_at: '',
             brokerage: null,

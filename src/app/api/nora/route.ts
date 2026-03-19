@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const agentSummary = (agents || [])
       .map((a) => {
         const brokerageName = (a.brokerage as unknown as { name: string } | null)?.name || 'Independent'
-        return `- ${a.full_name} (id: "${a.id}") | ${brokerageName} | ${a.primary_area || 'N/A'} | Tags: ${(a.tags || []).join(', ')} | ${a.deals_per_year || 0} deals/yr | ${a.years_licensed || 0} yrs | Avg: $${(a.avg_sale_price || 0).toLocaleString()} | Score: ${a.refernet_score ?? 'N/A'} | Response: ${a.response_time_minutes ? `${a.response_time_minutes} min` : 'N/A'} | Closed: ${a.closed_referrals || 0}`
+        return `- ${a.full_name} (id: "${a.id}") | ${brokerageName} | ${a.primary_area || 'N/A'} | Tags: ${(a.tags || []).join(', ')} | ${a.deals_per_year || 0} deals/yr | ${a.years_licensed || 0} yrs | Avg: $${(a.avg_sale_price || 0).toLocaleString()} | RCS: ${a.refernet_score ?? 'N/A'} | Response: ${a.response_time_minutes ? `${a.response_time_minutes} min` : 'N/A'} | Closed: ${a.closed_referrals || 0}`
       })
       .join('\n')
 
@@ -142,7 +142,7 @@ ${agentSummary}
 ${referralSummary}${partnerSummary}${newAgentsSummary}${inviteSummary}
 
 Your capabilities:
-1. **Find agents** — match by market, specialization, price range, brokerage, or ReferNet Score
+1. **Find agents** — match by market, specialization, price range, brokerage, or RCS (Referral Communication Score)
 2. **Draft messages** — write personalized outreach or check-in messages to partners
 3. **Suggest connections** — proactively recommend agents the user should invite or partner with based on their market gaps
 4. **Market insights** — identify coverage gaps and opportunities based on the agent directory

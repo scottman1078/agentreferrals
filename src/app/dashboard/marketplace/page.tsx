@@ -416,7 +416,7 @@ function BidCard({ bid, isAwarded }: { bid: ReferralBid; isAwarded?: boolean }) 
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
               <Zap className="w-3 h-3" />
-              {bid.agentReferNetScore} ReferNet
+              {bid.agentRCSScore} RCS
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-card border border-border">
               <Handshake className="w-3 h-3" />

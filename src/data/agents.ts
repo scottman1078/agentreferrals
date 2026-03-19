@@ -8,7 +8,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(269) 555-0147', email: 'jason@sweethomerealty.com',
     dealsPerYear: 32, yearsLicensed: 8, avgSalePrice: 285000,
     polygon: [],
-    color: '#f0a500', isPrimary: true, referNetScore: 92, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#f0a500', isPrimary: true, rcsScore: 92, responseTime: '< 1hr', closedReferrals: 8,
     photoUrl: '/demo/avatar-jason.jpg',
   },
   {
@@ -17,7 +17,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(616) 555-0381', email: 'derek.chung@realbrokerage.com',
     dealsPerYear: 45, yearsLicensed: 7, avgSalePrice: 340000,
     polygon: [],
-    color: '#14b8a6', referNetScore: 87, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#14b8a6', rcsScore: 87, responseTime: '< 2hr', closedReferrals: 5,
     photoUrl: '/demo/avatar-derek.jpg',
   },
   {
@@ -26,7 +26,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(615) 555-0815', email: 'amonroe@realbrokerage.com',
     dealsPerYear: 74, yearsLicensed: 13, avgSalePrice: 595000,
     polygon: [],
-    color: '#f472b6', referNetScore: 95, responseTime: '< 30min', closedReferrals: 14,
+    color: '#f472b6', rcsScore: 95, responseTime: '< 30min', closedReferrals: 14,
     photoUrl: '/demo/avatar-ashley.jpg',
   },
   {
@@ -35,7 +35,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(210) 555-0692', email: 'treyes@realbrokerage.com',
     dealsPerYear: 61, yearsLicensed: 11, avgSalePrice: 320000,
     polygon: [],
-    color: '#10b981', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#10b981', rcsScore: 89, responseTime: '< 1hr', closedReferrals: 9,
     photoUrl: '/demo/avatar-tomas.jpg',
   },
   {
@@ -44,7 +44,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(480) 555-0389', email: 'dking@realbrokerage.com',
     dealsPerYear: 86, yearsLicensed: 14, avgSalePrice: 620000,
     polygon: [],
-    color: '#d97706', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#d97706', rcsScore: 91, responseTime: '< 1hr', closedReferrals: 11,
     photoUrl: '/demo/avatar-darius.jpg',
   },
   {
@@ -53,7 +53,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(720) 555-0412', email: 'lpark@realbrokerage.com',
     dealsPerYear: 63, yearsLicensed: 11, avgSalePrice: 680000,
     polygon: [],
-    color: '#059669', referNetScore: 88, responseTime: '< 2hr', closedReferrals: 7,
+    color: '#059669', rcsScore: 88, responseTime: '< 2hr', closedReferrals: 7,
     photoUrl: '/demo/avatar-lily.jpg',
   },
   {
@@ -62,7 +62,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(702) 555-0534', email: 'ncruz@realbrokerage.com',
     dealsPerYear: 71, yearsLicensed: 12, avgSalePrice: 540000,
     polygon: [],
-    color: '#db2777', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#db2777', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 6,
     photoUrl: '/demo/avatar-natalie.jpg',
   },
   {
@@ -71,7 +71,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(231) 555-0567', email: 'brent.schaefer@realbrokerage.com',
     dealsPerYear: 28, yearsLicensed: 11, avgSalePrice: 195000,
     polygon: [],
-    color: '#f97316', referNetScore: 78, responseTime: '< 4hr', closedReferrals: 3,
+    color: '#f97316', rcsScore: 78, responseTime: '< 4hr', closedReferrals: 3,
     photoUrl: '/demo/avatar-brent.jpg',
   },
   // KELLER WILLIAMS agents
@@ -81,7 +81,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(616) 555-0293', email: 'megan.torres@kwgr.com',
     dealsPerYear: 67, yearsLicensed: 12, avgSalePrice: 520000,
     polygon: [],
-    color: '#22c55e', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 10,
+    color: '#22c55e', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 10,
     photoUrl: '/demo/avatar-megan.jpg',
   },
   {
@@ -90,7 +90,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(517) 555-0689', email: 'carla.mendez@kw.com',
     dealsPerYear: 52, yearsLicensed: 14, avgSalePrice: 310000,
     polygon: [],
-    color: '#6366f1', referNetScore: 84, responseTime: '< 2hr', closedReferrals: 6,
+    color: '#6366f1', rcsScore: 84, responseTime: '< 2hr', closedReferrals: 6,
     photoUrl: '/demo/avatar-carla.jpg',
   },
   // COMPASS agents
@@ -100,7 +100,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(312) 555-0210', email: 'mreid@compass.com',
     dealsPerYear: 88, yearsLicensed: 15, avgSalePrice: 615000,
     polygon: [],
-    color: '#818cf8', referNetScore: 94, responseTime: '< 30min', closedReferrals: 16,
+    color: '#818cf8', rcsScore: 94, responseTime: '< 30min', closedReferrals: 16,
     photoUrl: '/demo/avatar-marcus.jpg',
   },
   {
@@ -109,7 +109,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(704) 555-0124', email: 'mfoster@compass.com',
     dealsPerYear: 58, yearsLicensed: 9, avgSalePrice: 510000,
     polygon: [],
-    color: '#e879f9', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#e879f9', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 7,
     photoUrl: '/demo/avatar-michelle.jpg',
   },
   {
@@ -118,7 +118,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(415) 555-0780', email: 'lchen@compass.com',
     dealsPerYear: 76, yearsLicensed: 13, avgSalePrice: 1850000,
     polygon: [],
-    color: '#94a3b8', referNetScore: 82, responseTime: '< 4hr', closedReferrals: 4,
+    color: '#94a3b8', rcsScore: 82, responseTime: '< 4hr', closedReferrals: 4,
     photoUrl: '/demo/avatar-laura.jpg',
   },
   // eXp REALTY agents
@@ -128,7 +128,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(269) 555-0412', email: 'priya.nair@exprealty.com',
     dealsPerYear: 38, yearsLicensed: 9, avgSalePrice: 245000,
     polygon: [],
-    color: '#a855f7', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 5,
+    color: '#a855f7', rcsScore: 85, responseTime: '< 1hr', closedReferrals: 5,
     photoUrl: '/demo/avatar-priya.jpg',
   },
   {
@@ -137,7 +137,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(612) 555-0334', email: 'ohassan@exprealty.com',
     dealsPerYear: 55, yearsLicensed: 10, avgSalePrice: 420000,
     polygon: [],
-    color: '#38bdf8', referNetScore: 87, responseTime: '< 2hr', closedReferrals: 8,
+    color: '#38bdf8', rcsScore: 87, responseTime: '< 2hr', closedReferrals: 8,
     photoUrl: '/demo/avatar-omar.jpg',
   },
   {
@@ -146,7 +146,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(407) 555-0248', email: 'jwhitfield@exprealty.com',
     dealsPerYear: 79, yearsLicensed: 14, avgSalePrice: 445000,
     polygon: [],
-    color: '#06b6d4', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+    color: '#06b6d4', rcsScore: 91, responseTime: '< 1hr', closedReferrals: 12,
     photoUrl: '/demo/avatar-james.jpg',
   },
   {
@@ -155,7 +155,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(313) 555-0471', email: 'kdavis@exprealty.com',
     dealsPerYear: 41, yearsLicensed: 6, avgSalePrice: 295000,
     polygon: [],
-    color: '#fb923c', referNetScore: 76, responseTime: '< 4hr', closedReferrals: 2,
+    color: '#fb923c', rcsScore: 76, responseTime: '< 4hr', closedReferrals: 2,
     photoUrl: '/demo/avatar-kwame.jpg',
   },
   // BERKSHIRE HATHAWAY agents
@@ -165,7 +165,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(404) 555-0937', email: 'thill@bhhsatlanta.com',
     dealsPerYear: 93, yearsLicensed: 16, avgSalePrice: 685000,
     polygon: [],
-    color: '#c084fc', referNetScore: 96, responseTime: '< 30min', closedReferrals: 18,
+    color: '#c084fc', rcsScore: 96, responseTime: '< 30min', closedReferrals: 18,
     photoUrl: '/demo/avatar-tanya.jpg',
   },
   {
@@ -174,7 +174,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(215) 555-0613', email: 'fokafor@foxroach.com',
     dealsPerYear: 47, yearsLicensed: 8, avgSalePrice: 380000,
     polygon: [],
-    color: '#2563eb', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#2563eb', rcsScore: 83, responseTime: '< 2hr', closedReferrals: 5,
     photoUrl: '/demo/avatar-faith.jpg',
   },
   // SOTHEBY'S agents
@@ -184,7 +184,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(310) 555-0135', email: 'rkim@sothebys.com',
     dealsPerYear: 95, yearsLicensed: 16, avgSalePrice: 1650000,
     polygon: [],
-    color: '#eab308', referNetScore: 97, responseTime: '< 30min', closedReferrals: 22,
+    color: '#eab308', rcsScore: 97, responseTime: '< 30min', closedReferrals: 22,
     photoUrl: '/demo/avatar-rachel.jpg',
   },
   {
@@ -193,7 +193,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(617) 555-0491', email: 'bwalsh@sothebys.com',
     dealsPerYear: 71, yearsLicensed: 13, avgSalePrice: 890000,
     polygon: [],
-    color: '#7c3aed', referNetScore: 93, responseTime: '< 1hr', closedReferrals: 13,
+    color: '#7c3aed', rcsScore: 93, responseTime: '< 1hr', closedReferrals: 13,
     photoUrl: '/demo/avatar-brendan.jpg',
   },
   // RE/MAX agents
@@ -203,7 +203,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(214) 555-0558', email: 'cvega@remax.com',
     dealsPerYear: 102, yearsLicensed: 17, avgSalePrice: 780000,
     polygon: [],
-    color: '#f43f5e', referNetScore: 94, responseTime: '< 30min', closedReferrals: 15,
+    color: '#f43f5e', rcsScore: 94, responseTime: '< 30min', closedReferrals: 15,
     photoUrl: '/demo/avatar-carlos.jpg',
   },
   {
@@ -212,7 +212,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(206) 555-0267', email: 'schen@remax.com',
     dealsPerYear: 82, yearsLicensed: 14, avgSalePrice: 920000,
     polygon: [],
-    color: '#14b8a6', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#14b8a6', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 11,
     photoUrl: '/demo/avatar-sofia.jpg',
   },
   // COLDWELL BANKER agents
@@ -222,7 +222,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(212) 555-0746', email: 'phunt@coldwellbanker.com',
     dealsPerYear: 118, yearsLicensed: 21, avgSalePrice: 2100000,
     polygon: [],
-    color: '#dc2626', referNetScore: 88, responseTime: '< 2hr', closedReferrals: 9,
+    color: '#dc2626', rcsScore: 88, responseTime: '< 2hr', closedReferrals: 9,
     photoUrl: '/demo/avatar-priscilla.jpg',
   },
   {
@@ -231,7 +231,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(202) 555-0879', email: 'amoore@coldwellbanker.com',
     dealsPerYear: 65, yearsLicensed: 12, avgSalePrice: 820000,
     polygon: [],
-    color: '#9333ea', referNetScore: 81, responseTime: '< 4hr', closedReferrals: 4,
+    color: '#9333ea', rcsScore: 81, responseTime: '< 4hr', closedReferrals: 4,
     photoUrl: '/demo/avatar-anthony.jpg',
   },
   {
@@ -240,7 +240,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(305) 555-0372', email: 'rsantos@coldwellbanker.com',
     dealsPerYear: 84, yearsLicensed: 18, avgSalePrice: 1100000,
     polygon: [],
-    color: '#fb7185', referNetScore: 85, responseTime: '< 2hr', closedReferrals: 7,
+    color: '#fb7185', rcsScore: 85, responseTime: '< 2hr', closedReferrals: 7,
     photoUrl: '/demo/avatar-rick.jpg',
   },
   {
@@ -249,7 +249,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(503) 555-0657', email: 'barcher@coldwellbanker.com',
     dealsPerYear: 44, yearsLicensed: 7, avgSalePrice: 490000,
     polygon: [],
-    color: '#4ade80', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#4ade80', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
     photoUrl: '/demo/avatar-ben.jpg',
   },
   // ══════════════════════════════════════
@@ -262,7 +262,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(813) 555-0891', email: 'twilson@exprealty.com',
     dealsPerYear: 49, yearsLicensed: 8, avgSalePrice: 385000,
     polygon: [],
-    color: '#3b82f6', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 6,
+    color: '#3b82f6', rcsScore: 83, responseTime: '< 2hr', closedReferrals: 6,
     photoUrl: '/demo/avatar-tamara.jpg',
   },
   {
@@ -271,7 +271,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(919) 555-0342', email: 'rharper@exprealty.com',
     dealsPerYear: 56, yearsLicensed: 10, avgSalePrice: 440000,
     polygon: [],
-    color: '#60a5fa', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#60a5fa', rcsScore: 87, responseTime: '< 1hr', closedReferrals: 9,
     photoUrl: '/demo/avatar-ryan_h.jpg',
   },
   {
@@ -280,7 +280,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(713) 555-0478', email: 'dpatel@exprealty.com',
     dealsPerYear: 63, yearsLicensed: 9, avgSalePrice: 365000,
     polygon: [],
-    color: '#2563eb', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 10,
+    color: '#2563eb', rcsScore: 89, responseTime: '< 1hr', closedReferrals: 10,
     photoUrl: '/demo/avatar-diana.jpg',
   },
   // KW — more agents
@@ -290,7 +290,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(619) 555-0567', email: 'snakamura@kw.com',
     dealsPerYear: 72, yearsLicensed: 14, avgSalePrice: 875000,
     polygon: [],
-    color: '#ef4444', referNetScore: 91, responseTime: '< 30min', closedReferrals: 13,
+    color: '#ef4444', rcsScore: 91, responseTime: '< 30min', closedReferrals: 13,
     photoUrl: '/demo/avatar-steve.jpg',
   },
   {
@@ -299,7 +299,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(512) 555-0789', email: 'nrodriguez@kw.com',
     dealsPerYear: 58, yearsLicensed: 7, avgSalePrice: 480000,
     polygon: [],
-    color: '#dc2626', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#dc2626', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 7,
     photoUrl: '/demo/avatar-nina.jpg',
   },
   {
@@ -308,7 +308,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(614) 555-0234', email: 'tjackson@kw.com',
     dealsPerYear: 41, yearsLicensed: 6, avgSalePrice: 295000,
     polygon: [],
-    color: '#b91c1c', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#b91c1c', rcsScore: 79, responseTime: '< 2hr', closedReferrals: 4,
   },
   // Compass — more agents
   {
@@ -317,7 +317,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(305) 555-0912', email: 'evasquez@compass.com',
     dealsPerYear: 91, yearsLicensed: 15, avgSalePrice: 1350000,
     polygon: [],
-    color: '#16a34a', referNetScore: 95, responseTime: '< 30min', closedReferrals: 19,
+    color: '#16a34a', rcsScore: 95, responseTime: '< 30min', closedReferrals: 19,
     photoUrl: '/demo/avatar-elena.jpg',
   },
   {
@@ -326,7 +326,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(425) 555-0345', email: 'dkim@compass.com',
     dealsPerYear: 67, yearsLicensed: 11, avgSalePrice: 1050000,
     polygon: [],
-    color: '#15803d', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#15803d', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 8,
   },
   // BHHS — more agents
   {
@@ -335,7 +335,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(480) 555-0678', email: 'powens@bhhs.com',
     dealsPerYear: 54, yearsLicensed: 18, avgSalePrice: 1200000,
     polygon: [],
-    color: '#7c3aed', referNetScore: 92, responseTime: '< 1hr', closedReferrals: 14,
+    color: '#7c3aed', rcsScore: 92, responseTime: '< 1hr', closedReferrals: 14,
     photoUrl: '/demo/avatar-patricia.jpg',
   },
   {
@@ -344,7 +344,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(312) 555-0456', email: 'gpalmer@bhhs.com',
     dealsPerYear: 48, yearsLicensed: 12, avgSalePrice: 750000,
     polygon: [],
-    color: '#9333ea', referNetScore: 86, responseTime: '< 2hr', closedReferrals: 7,
+    color: '#9333ea', rcsScore: 86, responseTime: '< 2hr', closedReferrals: 7,
   },
   // RE/MAX — more agents
   {
@@ -353,7 +353,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(210) 555-0567', email: 'msantos@remax.com',
     dealsPerYear: 44, yearsLicensed: 9, avgSalePrice: 310000,
     polygon: [],
-    color: '#ea580c', referNetScore: 82, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#ea580c', rcsScore: 82, responseTime: '< 2hr', closedReferrals: 5,
   },
   {
     id: 'kevin', name: 'Kevin OConnell', brokerage: 'RE/MAX — Denver', brokerageId: 'remax',
@@ -361,7 +361,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(303) 555-0890', email: 'koconnell@remax.com',
     dealsPerYear: 37, yearsLicensed: 11, avgSalePrice: 590000,
     polygon: [],
-    color: '#c2410c', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#c2410c', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 6,
   },
   // Sotheby's — more agents
   {
@@ -370,7 +370,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(970) 555-0123', email: 'vblake@sothebys.com',
     dealsPerYear: 28, yearsLicensed: 20, avgSalePrice: 4500000,
     polygon: [],
-    color: '#0d9488', referNetScore: 98, responseTime: '< 1hr', closedReferrals: 24,
+    color: '#0d9488', rcsScore: 98, responseTime: '< 1hr', closedReferrals: 24,
     photoUrl: '/demo/avatar-victoria.jpg',
   },
   {
@@ -379,7 +379,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(561) 555-0456', email: 'jwellington@sothebys.com',
     dealsPerYear: 42, yearsLicensed: 16, avgSalePrice: 2800000,
     polygon: [],
-    color: '#0f766e', referNetScore: 96, responseTime: '< 30min', closedReferrals: 20,
+    color: '#0f766e', rcsScore: 96, responseTime: '< 30min', closedReferrals: 20,
     photoUrl: '/demo/avatar-james_w.jpg',
   },
   // Coldwell Banker — more agents
@@ -389,7 +389,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(404) 555-0789', email: 'smitchell@coldwellbanker.com',
     dealsPerYear: 53, yearsLicensed: 10, avgSalePrice: 620000,
     polygon: [],
-    color: '#4f46e5', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#4f46e5', rcsScore: 85, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'robert_l', name: 'Robert Lee', brokerage: 'Coldwell Banker — Salt Lake', brokerageId: 'coldwell',
@@ -397,7 +397,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(801) 555-0234', email: 'rlee@coldwellbanker.com',
     dealsPerYear: 39, yearsLicensed: 8, avgSalePrice: 550000,
     polygon: [],
-    color: '#6366f1', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#6366f1', rcsScore: 81, responseTime: '< 2hr', closedReferrals: 5,
   },
   // ══════════════════════════════════════
   // CANADA
@@ -409,7 +409,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(416) 555-0123', email: 'sthompson@royallepage.ca',
     dealsPerYear: 68, yearsLicensed: 12, avgSalePrice: 1150000,
     polygon: [],
-    color: '#dc2626', referNetScore: 93, responseTime: '< 1hr', closedReferrals: 15,
+    color: '#dc2626', rcsScore: 93, responseTime: '< 1hr', closedReferrals: 15,
     photoUrl: '/demo/avatar-sarah_t.jpg',
   },
   {
@@ -418,7 +418,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(514) 555-0234', email: 'jpbouchard@royallepage.ca',
     dealsPerYear: 52, yearsLicensed: 10, avgSalePrice: 520000,
     polygon: [],
-    color: '#c41230', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#c41230', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'heather_m', name: 'Heather MacLeod', brokerage: 'Royal LePage — Winnipeg', brokerageId: 'royallepage',
@@ -426,7 +426,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(204) 555-0345', email: 'hmacleod@royallepage.ca',
     dealsPerYear: 34, yearsLicensed: 7, avgSalePrice: 370000,
     polygon: [],
-    color: '#e11d48', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#e11d48', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
   // SUTTON GROUP agents
   {
@@ -435,7 +435,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(604) 555-0456', email: 'dwong@sutton.com',
     dealsPerYear: 73, yearsLicensed: 14, avgSalePrice: 1300000,
     polygon: [],
-    color: '#003366', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+    color: '#003366', rcsScore: 91, responseTime: '< 1hr', closedReferrals: 12,
     photoUrl: '/demo/avatar-david_w.jpg',
   },
   {
@@ -444,7 +444,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(250) 555-0567', email: 'chenderson@sutton.com',
     dealsPerYear: 41, yearsLicensed: 11, avgSalePrice: 890000,
     polygon: [],
-    color: '#1e3a5f', referNetScore: 85, responseTime: '< 2hr', closedReferrals: 6,
+    color: '#1e3a5f', rcsScore: 85, responseTime: '< 2hr', closedReferrals: 6,
   },
   {
     id: 'ryan_k', name: 'Ryan Kirkpatrick', brokerage: 'Sutton Group — Kelowna', brokerageId: 'sutton',
@@ -452,7 +452,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(250) 555-0678', email: 'rkirkpatrick@sutton.com',
     dealsPerYear: 36, yearsLicensed: 9, avgSalePrice: 780000,
     polygon: [],
-    color: '#1a4d80', referNetScore: 82, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#1a4d80', rcsScore: 82, responseTime: '< 2hr', closedReferrals: 5,
   },
   // RE/MAX CANADA agents
   {
@@ -461,7 +461,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(403) 555-0789', email: 'tbraun@remax.ca',
     dealsPerYear: 57, yearsLicensed: 10, avgSalePrice: 550000,
     polygon: [],
-    color: '#003DA5', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#003DA5', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'lisa_g', name: 'Lisa Greco', brokerage: 'RE/MAX Canada — Hamilton', brokerageId: 'remax',
@@ -469,7 +469,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(905) 555-0890', email: 'lgreco@remax.ca',
     dealsPerYear: 44, yearsLicensed: 8, avgSalePrice: 720000,
     polygon: [],
-    color: '#1e40af', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#1e40af', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 7,
   },
   // KELLER WILLIAMS CANADA agent
   {
@@ -478,7 +478,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(613) 555-0901', email: 'aroy@kwcanada.com',
     dealsPerYear: 46, yearsLicensed: 9, avgSalePrice: 610000,
     polygon: [],
-    color: '#B5000C', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#B5000C', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 7,
   },
   // CENTURY 21 CANADA agent
   {
@@ -487,7 +487,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(780) 555-0112', email: 'mnilsson@century21.ca',
     dealsPerYear: 39, yearsLicensed: 11, avgSalePrice: 430000,
     polygon: [],
-    color: '#b8860b', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#b8860b', rcsScore: 81, responseTime: '< 2hr', closedReferrals: 5,
   },
   // EXIT REALTY agent
   {
@@ -496,7 +496,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(902) 555-0223', email: 'cdeveau@exitrealty.ca',
     dealsPerYear: 31, yearsLicensed: 6, avgSalePrice: 480000,
     polygon: [],
-    color: '#0891b2', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#0891b2', rcsScore: 79, responseTime: '< 2hr', closedReferrals: 3,
   },
   // RIGHT AT HOME agent
   {
@@ -505,7 +505,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(905) 555-0334', email: 'psingh@rightathome.com',
     dealsPerYear: 51, yearsLicensed: 8, avgSalePrice: 950000,
     polygon: [],
-    color: '#1a5276', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#1a5276', rcsScore: 87, responseTime: '< 1hr', closedReferrals: 8,
   },
   // ══════════════════════════════════════
   // ADDITIONAL AGENTS — expanded network
@@ -517,7 +517,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(305) 555-0148', email: 'alejandro.reyes@realbrokerage.com',
     dealsPerYear: 68, yearsLicensed: 10, avgSalePrice: 520000,
     polygon: [],
-    color: '#e11d48', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 10,
+    color: '#e11d48', rcsScore: 89, responseTime: '< 1hr', closedReferrals: 10,
   },
   {
     id: 'real_mia2', name: 'Jasmine Laurent', brokerage: 'Real Broker LLC — Miami', brokerageId: 'real',
@@ -525,7 +525,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(305) 555-0261', email: 'jasmine.laurent@realbrokerage.com',
     dealsPerYear: 82, yearsLicensed: 14, avgSalePrice: 890000,
     polygon: [],
-    color: '#7c3aed', referNetScore: 93, responseTime: '< 30min', closedReferrals: 15,
+    color: '#7c3aed', rcsScore: 93, responseTime: '< 30min', closedReferrals: 15,
   },
   {
     id: 'real_tpa1', name: 'Marcus Jefferson', brokerage: 'Real Broker LLC — Tampa', brokerageId: 'real',
@@ -533,7 +533,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(813) 555-0372', email: 'marcus.jefferson@realbrokerage.com',
     dealsPerYear: 45, yearsLicensed: 7, avgSalePrice: 340000,
     polygon: [],
-    color: '#0891b2', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#0891b2', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 6,
   },
   {
     id: 'real_tpa2', name: 'Brianna Cole', brokerage: 'Real Broker LLC — Tampa', brokerageId: 'real',
@@ -541,7 +541,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(813) 555-0489', email: 'brianna.cole@realbrokerage.com',
     dealsPerYear: 53, yearsLicensed: 9, avgSalePrice: 395000,
     polygon: [],
-    color: '#059669', referNetScore: 86, responseTime: '< 2hr', closedReferrals: 7,
+    color: '#059669', rcsScore: 86, responseTime: '< 2hr', closedReferrals: 7,
   },
   {
     id: 'real_jax', name: 'Terrence Brooks', brokerage: 'Real Broker LLC — Jacksonville', brokerageId: 'real',
@@ -549,7 +549,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(904) 555-0531', email: 'terrence.brooks@realbrokerage.com',
     dealsPerYear: 39, yearsLicensed: 6, avgSalePrice: 285000,
     polygon: [],
-    color: '#d97706', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#d97706', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
   {
     id: 'real_nap', name: 'Catherine Moreau', brokerage: 'Real Broker LLC — Naples', brokerageId: 'real',
@@ -557,7 +557,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(239) 555-0674', email: 'catherine.moreau@realbrokerage.com',
     dealsPerYear: 57, yearsLicensed: 12, avgSalePrice: 780000,
     polygon: [],
-    color: '#db2777', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#db2777', rcsScore: 91, responseTime: '< 1hr', closedReferrals: 11,
   },
   // REAL BROKER LLC — Texas
   {
@@ -566,7 +566,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(713) 555-0193', email: 'deandre.williams@realbrokerage.com',
     dealsPerYear: 72, yearsLicensed: 11, avgSalePrice: 410000,
     polygon: [],
-    color: '#2563eb', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#2563eb', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'real_hou2', name: 'Priya Sharma', brokerage: 'Real Broker LLC — Houston', brokerageId: 'real',
@@ -574,7 +574,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(713) 555-0317', email: 'priya.sharma@realbrokerage.com',
     dealsPerYear: 64, yearsLicensed: 9, avgSalePrice: 620000,
     polygon: [],
-    color: '#a855f7', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 10,
+    color: '#a855f7', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 10,
   },
   {
     id: 'real_aus1', name: 'Jake Thornton', brokerage: 'Real Broker LLC — Austin', brokerageId: 'real',
@@ -582,7 +582,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(512) 555-0428', email: 'jake.thornton@realbrokerage.com',
     dealsPerYear: 78, yearsLicensed: 10, avgSalePrice: 530000,
     polygon: [],
-    color: '#16a34a', referNetScore: 92, responseTime: '< 30min', closedReferrals: 13,
+    color: '#16a34a', rcsScore: 92, responseTime: '< 30min', closedReferrals: 13,
   },
   {
     id: 'real_aus2', name: 'Sonia Gutierrez', brokerage: 'Real Broker LLC — Austin', brokerageId: 'real',
@@ -590,7 +590,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(512) 555-0564', email: 'sonia.gutierrez@realbrokerage.com',
     dealsPerYear: 55, yearsLicensed: 8, avgSalePrice: 680000,
     polygon: [],
-    color: '#f43f5e', referNetScore: 85, responseTime: '< 2hr', closedReferrals: 6,
+    color: '#f43f5e', rcsScore: 85, responseTime: '< 2hr', closedReferrals: 6,
   },
   {
     id: 'real_sat2', name: 'Michael Tran', brokerage: 'Real Broker LLC — San Antonio', brokerageId: 'real',
@@ -598,7 +598,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(210) 555-0781', email: 'michael.tran@realbrokerage.com',
     dealsPerYear: 42, yearsLicensed: 6, avgSalePrice: 265000,
     polygon: [],
-    color: '#14b8a6', referNetScore: 82, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#14b8a6', rcsScore: 82, responseTime: '< 2hr', closedReferrals: 5,
   },
   {
     id: 'real_ftw', name: 'Keisha Robinson', brokerage: 'Real Broker LLC — Fort Worth', brokerageId: 'real',
@@ -606,7 +606,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(817) 555-0293', email: 'keisha.robinson@realbrokerage.com',
     dealsPerYear: 48, yearsLicensed: 7, avgSalePrice: 350000,
     polygon: [],
-    color: '#eab308', referNetScore: 83, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#eab308', rcsScore: 83, responseTime: '< 1hr', closedReferrals: 7,
   },
   // REAL BROKER LLC — California
   {
@@ -615,7 +615,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(916) 555-0412', email: 'david.nakamura@realbrokerage.com',
     dealsPerYear: 56, yearsLicensed: 10, avgSalePrice: 480000,
     polygon: [],
-    color: '#dc2626', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#dc2626', rcsScore: 87, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'real_sj', name: 'Maria Espinoza', brokerage: 'Real Broker LLC — San Jose', brokerageId: 'real',
@@ -623,7 +623,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(408) 555-0536', email: 'maria.espinoza@realbrokerage.com',
     dealsPerYear: 70, yearsLicensed: 12, avgSalePrice: 1250000,
     polygon: [],
-    color: '#7c3aed', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#7c3aed', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 11,
   },
   {
     id: 'real_oc', name: 'Chris Andersen', brokerage: 'Real Broker LLC — Orange County', brokerageId: 'real',
@@ -631,7 +631,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(949) 555-0678', email: 'chris.andersen@realbrokerage.com',
     dealsPerYear: 85, yearsLicensed: 15, avgSalePrice: 1100000,
     polygon: [],
-    color: '#0d9488', referNetScore: 94, responseTime: '< 30min', closedReferrals: 16,
+    color: '#0d9488', rcsScore: 94, responseTime: '< 30min', closedReferrals: 16,
   },
   // REAL BROKER LLC — Arizona
   {
@@ -640,7 +640,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(602) 555-0154', email: 'amanda.osei@realbrokerage.com',
     dealsPerYear: 52, yearsLicensed: 8, avgSalePrice: 365000,
     polygon: [],
-    color: '#f97316', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#f97316', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 6,
   },
   {
     id: 'real_phx2', name: 'Jordan Rivera', brokerage: 'Real Broker LLC — Phoenix', brokerageId: 'real',
@@ -648,7 +648,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(602) 555-0287', email: 'jordan.rivera@realbrokerage.com',
     dealsPerYear: 67, yearsLicensed: 11, avgSalePrice: 575000,
     polygon: [],
-    color: '#6366f1', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#6366f1', rcsScore: 89, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'real_tuc', name: 'Gabriela Flores', brokerage: 'Real Broker LLC — Tucson', brokerageId: 'real',
@@ -656,7 +656,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(520) 555-0398', email: 'gabriela.flores@realbrokerage.com',
     dealsPerYear: 35, yearsLicensed: 5, avgSalePrice: 295000,
     polygon: [],
-    color: '#22c55e', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#22c55e', rcsScore: 79, responseTime: '< 2hr', closedReferrals: 4,
   },
   {
     id: 'real_mesa', name: 'Tyler Washington', brokerage: 'Real Broker LLC — Mesa', brokerageId: 'real',
@@ -664,7 +664,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(480) 555-0521', email: 'tyler.washington@realbrokerage.com',
     dealsPerYear: 44, yearsLicensed: 6, avgSalePrice: 340000,
     polygon: [],
-    color: '#e879f9', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#e879f9', rcsScore: 81, responseTime: '< 2hr', closedReferrals: 5,
   },
   // REAL BROKER LLC — Colorado
   {
@@ -673,7 +673,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(720) 555-0634', email: 'hannah.fischer@realbrokerage.com',
     dealsPerYear: 51, yearsLicensed: 7, avgSalePrice: 520000,
     polygon: [],
-    color: '#fb923c', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#fb923c', rcsScore: 85, responseTime: '< 1hr', closedReferrals: 7,
   },
   {
     id: 'real_cos', name: 'Brandon Mitchell', brokerage: 'Real Broker LLC — Colorado Springs', brokerageId: 'real',
@@ -681,7 +681,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(719) 555-0745', email: 'brandon.mitchell@realbrokerage.com',
     dealsPerYear: 40, yearsLicensed: 8, avgSalePrice: 410000,
     polygon: [],
-    color: '#38bdf8', referNetScore: 83, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#38bdf8', rcsScore: 83, responseTime: '< 2hr', closedReferrals: 5,
   },
   // REAL BROKER LLC — Georgia
   {
@@ -690,7 +690,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(404) 555-0213', email: 'destiny.harris@realbrokerage.com',
     dealsPerYear: 62, yearsLicensed: 9, avgSalePrice: 410000,
     polygon: [],
-    color: '#c084fc', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#c084fc', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'real_atl2', name: 'Raj Patel', brokerage: 'Real Broker LLC — Atlanta', brokerageId: 'real',
@@ -698,7 +698,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(404) 555-0356', email: 'raj.patel@realbrokerage.com',
     dealsPerYear: 75, yearsLicensed: 13, avgSalePrice: 720000,
     polygon: [],
-    color: '#ef4444', referNetScore: 92, responseTime: '< 30min', closedReferrals: 14,
+    color: '#ef4444', rcsScore: 92, responseTime: '< 30min', closedReferrals: 14,
   },
   {
     id: 'real_sav', name: 'Nicole Beaumont', brokerage: 'Real Broker LLC — Savannah', brokerageId: 'real',
@@ -706,7 +706,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(912) 555-0478', email: 'nicole.beaumont@realbrokerage.com',
     dealsPerYear: 33, yearsLicensed: 5, avgSalePrice: 310000,
     polygon: [],
-    color: '#4ade80', referNetScore: 78, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#4ade80', rcsScore: 78, responseTime: '< 2hr', closedReferrals: 3,
   },
   // REAL BROKER LLC — North Carolina
   {
@@ -715,7 +715,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(704) 555-0312', email: 'andre.thompson@realbrokerage.com',
     dealsPerYear: 66, yearsLicensed: 10, avgSalePrice: 465000,
     polygon: [],
-    color: '#818cf8', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#818cf8', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 11,
   },
   {
     id: 'real_clt2', name: 'Whitney Palmer', brokerage: 'Real Broker LLC — Charlotte', brokerageId: 'real',
@@ -723,7 +723,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(704) 555-0445', email: 'whitney.palmer@realbrokerage.com',
     dealsPerYear: 49, yearsLicensed: 7, avgSalePrice: 580000,
     polygon: [],
-    color: '#f472b6', referNetScore: 84, responseTime: '< 2hr', closedReferrals: 6,
+    color: '#f472b6', rcsScore: 84, responseTime: '< 2hr', closedReferrals: 6,
   },
   {
     id: 'real_ral', name: 'Omar Farah', brokerage: 'Real Broker LLC — Raleigh', brokerageId: 'real',
@@ -731,7 +731,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(919) 555-0567', email: 'omar.farah@realbrokerage.com',
     dealsPerYear: 54, yearsLicensed: 8, avgSalePrice: 395000,
     polygon: [],
-    color: '#10b981', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#10b981', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 8,
   },
   // REAL BROKER LLC — Tennessee
   {
@@ -740,7 +740,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(615) 555-0623', email: 'courtney.simmons@realbrokerage.com',
     dealsPerYear: 58, yearsLicensed: 9, avgSalePrice: 485000,
     polygon: [],
-    color: '#d97706', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#d97706', rcsScore: 87, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'real_mem', name: 'Lamar Green', brokerage: 'Real Broker LLC — Memphis', brokerageId: 'real',
@@ -748,7 +748,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(901) 555-0734', email: 'lamar.green@realbrokerage.com',
     dealsPerYear: 36, yearsLicensed: 5, avgSalePrice: 225000,
     polygon: [],
-    color: '#06b6d4', referNetScore: 77, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#06b6d4', rcsScore: 77, responseTime: '< 2hr', closedReferrals: 3,
   },
   {
     id: 'real_knx', name: 'Megan Sullivan', brokerage: 'Real Broker LLC — Knoxville', brokerageId: 'real',
@@ -756,7 +756,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(865) 555-0845', email: 'megan.sullivan@realbrokerage.com',
     dealsPerYear: 41, yearsLicensed: 6, avgSalePrice: 310000,
     polygon: [],
-    color: '#9333ea', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#9333ea', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
   // REAL BROKER LLC — Michigan (additional)
   {
@@ -765,7 +765,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(313) 555-0156', email: 'dante.powell@realbrokerage.com',
     dealsPerYear: 38, yearsLicensed: 5, avgSalePrice: 210000,
     polygon: [],
-    color: '#f0a500', referNetScore: 76, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#f0a500', rcsScore: 76, responseTime: '< 2hr', closedReferrals: 3,
   },
   {
     id: 'real_aa', name: 'Emily Zhang', brokerage: 'Real Broker LLC — Ann Arbor', brokerageId: 'real',
@@ -773,7 +773,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(734) 555-0289', email: 'emily.zhang@realbrokerage.com',
     dealsPerYear: 47, yearsLicensed: 7, avgSalePrice: 420000,
     polygon: [],
-    color: '#3b82f6', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#3b82f6', rcsScore: 85, responseTime: '< 1hr', closedReferrals: 7,
   },
   {
     id: 'real_gr', name: 'Marcus DeLeon', brokerage: 'Real Broker LLC — Grand Rapids', brokerageId: 'real',
@@ -781,7 +781,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(616) 555-0412', email: 'marcus.deleon@realbrokerage.com',
     dealsPerYear: 43, yearsLicensed: 8, avgSalePrice: 295000,
     polygon: [],
-    color: '#ea580c', referNetScore: 83, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#ea580c', rcsScore: 83, responseTime: '< 1hr', closedReferrals: 6,
   },
   // REAL BROKER LLC — Nevada
   {
@@ -790,7 +790,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(702) 555-0678', email: 'sandra.kim@realbrokerage.com',
     dealsPerYear: 65, yearsLicensed: 10, avgSalePrice: 475000,
     polygon: [],
-    color: '#c2410c', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#c2410c', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'real_rno', name: 'Patrick O\'Malley', brokerage: 'Real Broker LLC — Reno', brokerageId: 'real',
@@ -798,7 +798,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(775) 555-0234', email: 'patrick.omalley@realbrokerage.com',
     dealsPerYear: 37, yearsLicensed: 6, avgSalePrice: 430000,
     polygon: [],
-    color: '#15803d', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#15803d', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
   // REAL BROKER LLC — Oregon
   {
@@ -807,7 +807,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(503) 555-0345', email: 'aisha.jackson@realbrokerage.com',
     dealsPerYear: 50, yearsLicensed: 8, avgSalePrice: 510000,
     polygon: [],
-    color: '#b91c1c', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#b91c1c', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 7,
   },
   // REAL BROKER LLC — Washington
   {
@@ -816,7 +816,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(206) 555-0456', email: 'kevin.nguyen@realbrokerage.com',
     dealsPerYear: 73, yearsLicensed: 12, avgSalePrice: 850000,
     polygon: [],
-    color: '#f472b6', referNetScore: 91, responseTime: '< 1hr', closedReferrals: 12,
+    color: '#f472b6', rcsScore: 91, responseTime: '< 1hr', closedReferrals: 12,
   },
   {
     id: 'real_tac', name: 'Jessica Barnes', brokerage: 'Real Broker LLC — Tacoma', brokerageId: 'real',
@@ -824,7 +824,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(253) 555-0567', email: 'jessica.barnes@realbrokerage.com',
     dealsPerYear: 38, yearsLicensed: 5, avgSalePrice: 420000,
     polygon: [],
-    color: '#0891b2', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#0891b2', rcsScore: 79, responseTime: '< 2hr', closedReferrals: 4,
   },
   // REAL BROKER LLC — Virginia
   {
@@ -833,7 +833,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(804) 555-0678', email: 'daniel.foster@realbrokerage.com',
     dealsPerYear: 55, yearsLicensed: 9, avgSalePrice: 380000,
     polygon: [],
-    color: '#4f46e5', referNetScore: 85, responseTime: '< 1hr', closedReferrals: 7,
+    color: '#4f46e5', rcsScore: 85, responseTime: '< 1hr', closedReferrals: 7,
   },
   {
     id: 'real_nova', name: 'Samantha Lee', brokerage: 'Real Broker LLC — Northern Virginia', brokerageId: 'real',
@@ -841,7 +841,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(703) 555-0789', email: 'samantha.lee@realbrokerage.com',
     dealsPerYear: 80, yearsLicensed: 14, avgSalePrice: 750000,
     polygon: [],
-    color: '#e11d48', referNetScore: 93, responseTime: '< 30min', closedReferrals: 15,
+    color: '#e11d48', rcsScore: 93, responseTime: '< 30min', closedReferrals: 15,
   },
   // REAL BROKER LLC — Maryland
   {
@@ -850,7 +850,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(410) 555-0890', email: 'jamal.carter@realbrokerage.com',
     dealsPerYear: 46, yearsLicensed: 7, avgSalePrice: 310000,
     polygon: [],
-    color: '#059669', referNetScore: 82, responseTime: '< 1hr', closedReferrals: 5,
+    color: '#059669', rcsScore: 82, responseTime: '< 1hr', closedReferrals: 5,
   },
   {
     id: 'real_beth', name: 'Kristin Olson', brokerage: 'Real Broker LLC — Bethesda', brokerageId: 'real',
@@ -858,7 +858,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(301) 555-0123', email: 'kristin.olson@realbrokerage.com',
     dealsPerYear: 62, yearsLicensed: 11, avgSalePrice: 890000,
     polygon: [],
-    color: '#a855f7', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 10,
+    color: '#a855f7', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 10,
   },
   // REAL BROKER LLC — Additional markets
   {
@@ -867,7 +867,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(612) 555-0234', email: 'sarah.lindgren@realbrokerage.com',
     dealsPerYear: 49, yearsLicensed: 8, avgSalePrice: 395000,
     polygon: [],
-    color: '#fb923c', referNetScore: 84, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#fb923c', rcsScore: 84, responseTime: '< 1hr', closedReferrals: 6,
   },
   {
     id: 'real_ind', name: 'Marcus Wright', brokerage: 'Real Broker LLC — Indianapolis', brokerageId: 'real',
@@ -875,7 +875,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(317) 555-0345', email: 'marcus.wright@realbrokerage.com',
     dealsPerYear: 40, yearsLicensed: 6, avgSalePrice: 265000,
     polygon: [],
-    color: '#14b8a6', referNetScore: 80, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#14b8a6', rcsScore: 80, responseTime: '< 2hr', closedReferrals: 4,
   },
   {
     id: 'real_kc', name: 'Rachel Hoffman', brokerage: 'Real Broker LLC — Kansas City', brokerageId: 'real',
@@ -883,7 +883,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(816) 555-0456', email: 'rachel.hoffman@realbrokerage.com',
     dealsPerYear: 44, yearsLicensed: 7, avgSalePrice: 310000,
     polygon: [],
-    color: '#dc2626', referNetScore: 82, responseTime: '< 1hr', closedReferrals: 5,
+    color: '#dc2626', rcsScore: 82, responseTime: '< 1hr', closedReferrals: 5,
   },
   {
     id: 'real_stl', name: 'Tony Abrams', brokerage: 'Real Broker LLC — St. Louis', brokerageId: 'real',
@@ -891,7 +891,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(314) 555-0567', email: 'tony.abrams@realbrokerage.com',
     dealsPerYear: 35, yearsLicensed: 5, avgSalePrice: 235000,
     polygon: [],
-    color: '#22c55e', referNetScore: 75, responseTime: '< 4hr', closedReferrals: 2,
+    color: '#22c55e', rcsScore: 75, responseTime: '< 4hr', closedReferrals: 2,
   },
   {
     id: 'real_slc', name: 'Brittany Sorensen', brokerage: 'Real Broker LLC — Salt Lake City', brokerageId: 'real',
@@ -899,7 +899,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(801) 555-0678', email: 'brittany.sorensen@realbrokerage.com',
     dealsPerYear: 52, yearsLicensed: 9, avgSalePrice: 510000,
     polygon: [],
-    color: '#6366f1', referNetScore: 87, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#6366f1', rcsScore: 87, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'real_orl', name: 'Devon Martinez', brokerage: 'Real Broker LLC — Orlando', brokerageId: 'real',
@@ -907,7 +907,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(407) 555-0789', email: 'devon.martinez@realbrokerage.com',
     dealsPerYear: 60, yearsLicensed: 10, avgSalePrice: 380000,
     polygon: [],
-    color: '#d97706', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#d97706', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 8,
   },
   {
     id: 'real_pit', name: 'Angela Romano', brokerage: 'Real Broker LLC — Pittsburgh', brokerageId: 'real',
@@ -915,7 +915,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(412) 555-0890', email: 'angela.romano@realbrokerage.com',
     dealsPerYear: 42, yearsLicensed: 7, avgSalePrice: 285000,
     polygon: [],
-    color: '#db2777', referNetScore: 81, responseTime: '< 2hr', closedReferrals: 5,
+    color: '#db2777', rcsScore: 81, responseTime: '< 2hr', closedReferrals: 5,
   },
   {
     id: 'real_chs', name: 'William Baptiste', brokerage: 'Real Broker LLC — Charleston', brokerageId: 'real',
@@ -923,7 +923,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(843) 555-0123', email: 'william.baptiste@realbrokerage.com',
     dealsPerYear: 57, yearsLicensed: 10, avgSalePrice: 560000,
     polygon: [],
-    color: '#0d9488', referNetScore: 89, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#0d9488', rcsScore: 89, responseTime: '< 1hr', closedReferrals: 9,
   },
   {
     id: 'real_boi', name: 'Taylor Christensen', brokerage: 'Real Broker LLC — Boise', brokerageId: 'real',
@@ -931,7 +931,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(208) 555-0234', email: 'taylor.christensen@realbrokerage.com',
     dealsPerYear: 46, yearsLicensed: 7, avgSalePrice: 440000,
     polygon: [],
-    color: '#f43f5e', referNetScore: 83, responseTime: '< 1hr', closedReferrals: 6,
+    color: '#f43f5e', rcsScore: 83, responseTime: '< 1hr', closedReferrals: 6,
   },
   {
     id: 'real_abq', name: 'Rosa Sandoval', brokerage: 'Real Broker LLC — Albuquerque', brokerageId: 'real',
@@ -939,7 +939,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(505) 555-0345', email: 'rosa.sandoval@realbrokerage.com',
     dealsPerYear: 34, yearsLicensed: 5, avgSalePrice: 280000,
     polygon: [],
-    color: '#16a34a', referNetScore: 78, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#16a34a', rcsScore: 78, responseTime: '< 2hr', closedReferrals: 3,
   },
   {
     id: 'real_okc', name: 'Chris Adebayo', brokerage: 'Real Broker LLC — Oklahoma City', brokerageId: 'real',
@@ -947,7 +947,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(405) 555-0456', email: 'chris.adebayo@realbrokerage.com',
     dealsPerYear: 39, yearsLicensed: 6, avgSalePrice: 250000,
     polygon: [],
-    color: '#818cf8', referNetScore: 79, responseTime: '< 2hr', closedReferrals: 4,
+    color: '#818cf8', rcsScore: 79, responseTime: '< 2hr', closedReferrals: 4,
   },
   {
     id: 'real_oma', name: 'Natasha Ivanov', brokerage: 'Real Broker LLC — Omaha', brokerageId: 'real',
@@ -955,7 +955,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(402) 555-0567', email: 'natasha.ivanov@realbrokerage.com',
     dealsPerYear: 32, yearsLicensed: 4, avgSalePrice: 240000,
     polygon: [],
-    color: '#eab308', referNetScore: 74, responseTime: '< 4hr', closedReferrals: 2,
+    color: '#eab308', rcsScore: 74, responseTime: '< 4hr', closedReferrals: 2,
   },
   {
     id: 'real_wil', name: 'Tiffany Odom', brokerage: 'Real Broker LLC — Wilmington', brokerageId: 'real',
@@ -963,7 +963,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(910) 555-0678', email: 'tiffany.odom@realbrokerage.com',
     dealsPerYear: 37, yearsLicensed: 5, avgSalePrice: 320000,
     polygon: [],
-    color: '#38bdf8', referNetScore: 78, responseTime: '< 2hr', closedReferrals: 3,
+    color: '#38bdf8', rcsScore: 78, responseTime: '< 2hr', closedReferrals: 3,
   },
   {
     id: 'real_lex', name: 'Brian Hawkins', brokerage: 'Real Broker LLC — Lexington', brokerageId: 'real',
@@ -971,7 +971,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(859) 555-0789', email: 'brian.hawkins@realbrokerage.com',
     dealsPerYear: 40, yearsLicensed: 7, avgSalePrice: 290000,
     polygon: [],
-    color: '#c2410c', referNetScore: 81, responseTime: '< 1hr', closedReferrals: 5,
+    color: '#c2410c', rcsScore: 81, responseTime: '< 1hr', closedReferrals: 5,
   },
   {
     id: 'real_tul', name: 'Monica Chen-Williams', brokerage: 'Real Broker LLC — Tulsa', brokerageId: 'real',
@@ -979,7 +979,7 @@ export const agents: Agent[] = [
     status: 'invited', phone: '(918) 555-0890', email: 'monica.chenwilliams@realbrokerage.com',
     dealsPerYear: 33, yearsLicensed: 4, avgSalePrice: 230000,
     polygon: [],
-    color: '#4ade80', referNetScore: 76, responseTime: '< 4hr', closedReferrals: 2,
+    color: '#4ade80', rcsScore: 76, responseTime: '< 4hr', closedReferrals: 2,
   },
   // Additional non-Real agents for variety
   // eXp Realty
@@ -989,7 +989,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(615) 555-0456', email: 'tcoleman@exprealty.com',
     dealsPerYear: 61, yearsLicensed: 10, avgSalePrice: 490000,
     polygon: [],
-    color: '#c084fc', referNetScore: 88, responseTime: '< 1hr', closedReferrals: 9,
+    color: '#c084fc', rcsScore: 88, responseTime: '< 1hr', closedReferrals: 9,
   },
   // Keller Williams
   {
@@ -998,7 +998,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(720) 555-0567', email: 'lchang@kw.com',
     dealsPerYear: 69, yearsLicensed: 12, avgSalePrice: 640000,
     polygon: [],
-    color: '#B5000C', referNetScore: 90, responseTime: '< 1hr', closedReferrals: 11,
+    color: '#B5000C', rcsScore: 90, responseTime: '< 1hr', closedReferrals: 11,
   },
   // Compass
   {
@@ -1007,7 +1007,7 @@ export const agents: Agent[] = [
     status: 'active', phone: '(404) 555-0678', email: 'vford@compass.com',
     dealsPerYear: 76, yearsLicensed: 13, avgSalePrice: 710000,
     polygon: [],
-    color: '#16a34a', referNetScore: 92, responseTime: '< 30min', closedReferrals: 13,
+    color: '#16a34a', rcsScore: 92, responseTime: '< 30min', closedReferrals: 13,
   },
   // RE/MAX
   {
@@ -1016,6 +1016,6 @@ export const agents: Agent[] = [
     status: 'active', phone: '(602) 555-0789', email: 'gkowalski@remax.com',
     dealsPerYear: 58, yearsLicensed: 11, avgSalePrice: 450000,
     polygon: [],
-    color: '#f43f5e', referNetScore: 86, responseTime: '< 1hr', closedReferrals: 8,
+    color: '#f43f5e', rcsScore: 86, responseTime: '< 1hr', closedReferrals: 8,
   },
 ]

@@ -9,7 +9,7 @@ export interface CommScore {
 }
 
 // Mock PCS data for all agents
-// Agents with high ReferNet scores generally have high PCS but not always
+// Agents with high RCS scores generally have high PCS but not always
 const COMM_SCORES: Record<string, CommScore> = {
   // MICHIGAN — Real Broker
   jason: { overall: 74, pipelineActivity: 68, messageFrequency: 72, responseTime: 88, checkInConsistency: 62, label: 'Responsive', trend: 'down' },

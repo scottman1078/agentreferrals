@@ -41,7 +41,7 @@ const TEMPLATES: Record<NotificationType, (data: Record<string, string>) => { su
   partnership_request: (d) => ({
     subject: `${d.requesterName} wants to partner with you`,
     heading: 'New Partnership Request',
-    body: `<strong>${d.requesterName}</strong> from ${d.requesterBrokerage} (${d.requesterArea}) wants to be your referral partner for <strong>${d.market}</strong>.<br><br>They have a <strong>${d.referNetScore}</strong> ReferNet Score and close <strong>${d.dealsPerYear}</strong> deals per year.`,
+    body: `<strong>${d.requesterName}</strong> from ${d.requesterBrokerage} (${d.requesterArea}) wants to be your referral partner for <strong>${d.market}</strong>.<br><br>They have a <strong>${d.rcsScore}</strong> RCS and close <strong>${d.dealsPerYear}</strong> deals per year.`,
     ctaText: 'View Request',
     ctaUrl: 'https://agentreferrals.ai/dashboard/partnerships',
   }),

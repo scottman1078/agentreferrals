@@ -140,6 +140,23 @@ async function processInvitePartnership(
         })
         .eq('id', invite.id)
 
+      // Create affiliate reward for the inviter ($10 per successful invite)
+      await supabase
+        .from('ar_affiliate_rewards')
+        .insert({
+          user_id: invite.invited_by,
+          invite_id: invite.id,
+          reward_type: 'cash_back',
+          amount: 10.00,
+          status: 'earned',
+          earned_at: new Date().toISOString(),
+        })
+        .then(({ error: rewardError }: { error: { message: string } | null }) => {
+          if (rewardError) {
+            console.error('[onboarding/save] Affiliate reward insert failed:', rewardError.message)
+          }
+        })
+
       // Send notification email to the inviter (fire-and-forget)
       const { sendInviterNotification } = await import('@/lib/postmark')
 
