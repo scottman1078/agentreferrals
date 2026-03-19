@@ -96,8 +96,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Send email via Postmark
-      const isDev = process.env.NODE_ENV === 'development'
-      const baseUrl = isDev ? 'http://localhost:5500' : 'https://agentreferrals.ai'
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentreferrals.ai'
       const referralLink = referralCode
         ? `${baseUrl}/invite/${referralCode}`
         : `${baseUrl}/`

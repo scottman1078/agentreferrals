@@ -50,7 +50,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
       <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;">You've been invited to join AgentReferrals</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;">
-        <strong style="color:#1a1a2e;">${data.inviterName}</strong> from ${data.inviterBrokerage} (${data.inviterArea}) wants to add you to their referral network.
+        <strong style="color:#1a1a2e;">${data.inviterName}</strong> from ${data.inviterBrokerage}${data.inviterArea ? ` (${data.inviterArea})` : ''} wants to add you to their referral network.
       </p>
 
       ${data.personalMessage ? `
