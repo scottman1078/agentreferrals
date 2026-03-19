@@ -895,10 +895,8 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         </div>
       )}
 
-      {/* Map — NO sibling overlays inside the container to prevent recomposite tile loss */}
-      <div className="rounded-xl border border-border" style={{ overflow: 'clip' }}>
-        <div ref={mapRef} className={`w-full h-[340px] ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
-      </div>
+      {/* Map */}
+      <div ref={mapRef} className={`w-full h-[340px] rounded-xl border border-border ${activeTab === 'zip' && !mapClickLoading ? 'cursor-crosshair' : ''}`} style={{ background: '#f2f2f2' }} />
       {/* Status messages rendered OUTSIDE the map container */}
       {activeTab === 'zip' && mapClickLoading && (
         <p className="text-xs text-muted-foreground text-center mt-1">
