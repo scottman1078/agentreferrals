@@ -97,7 +97,7 @@ export default function AdminInvitesPage() {
           signed_up: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
           active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
         }
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${styles[params.value] || 'bg-muted text-muted-foreground'}">${params.value}</span>`
+        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${styles[params.value] || 'bg-muted text-muted-foreground'}`}>{params.value}</span>
       },
     },
     {
