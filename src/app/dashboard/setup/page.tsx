@@ -46,6 +46,7 @@ export default function SetupPage() {
   const mapInstance = useRef<L.Map | null>(null)
   const zipLayersRef = useRef<L.Layer[]>([])
   const radiusCircleRef = useRef<L.Circle | null>(null)
+  const wmsLayersRef = useRef<L.Layer[]>([])
   const [leafletReady, setLeafletReady] = useState(false)
 
   // Territory mode tabs
@@ -192,19 +193,6 @@ export default function SetupPage() {
 
       L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
       map.attributionControl.setPrefix('')
-
-      L.tileLayer.wms(ZCTA_WMS_URL, {
-        layers: ZCTA_WMS_LAYERS,
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.3,
-      }).addTo(map)
-      L.tileLayer.wms(ZCTA_WMS_URL, {
-        layers: ZCTA_WMS_LABELS,
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.5,
-      }).addTo(map)
 
       mapInstance.current = map
 
@@ -481,6 +469,52 @@ export default function SetupPage() {
   const removeZip = useCallback((zip: string) => {
     setSelectedZips((prev) => prev.filter((z) => z !== zip))
   }, [])
+
+  // Switch WMS overlay based on territory mode
+  const COUNTY_WMS_BOUNDARIES = '1'
+  const COUNTY_WMS_LABELS = '0'
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const map = mapInstance.current
+
+    // Remove old WMS layers
+    wmsLayersRef.current.forEach((l) => {
+      try { map.removeLayer(l) } catch { /* */ }
+    })
+    wmsLayersRef.current = []
+
+    if (territoryMode === 'county') {
+      // Show county boundaries
+      const boundaries = L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: COUNTY_WMS_BOUNDARIES,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.3,
+      }).addTo(map)
+      const labels = L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: COUNTY_WMS_LABELS,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.5,
+      }).addTo(map)
+      wmsLayersRef.current = [boundaries, labels]
+    } else {
+      // Show zip code boundaries
+      const boundaries = L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: ZCTA_WMS_LAYERS,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.3,
+      }).addTo(map)
+      const labels = L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: ZCTA_WMS_LABELS,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.5,
+      }).addTo(map)
+      wmsLayersRef.current = [boundaries, labels]
+    }
+  }, [territoryMode, leafletReady])
 
   // Sync radius mode to DOM for the map click handler
   useEffect(() => {
