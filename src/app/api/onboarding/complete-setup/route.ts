@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // POST /api/onboarding/complete-setup
-// Marks the user's setup wizard as completed in the database
+// Updates the user's setup step progress in the database
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    const { userId, step } = await request.json()
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
     }
@@ -12,9 +12,19 @@ export async function POST(request: NextRequest) {
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = createAdminClient()
 
+    const update: Record<string, unknown> = {
+      setup_step: step || 'complete',
+    }
+
+    // If completing the entire wizard, also set setup_completed_at
+    if (!step || step === 'complete') {
+      update.setup_completed_at = new Date().toISOString()
+      update.setup_step = 'complete'
+    }
+
     const { error } = await supabase
       .from('ar_profiles')
-      .update({ setup_completed_at: new Date().toISOString() })
+      .update(update)
       .eq('id', userId)
 
     if (error) {

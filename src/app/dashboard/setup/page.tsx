@@ -8,7 +8,7 @@ import NoraOnboardingChat from '@/components/onboarding/nora-onboarding-chat'
 import {
   MapPin, Users, Check, ChevronRight, ChevronLeft, Plus, X, Mail, Sparkles,
   Loader2, Search, Gift, Copy, Link2, ArrowUpRight, TrendingUp, MessageSquare,
-  Clock, BarChart3, CheckCircle2,
+  Clock, BarChart3, CheckCircle2, LogOut,
 } from 'lucide-react'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -106,28 +106,36 @@ export default function SetupPage() {
     })
   }, [])
 
-  // Smart step detection
+  // Smart step detection — uses setup_step from DB
   useEffect(() => {
     if (isLoading || !isAuthenticated) return
     if (currentStep !== -1) return // already determined
 
-    if (!profile || !profile.primary_area) {
-      // No profile or no primary_area → start at Intake (Step 0)
-      setCurrentStep(0)
-    } else if (
-      !Array.isArray(profile.territory_zips) ||
-      profile.territory_zips.length <= 1
-    ) {
-      // Has profile but no real territory → start at Service Area (Step 1)
-      setCurrentStep(1)
-    } else if (!profile.setup_completed_at && !localStorage.getItem('ar_setup_wizard_completed')) {
-      // Has territory but hasn't finished wizard → start at Invites (Step 2)
-      setCurrentStep(2)
-    } else {
-      // Everything done → go to dashboard
+    const step = profile?.setup_step
+
+    if (step === 'complete') {
       router.push('/dashboard')
+    } else if (step === 'invites' || step === 'service_area') {
+      // Already did intake + service area → go to invites
+      setCurrentStep(2)
+    } else if (step === 'intake') {
+      // Completed intake → go to service area
+      setCurrentStep(1)
+    } else {
+      // Not started or no profile → start at intake
+      setCurrentStep(0)
     }
   }, [isLoading, isAuthenticated, profile, currentStep, router])
+
+  // Save step progress to DB
+  const saveStepProgress = useCallback((step: string) => {
+    if (!profile?.id) return
+    fetch('/api/onboarding/complete-setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: profile.id, step }),
+    }).catch(() => {})
+  }, [profile?.id])
 
   // Fetch affiliate data when reaching step 2
   useEffect(() => {
@@ -448,6 +456,7 @@ export default function SetupPage() {
         throw new Error(data.error || 'Failed to save territory')
       }
 
+      saveStepProgress('service_area')
       await refreshProfile()
       setCurrentStep(2)
     } catch (err) {
@@ -455,7 +464,7 @@ export default function SetupPage() {
     } finally {
       setSaving(false)
     }
-  }, [profile?.id, selectedZips, refreshProfile])
+  }, [profile?.id, selectedZips, refreshProfile, saveStepProgress])
 
   // Send invites
   const handleSendInvites = useCallback(async () => {
@@ -530,22 +539,16 @@ export default function SetupPage() {
 
   // NORA complete handler
   const handleNoraComplete = useCallback(async () => {
+    saveStepProgress('intake')
     await refreshProfile()
     setCurrentStep(1)
-  }, [refreshProfile])
+  }, [refreshProfile, saveStepProgress])
 
   const handleComplete = useCallback(async () => {
     localStorage.setItem('ar_setup_wizard_completed', 'true')
-    // Persist to DB so it works across devices
-    if (profile?.id) {
-      fetch('/api/onboarding/complete-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: profile.id }),
-      }).catch(() => {})
-    }
+    saveStepProgress('complete')
     router.push('/dashboard')
-  }, [router, profile?.id])
+  }, [router, saveStepProgress])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const referralCode = affiliateData.referralCode || profile?.referral_code
@@ -562,12 +565,12 @@ export default function SetupPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="border-b border-border bg-card sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg>
             </div>
-            <span className="font-extrabold text-lg">Agent<span className="text-primary">Referrals</span></span>
+            <span className="font-extrabold text-lg hidden sm:block">Agent<span className="text-primary">Referrals</span></span>
           </div>
           {/* Step indicator */}
           <div className="flex items-center gap-2">
@@ -587,7 +590,25 @@ export default function SetupPage() {
               </div>
             ))}
           </div>
-          <ThemeToggle />
+          {/* User info + actions */}
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <div className="text-xs font-semibold truncate max-w-[140px]">{profile?.full_name || userName}</div>
+              <div className="text-[10px] text-muted-foreground truncate max-w-[140px]">{profile?.email || userEmail}</div>
+            </div>
+            <ThemeToggle />
+            <button
+              onClick={async () => {
+                const hub = createHubClient()
+                await hub.auth.signOut()
+                window.location.href = '/'
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title="Log out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 

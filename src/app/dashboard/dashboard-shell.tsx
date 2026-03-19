@@ -91,7 +91,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const ADMIN_EMAILS = ['scott@agentdashboards.com']
   const isAdminUser = ADMIN_EMAILS.includes(profile?.email ?? '')
 
-  // Redirect to onboarding if user hasn't completed profile setup (skip in demo mode + admins)
+  // Redirect to setup if user hasn't completed it (skip in demo mode + admins)
   useEffect(() => {
     if (isDemoMode && !isAuthenticated) return
     if (isLoading) return
@@ -99,35 +99,20 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       router.push('/')
       return
     }
-    if (isAdminUser) return // admins skip setup
-    if (needsOnboarding || (profile && !profile.primary_area)) {
-      router.push('/dashboard/setup')
-    }
-  }, [isLoading, isAuthenticated, needsOnboarding, profile, router, isDemoMode, isAdminUser])
+    if (isAdminUser) return
+    if (!profile) return
 
-  // Redirect to setup page if user hasn't completed territory setup
-  useEffect(() => {
-    if (isLoading || !isAuthenticated || !profile) return
-    if (isAdminUser) return // admins skip setup
-    if (needsOnboarding || !profile.primary_area) return
-    if (profile.setup_completed_at) return
+    // If setup is complete (DB flag), skip
+    if (profile.setup_step === 'complete') return
+    // Legacy: localStorage flag
     if (typeof window !== 'undefined' && localStorage.getItem('ar_setup_wizard_completed')) return
 
-    const hasRealServiceArea =
-      (Array.isArray(profile.territory_zips) && profile.territory_zips.length > 1) ||
-      (Array.isArray(profile.polygon) && profile.polygon.length > 0)
-
-    if (hasRealServiceArea) {
-      localStorage.setItem('ar_setup_wizard_completed', 'true')
-      return
-    }
-
-    // Redirect to full-page setup instead of showing modal
+    // Redirect to setup if not complete
     if (pathname !== '/dashboard/setup') {
       router.push('/dashboard/setup')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isAuthenticated, needsOnboarding, profile, pathname, isAdminUser])
+  }, [isLoading, isAuthenticated, profile, pathname, isDemoMode, isAdminUser])
 
   if (isLoading) {
     return (
