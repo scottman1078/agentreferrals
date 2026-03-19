@@ -156,11 +156,16 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
     mapInstance.current = map
 
+    // Leaflet needs invalidateSize after the container is fully rendered
+    setTimeout(() => map.invalidateSize(), 200)
+
     // Try to center on primaryArea
     if (initialCenter) {
       geocodeLocation(initialCenter).then((coords) => {
         if (coords && mapInstance.current) {
           mapInstance.current.setView(coords, 5, { animate: false })
+          // Invalidate again after view change
+          setTimeout(() => mapInstance.current?.invalidateSize(), 100)
         }
       })
     }
