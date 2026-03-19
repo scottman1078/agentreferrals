@@ -1573,6 +1573,33 @@ export default function SetupPage() {
             </p>
           </div>
 
+          {/* Affiliate Rewards Banner */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <Gift className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">Earn 10% of Every Referral&apos;s Subscription</h3>
+                <p className="text-xs text-muted-foreground">
+                  When an agent you invite becomes a paid subscriber, you earn 10% of their subscription payment for up to 2 years.
+                </p>
+              </div>
+            </div>
+            {affiliateData.summary.count > 0 && (
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+                <div>
+                  <div className="text-lg font-extrabold text-emerald-600">{affiliateData.summary.count * 10}%</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Discount</div>
+                </div>
+                <div>
+                  <div className="text-lg font-extrabold">{affiliateData.summary.count}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Rewards</div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Past Referrals */}
           <div className="mb-8">
             <div className="mb-3">
@@ -1685,33 +1712,6 @@ export default function SetupPage() {
             )}
           </div>
 
-          {/* Affiliate Rewards Banner */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <Gift className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold">Earn 10% of Every Referral&apos;s Subscription</h3>
-                <p className="text-xs text-muted-foreground">
-                  When an agent you invite becomes a paid subscriber, you earn 10% of their subscription payment for up to 2 years.
-                </p>
-              </div>
-            </div>
-            {affiliateData.summary.count > 0 && (
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
-                <div>
-                  <div className="text-lg font-extrabold text-emerald-600">{affiliateData.summary.count * 10}%</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Discount</div>
-                </div>
-                <div>
-                  <div className="text-lg font-extrabold">{affiliateData.summary.count}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Rewards</div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Shareable Link */}
           {referralCode && (
             <div className="mb-6">
@@ -1730,37 +1730,6 @@ export default function SetupPage() {
                   {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {linkCopied ? 'Copied!' : 'Copy'}
                 </button>
-                <a
-                  href={`sms:?body=${encodeURIComponent(`Hey! I'm using AgentReferrals to grow my referral network. Join me and let's exchange referrals: ${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
-                  className="h-10 px-4 rounded-lg bg-emerald-600 text-white text-sm font-bold flex items-center gap-2 hover:opacity-90"
-                >
-                  <Smartphone className="w-4 h-4" />
-                  Send via Text
-                </a>
-              </div>
-
-              {/* QR Code */}
-              <div className="mt-4 p-4 rounded-xl border border-border bg-card flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <QrCode className="w-4 h-4 text-primary" />
-                  Scan to join my network
-                </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
-                  alt="QR Code for invite link"
-                  width={200}
-                  height={200}
-                  className="rounded-lg"
-                />
-                <a
-                  href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${referralCode}`)}`}
-                  download={`agentreferrals-invite-qr.png`}
-                  className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary/80"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Download QR Code
-                </a>
               </div>
             </div>
           )}
