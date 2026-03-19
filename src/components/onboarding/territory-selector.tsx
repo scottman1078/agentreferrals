@@ -141,27 +141,23 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     }
 
     let cancelled = false
+    let ro: ResizeObserver | null = null
+
     ensureCss().then(() => {
       if (cancelled || !mapRef.current || mapInstance.current) return
-      initMap()
-    })
 
-    function initMap() {
-      if (!L || !mapRef.current) return
-
-      const map = L.map(mapRef.current, {
+      const map = L!.map(mapRef.current, {
         center: [39.5, -96.5],
         zoom: 4,
         zoomControl: false,
-        maxBounds: L.latLngBounds([15, -175], [75, -45]),
+        maxBounds: L!.latLngBounds([15, -175], [75, -45]),
         maxBoundsViscosity: 1.0,
         minZoom: 4,
       })
 
-      L.control.zoom({ position: 'bottomleft' }).addTo(map)
-      L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
+      L!.control.zoom({ position: 'bottomleft' }).addTo(map)
+      L!.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
       map.attributionControl.setPrefix('')
-
       map.getContainer().style.background = '#f2f2f2'
 
       map.on('zoomend', () => {
@@ -172,9 +168,12 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
 
       mapInstance.current = map
 
-      // Invalidate size after a short delay to ensure container is fully laid out
-      setTimeout(() => map.invalidateSize(), 300)
-      setTimeout(() => map.invalidateSize(), 800)
+      // ResizeObserver + timed invalidateSize to fix tile rendering
+      ro = new ResizeObserver(() => map.invalidateSize())
+      ro.observe(mapRef.current!)
+      setTimeout(() => map.invalidateSize(), 100)
+      setTimeout(() => map.invalidateSize(), 500)
+      setTimeout(() => map.invalidateSize(), 1500)
 
       if (initialCenter) {
         geocodeLocation(initialCenter).then((coords) => {
@@ -184,10 +183,11 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           }
         })
       }
-    }
+    })
 
     return () => {
       cancelled = true
+      ro?.disconnect()
       if (mapInstance.current) {
         mapInstance.current.remove()
         mapInstance.current = null
