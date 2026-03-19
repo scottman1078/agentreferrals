@@ -29,7 +29,13 @@ export default function SetupPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
   const zipLayersRef = useRef<L.Layer[]>([])
+  const radiusCircleRef = useRef<L.Circle | null>(null)
   const [leafletReady, setLeafletReady] = useState(false)
+
+  // Radius picker
+  const [radiusMode, setRadiusMode] = useState(false)
+  const [radiusMiles, setRadiusMiles] = useState(25)
+  const [radiusLoading, setRadiusLoading] = useState(false)
 
   // Step 2: Invites
   const [emails, setEmails] = useState<string[]>([''])
@@ -114,13 +120,21 @@ export default function SetupPage() {
           .catch(() => {})
       }
 
-      // Click to add zip
+      // Click to add zip or set radius center
       map.on('click', async (e) => {
+        // Check if radius mode is active via DOM data attribute
+        const isRadius = document.body.dataset.radiusMode === 'true'
+        if (isRadius) {
+          // Set radius center and find zips within radius
+          const radiusMi = parseInt(document.body.dataset.radiusMiles || '25', 10)
+          handleRadiusSelect(e.latlng.lat, e.latlng.lng, radiusMi)
+          return
+        }
         const zip = await getZipAtPoint(e.latlng.lat, e.latlng.lng)
         if (!zip) return
         setSelectedZips((prev) => {
           if (prev.includes(zip)) return prev
-          if (prev.length >= 30) return prev
+          if (prev.length >= 100) return prev
           return [...prev, zip]
         })
       })
@@ -185,8 +199,8 @@ export default function SetupPage() {
   const handleAddZip = useCallback(async () => {
     const input = zipInput.trim()
     if (!input) return
-    if (selectedZips.length >= 30) {
-      setZipError('Maximum 30 zip codes')
+    if (selectedZips.length >= 100) {
+      setZipError('Maximum 100 zip codes')
       return
     }
 
@@ -250,7 +264,7 @@ export default function SetupPage() {
 
       // Add all found zips
       for (const zip of nearbyZips) {
-        if (selectedZips.length + nearbyZips.size > 30) break
+        if (selectedZips.length + nearbyZips.size > 100) break
         if (!zipBoundariesRef.current.has(zip)) {
           const ring = await getZipBoundary(zip)
           if (ring) zipBoundariesRef.current.set(zip, ring)
@@ -258,7 +272,7 @@ export default function SetupPage() {
       }
       setSelectedZips((prev) => {
         const combined = new Set([...prev, ...nearbyZips])
-        return Array.from(combined).slice(0, 30)
+        return Array.from(combined).slice(0, 100)
       })
 
       setZipInput('')
@@ -273,6 +287,63 @@ export default function SetupPage() {
 
   const removeZip = useCallback((zip: string) => {
     setSelectedZips((prev) => prev.filter((z) => z !== zip))
+  }, [])
+
+  // Sync radius mode to DOM for the map click handler (avoids stale closure)
+  useEffect(() => {
+    document.body.dataset.radiusMode = radiusMode ? 'true' : 'false'
+    document.body.dataset.radiusMiles = String(radiusMiles)
+  }, [radiusMode, radiusMiles])
+
+  // Handle radius selection — find all zips within radius of a point
+  const handleRadiusSelect = useCallback(async (lat: number, lng: number, miles: number) => {
+    if (!mapInstance.current || !L) return
+    setRadiusLoading(true)
+
+    // Draw the circle on the map
+    if (radiusCircleRef.current) mapInstance.current.removeLayer(radiusCircleRef.current)
+    const radiusMeters = miles * 1609.34
+    const circle = L.circle([lat, lng], {
+      radius: radiusMeters,
+      color: '#f59e0b',
+      weight: 2,
+      fillColor: '#f59e0b',
+      fillOpacity: 0.08,
+      dashArray: '6, 4',
+    }).addTo(mapInstance.current)
+    radiusCircleRef.current = circle
+    mapInstance.current.fitBounds(circle.getBounds(), { padding: [20, 20] })
+
+    // Sample points in a grid within the circle to find zip codes
+    const uniqueZips = new Set<string>()
+    const degPerMile = 1 / 69 // approx degrees per mile
+    const gridStep = Math.max(miles / 8, 2) * degPerMile // adaptive grid density
+
+    for (let dlat = -miles * degPerMile; dlat <= miles * degPerMile; dlat += gridStep) {
+      for (let dlng = -miles * degPerMile; dlng <= miles * degPerMile; dlng += gridStep) {
+        // Check if point is within radius
+        const dist = Math.sqrt(dlat * dlat + dlng * dlng) / degPerMile
+        if (dist > miles) continue
+        const zip = await getZipAtPoint(lat + dlat, lng + dlng)
+        if (zip) uniqueZips.add(zip)
+      }
+    }
+
+    // Fetch boundaries and add
+    for (const zip of uniqueZips) {
+      if (!zipBoundariesRef.current.has(zip)) {
+        const ring = await getZipBoundary(zip)
+        if (ring) zipBoundariesRef.current.set(zip, ring)
+      }
+    }
+
+    setSelectedZips((prev) => {
+      const combined = new Set([...prev, ...uniqueZips])
+      return Array.from(combined).slice(0, 100)
+    })
+
+    setRadiusLoading(false)
+    setRadiusMode(false)
   }, [])
 
   // Save territory
@@ -434,8 +505,45 @@ export default function SetupPage() {
                 {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
               </button>
               <span className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
-                {selectedZips.length}/30
+                {selectedZips.length}/100
               </span>
+            </div>
+
+            {/* Radius picker toggle */}
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={() => setRadiusMode(!radiusMode)}
+                className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all ${
+                  radiusMode
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <MapPin className="w-3 h-3" />
+                {radiusMode ? 'Radius Mode ON' : 'Select by Radius'}
+              </button>
+              {radiusMode && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Radius:</span>
+                  {[10, 25, 50].map((mi) => (
+                    <button
+                      key={mi}
+                      onClick={() => setRadiusMiles(mi)}
+                      className={`h-7 px-2.5 rounded-md text-xs font-semibold transition-all ${
+                        radiusMiles === mi ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {mi}mi
+                    </button>
+                  ))}
+                  <span className="text-xs text-muted-foreground">— click the map to set center</span>
+                </div>
+              )}
+              {radiusLoading && (
+                <div className="flex items-center gap-1.5 text-xs text-primary">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Finding zip codes...
+                </div>
+              )}
             </div>
 
             {zipError && <p className="text-sm text-destructive mb-3">{zipError}</p>}
