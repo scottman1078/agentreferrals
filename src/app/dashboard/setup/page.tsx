@@ -878,7 +878,7 @@ export default function SetupPage() {
   const handleCopyLink = useCallback(() => {
     const code = affiliateData.referralCode || profile?.referral_code || fetchedReferralCode
     if (!code) return
-    const link = `${window.location.origin}/invite/${code}`
+    const link = `https://agentreferrals.ai/invite/${code}`
     navigator.clipboard.writeText(link).then(() => {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 3000)
@@ -1720,7 +1720,7 @@ export default function SetupPage() {
                 <div className="flex-1 flex items-center gap-2 h-10 px-3 rounded-lg border border-input bg-muted/50 text-sm">
                   <Link2 className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="truncate text-muted-foreground">
-                    {typeof window !== 'undefined' ? `${window.location.origin}/invite/${referralCode}` : `/invite/${referralCode}`}
+                    {typeof window !== 'undefined' ? `https://agentreferrals.ai/invite/${referralCode}` : `/invite/${referralCode}`}
                   </span>
                 </div>
                 <button
@@ -2074,7 +2074,7 @@ export default function SetupPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold">Share your invite link to earn 10% of their subscription</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/invite/${referralCode}` : `/invite/${referralCode}`}
+                  {typeof window !== 'undefined' ? `https://agentreferrals.ai/invite/${referralCode}` : `/invite/${referralCode}`}
                 </p>
               </div>
               <button

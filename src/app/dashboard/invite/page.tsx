@@ -56,7 +56,7 @@ export default function InvitePage() {
   // Use real profile referral code, falling back to mock data
   const REFERRAL_CODE = profile?.referral_code || REFERRAL_CODE_MOCK
   const REFERRAL_LINK = REFERRAL_CODE
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://agentreferrals.ai'}/invite/${REFERRAL_CODE}`
+    ? `https://agentreferrals.ai/invite/${REFERRAL_CODE}`
     : REFERRAL_LINK_MOCK
   const [inviteList, setInviteList] = useState<Invite[]>(initialInvites)
 
