@@ -353,12 +353,37 @@ export default function AgentMap() {
         }
       }
 
-      // Center map on territory on first render
+      // Center map on territory and add "Me" marker
       if (!cancelled && allBounds.length > 0 && !territoryRenderedRef.current) {
         territoryRenderedRef.current = true
         let combined = allBounds[0]
         for (let i = 1; i < allBounds.length; i++) combined = combined.extend(allBounds[i])
         map.fitBounds(combined, { padding: [60, 60], maxZoom: 10, animate: false })
+
+        // Add a "Me" marker at the center of the territory
+        const center = combined.getCenter()
+        const avatarUrl = profile?.avatar_url
+        const initials = (profile?.full_name || 'ME').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+        const markerHtml = avatarUrl
+          ? `<div style="width:48px;height:48px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);overflow:hidden;background:#fff;">
+              <img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" />
+            </div>
+            <div style="text-align:center;margin-top:2px;font-size:10px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.8);">My Territory</div>`
+          : `<div style="width:48px;height:48px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);background:#3b82f6;display:flex;align-items:center;justify-content:center;">
+              <span style="color:#fff;font-weight:800;font-size:14px;">${initials}</span>
+            </div>
+            <div style="text-align:center;margin-top:2px;font-size:10px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.8);">My Territory</div>`
+
+        const icon = L!.divIcon({
+          html: markerHtml,
+          className: 'my-territory-marker',
+          iconSize: [60, 64],
+          iconAnchor: [30, 32],
+        })
+
+        const marker = L!.marker(center, { icon, interactive: false, zIndexOffset: -100 }).addTo(map)
+        territoryOverlayRef.current.push(marker)
       }
     }
     renderOverlay()
