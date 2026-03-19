@@ -815,7 +815,7 @@ export default function SetupPage() {
           <div className="mb-4">
             <h1 className="text-2xl font-bold">Define Your Service Area</h1>
             <p className="text-muted-foreground mt-1">
-              Choose how you want to define your territory, then use the map to refine.
+              Agents can search for partners by city, county, or address — but behind the scenes, all lookups match against zip codes. Use any method below to define your coverage area.
             </p>
           </div>
 
@@ -968,7 +968,7 @@ export default function SetupPage() {
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Radius:</span>
-                {[10, 25, 50].map((mi) => (
+                {[5, 10, 25].map((mi) => (
                   <button
                     key={mi}
                     onClick={() => setRadiusMiles(mi)}
@@ -1012,9 +1012,22 @@ export default function SetupPage() {
                     setSelectedZips([])
                     setTerritorySelections([])
                     radiusCenterRef.current = null
-                    if (radiusCircleRef.current && mapInstance.current) {
-                      mapInstance.current.removeLayer(radiusCircleRef.current)
-                      radiusCircleRef.current = null
+                    // Force-clear all layers from the map
+                    if (mapInstance.current) {
+                      zipLayersRef.current.forEach((l) => {
+                        try { mapInstance.current!.removeLayer(l) } catch { /* */ }
+                      })
+                      zipLayersRef.current = []
+                      if (radiusCircleRef.current) {
+                        mapInstance.current.removeLayer(radiusCircleRef.current)
+                        radiusCircleRef.current = null
+                      }
+                      // Remove any remaining polygon/tooltip layers
+                      mapInstance.current.eachLayer((l) => {
+                        if (l instanceof L!.Polygon || l instanceof L!.Circle) {
+                          mapInstance.current!.removeLayer(l)
+                        }
+                      })
                     }
                   }}
                   className="text-xs text-destructive hover:text-destructive/80 font-medium"
@@ -1085,17 +1098,17 @@ export default function SetupPage() {
                 <Gift className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold">Earn $10 for Every Agent Who Joins</h3>
+                <h3 className="text-sm font-bold">Earn 10% Off for Every Agent Who Subscribes</h3>
                 <p className="text-xs text-muted-foreground">
-                  When an agent you invite completes their profile, you earn $10 in cash back rewards.
+                  When an agent you invite becomes a paid subscriber, you earn 10% off your subscription.
                 </p>
               </div>
             </div>
             {affiliateData.summary.count > 0 && (
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
                 <div>
-                  <div className="text-lg font-extrabold text-emerald-600">${affiliateData.summary.totalEarned}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Earned</div>
+                  <div className="text-lg font-extrabold text-emerald-600">{affiliateData.summary.count * 10}%</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Discount</div>
                 </div>
                 <div>
                   <div className="text-lg font-extrabold">{affiliateData.summary.count}</div>
@@ -1473,7 +1486,7 @@ export default function SetupPage() {
             <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mb-6">
               <Gift className="w-5 h-5 text-emerald-600 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">Share your invite link to earn $10 per agent</p>
+                <p className="text-sm font-semibold">Share your invite link to earn 10% off per subscriber</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {typeof window !== 'undefined' ? `${window.location.origin}/invite/${referralCode}` : `/invite/${referralCode}`}
                 </p>
