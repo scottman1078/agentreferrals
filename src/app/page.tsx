@@ -177,19 +177,20 @@ export default function LandingPage() {
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="#brokerages" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Brokerages</a>
           </div>
-          <div className="flex items-center gap-5">
-            <ThemeToggle />
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="hidden sm:block"><ThemeToggle /></span>
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signin') }}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
             >
               Sign In
             </button>
             <button
               onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
-              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold font-bold hover:opacity-90 transition-opacity"
+              className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
             >
-              Claim Your Spot
+              <span className="sm:hidden">Join</span>
+              <span className="hidden sm:inline">Claim Your Spot</span>
             </button>
           </div>
         </div>
