@@ -37,6 +37,9 @@ export default function SetupPage() {
   const [zipError, setZipError] = useState('')
   const [selectedZips, setSelectedZips] = useState<string[]>([])
   const zipBoundariesRef = useRef<Map<string, [number, number][]>>(new Map())
+  const [suggestions, setSuggestions] = useState<{ label: string; lat: number; lng: number }[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Map
   const mapRef = useRef<HTMLDivElement>(null)
@@ -244,8 +247,12 @@ export default function SetupPage() {
   useEffect(() => {
     if (!mapInstance.current || !L) return
     const map = mapInstance.current
+    let cancelled = false
 
-    zipLayersRef.current.forEach((l) => map.removeLayer(l))
+    // Clear ALL polygon/tooltip layers from the map (not just tracked ones)
+    zipLayersRef.current.forEach((l) => {
+      try { map.removeLayer(l) } catch { /* already removed */ }
+    })
     zipLayersRef.current = []
 
     if (selectedZips.length === 0) return
@@ -253,12 +260,13 @@ export default function SetupPage() {
     const renderZips = async () => {
       const bounds: L.LatLngBounds[] = []
       for (const zip of selectedZips) {
+        if (cancelled) return
         let ring = zipBoundariesRef.current.get(zip)
         if (!ring) {
           ring = (await getZipBoundary(zip)) ?? undefined
           if (ring) zipBoundariesRef.current.set(zip, ring)
         }
-        if (!ring || !L) continue
+        if (!ring || !L || cancelled) continue
 
         const poly = L.polygon(ring as L.LatLngExpression[], {
           color: '#f59e0b',
@@ -266,13 +274,17 @@ export default function SetupPage() {
           fillColor: '#f59e0b',
           fillOpacity: 0.25,
         })
-        poly.bindTooltip(zip, { permanent: true, direction: 'center', className: 'zip-label' })
-        poly.on('click', (e) => { L!.DomEvent.stopPropagation(e) })
+        poly.bindTooltip(`${zip} ✕`, { permanent: true, direction: 'center', className: 'zip-label' })
+        poly.on('click', (e) => {
+          L!.DomEvent.stopPropagation(e)
+          setSelectedZips((prev) => prev.filter((z) => z !== zip))
+        })
         poly.addTo(map)
         zipLayersRef.current.push(poly)
         bounds.push(poly.getBounds())
       }
 
+      if (cancelled) return
       if (bounds.length > 0) {
         let combined = bounds[0]
         for (let i = 1; i < bounds.length; i++) combined = combined.extend(bounds[i])
@@ -280,7 +292,33 @@ export default function SetupPage() {
       }
     }
     renderZips()
+    return () => { cancelled = true }
   }, [selectedZips])
+
+  // Autocomplete suggestions
+  const fetchSuggestions = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query || query.length < 2 || /^\d{5}$/.test(query)) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geocode/autocomplete?q=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        if (data.suggestions?.length > 0) {
+          setSuggestions(data.suggestions)
+          setShowSuggestions(true)
+        } else {
+          setSuggestions([])
+          setShowSuggestions(false)
+        }
+      } catch {
+        setSuggestions([])
+      }
+    }, 300)
+  }, [])
 
   // Add zip code or resolve county/city name to zip codes
   const handleAddZip = useCallback(async () => {
@@ -585,7 +623,7 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-border bg-card sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -649,12 +687,13 @@ export default function SetupPage() {
       )}
 
       {/* Step 1: Service Area */}
-      {currentStep === 1 && (
-        <div className="max-w-4xl mx-auto px-6 py-8 pb-32 w-full">
+      {currentStep === 1 && (<>
+        <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-8 pb-4 w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Define Your Service Area</h1>
             <p className="text-muted-foreground mt-1">
-              Add zip codes or county names where you work. This helps other agents find you for referrals.
+              Type a city, county, or zip code to add your service area. You can also use the radius tool or click the map directly.
             </p>
           </div>
 
@@ -665,11 +704,45 @@ export default function SetupPage() {
               <input
                 type="text"
                 value={zipInput}
-                onChange={(e) => { setZipInput(e.target.value); setZipError('') }}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddZip()}
-                placeholder="Zip code or county name (e.g. 49001 or Kalamazoo)"
+                onChange={(e) => {
+                  setZipInput(e.target.value)
+                  setZipError('')
+                  fetchSuggestions(e.target.value)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setShowSuggestions(false)
+                    handleAddZip()
+                  }
+                  if (e.key === 'Escape') setShowSuggestions(false)
+                }}
+                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+                onBlur={() => { setTimeout(() => setShowSuggestions(false), 200) }}
+                placeholder="City, county, or zip code (e.g. Austin TX, Travis County, 78734)"
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
+              {/* Autocomplete dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={`${s.label}-${i}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setZipInput(s.label)
+                        setShowSuggestions(false)
+                        setSuggestions([])
+                        // Auto-trigger the add after state updates
+                        setTimeout(() => handleAddZip(), 50)
+                      }}
+                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center gap-2 border-b border-border last:border-b-0"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               onClick={handleAddZip}
@@ -686,7 +759,18 @@ export default function SetupPage() {
           {/* Radius picker toggle */}
           <div className="flex items-center gap-3 mb-4">
             <button
-              onClick={() => setRadiusMode(!radiusMode)}
+              onClick={() => {
+                const entering = !radiusMode
+                setRadiusMode(entering)
+                if (entering && selectedZips.length > 0) {
+                  setSelectedZips([])
+                  radiusCenterRef.current = null
+                  if (radiusCircleRef.current && mapInstance.current) {
+                    mapInstance.current.removeLayer(radiusCircleRef.current)
+                    radiusCircleRef.current = null
+                  }
+                }
+              }}
               className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-all ${
                 radiusMode
                   ? 'bg-primary/10 border-primary/30 text-primary'
@@ -728,41 +812,48 @@ export default function SetupPage() {
           </p>
 
           {selectedZips.length > 0 && (
-            <div className="mb-3">
-              <div className="flex flex-wrap gap-1.5">
-                {selectedZips.map((zip) => (
-                  <span
-                    key={zip}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20"
-                  >
-                    {zip}
-                    <button onClick={() => removeZip(zip)} className="hover:bg-primary/20 rounded-full p-0.5">
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </span>
-                ))}
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                <MapPin className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-semibold text-primary">{selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}</span>
               </div>
+              <button
+                onClick={() => {
+                  setSelectedZips([])
+                  radiusCenterRef.current = null
+                  if (radiusCircleRef.current && mapInstance.current) {
+                    mapInstance.current.removeLayer(radiusCircleRef.current)
+                    radiusCircleRef.current = null
+                  }
+                }}
+                className="text-xs text-destructive hover:text-destructive/80 font-medium"
+              >
+                Clear all
+              </button>
             </div>
           )}
 
           {/* Map */}
           <div
             ref={mapRef}
-            className="w-full h-[400px] rounded-xl border border-border mb-4 cursor-crosshair"
+            className="w-full h-[350px] rounded-xl border border-border mb-4 cursor-crosshair"
             style={{ background: '#f2f2f2' }}
           />
 
           {saveError && <p className="text-sm text-destructive mb-3">{saveError}</p>}
 
-          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-6">
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-4">
             <p className="text-xs text-amber-700 dark:text-amber-400">
               <Sparkles className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
               You&apos;re on the free plan — only agents in your direct network will see your service area.
             </p>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between">
+        </div>
+        {/* Bottom actions */}
+        <div className="border-t border-border bg-card shrink-0">
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
             <button
               onClick={() => setCurrentStep(0)}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -770,12 +861,6 @@ export default function SetupPage() {
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentStep(2)}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Skip for now
-              </button>
               <button
                 onClick={handleSaveTerritory}
                 disabled={saving || selectedZips.length === 0}
@@ -786,11 +871,12 @@ export default function SetupPage() {
             </div>
           </div>
         </div>
-      )}
+      </>)}
 
       {/* Step 2: Invite Network */}
       {currentStep === 2 && (
-        <div className="max-w-4xl mx-auto px-6 py-8 pb-32 w-full">
+        <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Invite Your Network</h1>
             <p className="text-muted-foreground mt-1">
@@ -1069,11 +1155,13 @@ export default function SetupPage() {
             </button>
           </div>
         </div>
+        </div>
       )}
 
       {/* Step 3: Done + RCS Introduction */}
       {currentStep === 3 && (
-        <div className="max-w-4xl mx-auto px-6 py-8 pb-32 w-full">
+        <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
           <div className="text-center py-6">
             <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 mb-5">
               <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -1214,6 +1302,7 @@ export default function SetupPage() {
               Explore Dashboard <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
         </div>
       )}
     </div>
