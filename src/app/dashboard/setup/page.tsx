@@ -37,7 +37,7 @@ export default function SetupPage() {
   const [zipError, setZipError] = useState('')
   const [selectedZips, setSelectedZips] = useState<string[]>([])
   const zipBoundariesRef = useRef<Map<string, [number, number][]>>(new Map())
-  const [suggestions, setSuggestions] = useState<{ label: string; lat: number; lng: number }[]>([])
+  const [suggestions, setSuggestions] = useState<{ label: string; subtitle?: string; lat: number; lng: number; county?: string; state?: string }[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -363,33 +363,41 @@ export default function SetupPage() {
         return
       }
 
-      const centerZip = await getZipAtPoint(geo.lat, geo.lng)
-      if (centerZip && !selectedZips.includes(centerZip)) {
-        const ring = await getZipBoundary(centerZip)
-        if (ring) {
-          zipBoundariesRef.current.set(centerZip, ring)
-          setSelectedZips((prev) => [...prev, centerZip])
+      // Determine search radius based on input type
+      // County names get a wider search (~30mi), cities get ~15mi
+      const isCounty = input.toLowerCase().includes('county')
+      const searchMiles = isCounty ? 30 : 15
+      const degPerMile = 1 / 69
+      const gridStep = Math.max(searchMiles / 8, 2) * degPerMile
+
+      // Build grid of sample points
+      const points: { lat: number; lng: number }[] = []
+      for (let dlat = -searchMiles * degPerMile; dlat <= searchMiles * degPerMile; dlat += gridStep) {
+        for (let dlng = -searchMiles * degPerMile; dlng <= searchMiles * degPerMile; dlng += gridStep) {
+          const dist = Math.sqrt(dlat * dlat + dlng * dlng) / degPerMile
+          if (dist > searchMiles) continue
+          points.push({ lat: geo.lat + dlat, lng: geo.lng + dlng })
         }
       }
 
-      const offsets = [0.05, -0.05, 0.1, -0.1, 0.08, -0.08]
-      const nearbyZips = new Set<string>(centerZip ? [centerZip] : [])
-      for (const dlat of offsets) {
-        for (const dlng of offsets) {
-          if (nearbyZips.size >= 10) break
-          const zip = await getZipAtPoint(geo.lat + dlat, geo.lng + dlng)
-          if (zip && !selectedZips.includes(zip)) nearbyZips.add(zip)
-        }
-        if (nearbyZips.size >= 10) break
+      // Lookup zips in parallel batches
+      const nearbyZips = new Set<string>()
+      for (let i = 0; i < points.length; i += 10) {
+        const batch = points.slice(i, i + 10)
+        const results = await Promise.all(batch.map((p) => getZipAtPoint(p.lat, p.lng)))
+        results.forEach((zip) => { if (zip) nearbyZips.add(zip) })
       }
 
-      for (const zip of nearbyZips) {
-        if (selectedZips.length + nearbyZips.size > 100) break
-        if (!zipBoundariesRef.current.has(zip)) {
-          const ring = await getZipBoundary(zip)
-          if (ring) zipBoundariesRef.current.set(zip, ring)
-        }
+      // Fetch boundaries in parallel batches
+      const newZips = Array.from(nearbyZips).filter((z) => !zipBoundariesRef.current.has(z))
+      for (let i = 0; i < newZips.length; i += 10) {
+        const batch = newZips.slice(i, i + 10)
+        const results = await Promise.all(batch.map((z) => getZipBoundary(z)))
+        results.forEach((ring, idx) => {
+          if (ring) zipBoundariesRef.current.set(batch[idx], ring)
+        })
       }
+
       setSelectedZips((prev) => {
         const combined = new Set([...prev, ...nearbyZips])
         return Array.from(combined).slice(0, 100)
@@ -397,7 +405,7 @@ export default function SetupPage() {
 
       setZipInput('')
       if (mapInstance.current) {
-        mapInstance.current.setView([geo.lat, geo.lng], 9, { animate: true })
+        mapInstance.current.setView([geo.lat, geo.lng], isCounty ? 9 : 10, { animate: true })
       }
     } catch {
       setZipError('Failed to look up location.')
@@ -689,7 +697,7 @@ export default function SetupPage() {
       {/* Step 1: Service Area */}
       {currentStep === 1 && (<>
         <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 py-8 pb-4 w-full">
+        <div className="max-w-4xl mx-auto px-6 py-6 pb-4 w-full flex flex-col h-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Define Your Service Area</h1>
             <p className="text-muted-foreground mt-1">
@@ -728,17 +736,50 @@ export default function SetupPage() {
                     <button
                       key={`${s.label}-${i}`}
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setZipInput(s.label)
+                      onClick={async () => {
                         setShowSuggestions(false)
                         setSuggestions([])
-                        // Auto-trigger the add after state updates
-                        setTimeout(() => handleAddZip(), 50)
+
+                        // If it's a county, use dedicated county-zips API
+                        if (s.subtitle === 'County' && s.county && s.state) {
+                          setZipInput('')
+                          setZipLoading(true)
+                          try {
+                            const res = await fetch(`/api/geocode/county-zips?county=${encodeURIComponent(s.county)}&state=${encodeURIComponent(s.state)}`)
+                            const data = await res.json()
+                            if (data.zips?.length > 0) {
+                              // Fetch boundaries in parallel
+                              const newZips = data.zips.filter((z: string) => !zipBoundariesRef.current.has(z))
+                              for (let i = 0; i < newZips.length; i += 10) {
+                                const batch = newZips.slice(i, i + 10)
+                                const results = await Promise.all(batch.map((z: string) => getZipBoundary(z)))
+                                results.forEach((ring: [number, number][] | null, idx: number) => {
+                                  if (ring) zipBoundariesRef.current.set(batch[idx], ring)
+                                })
+                              }
+                              setSelectedZips((prev) => {
+                                const combined = new Set([...prev, ...data.zips])
+                                return Array.from(combined).slice(0, 100)
+                              })
+                              if (mapInstance.current) {
+                                mapInstance.current.setView([s.lat, s.lng], 9, { animate: true })
+                              }
+                            }
+                          } catch {
+                            setZipError('Failed to load county zip codes.')
+                          }
+                          setZipLoading(false)
+                        } else {
+                          // City: use geocode grid approach
+                          setZipInput(s.label)
+                          setTimeout(() => handleAddZip(), 50)
+                        }
                       }}
                       className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center gap-2 border-b border-border last:border-b-0"
                     >
                       <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <span className="truncate">{s.label}</span>
+                      {s.subtitle && <span className="text-xs text-muted-foreground shrink-0">{s.subtitle}</span>}
                     </button>
                   ))}
                 </div>
@@ -836,7 +877,7 @@ export default function SetupPage() {
           {/* Map */}
           <div
             ref={mapRef}
-            className="w-full h-[350px] rounded-xl border border-border mb-4 cursor-crosshair"
+            className="w-full flex-1 min-h-[250px] rounded-xl border border-border mb-4 cursor-crosshair"
             style={{ background: '#f2f2f2' }}
           />
 
