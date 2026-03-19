@@ -86,6 +86,8 @@ export default function SettingsPage() {
 
   const [saving, setSaving] = useState(false)
   const [saveToast, setSaveToast] = useState('')
+  const [zillowProfileUrl, setZillowProfileUrl] = useState('')
+  const [zillowSaving, setZillowSaving] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -108,6 +110,7 @@ export default function SettingsPage() {
       setServiceArea(profile.primary_area || '')
       setBrokerageName(profile.brokerage?.name || '')
       setAvatarUrl(profile.avatar_url || null)
+      setZillowProfileUrl(profile.zillow_profile_url || '')
       // Load existing territory zips
       if (profile.territory_zips && Array.isArray(profile.territory_zips)) {
         setSelectedZips(profile.territory_zips as string[])
@@ -191,6 +194,7 @@ export default function SettingsPage() {
         full_name: fullName.trim(),
         phone: phone.trim() || null,
         primary_area: serviceArea.trim() || null,
+        zillow_profile_url: zillowProfileUrl.trim() || null,
       })
       .eq('id', profile.id)
 
@@ -801,6 +805,23 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
+
+                {/* Zillow Profile */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Zillow Profile URL
+                  </label>
+                  <input
+                    value={zillowProfileUrl}
+                    onChange={(e) => setZillowProfileUrl(e.target.value)}
+                    placeholder="https://www.zillow.com/profile/yourscreenname"
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Link your Zillow profile to display verified transaction data on your agent profile.
+                  </p>
+                </div>
+
                 <div className="text-right pt-2">
                   <button
                     onClick={handleSave}

@@ -22,6 +22,7 @@ import {
   MapPin,
   Building2,
   ArrowLeft,
+  ArrowUpRight,
   GraduationCap,
   ThumbsUp,
   Video,
@@ -268,10 +269,10 @@ export default async function AgentProfilePage({ params }: PageProps) {
           {[
             {
               icon: Home,
-              label: 'Deals / Year',
-              value: agent.dealsPerYear.toString(),
+              label: agent.totalTransactions ? 'Total Transactions' : 'Deals / Year',
+              value: agent.totalTransactions ? agent.totalTransactions.toString() : agent.dealsPerYear.toString(),
               color: 'text-blue-500',
-              sublabel: undefined as string | undefined,
+              sublabel: (agent.totalTransactions && agent.zillowProfileUrl) ? 'via Zillow' : undefined as string | undefined,
             },
             {
               icon: Calendar,
@@ -329,6 +330,22 @@ export default async function AgentProfilePage({ params }: PageProps) {
             </div>
           ))}
         </section>
+
+        {/* ═══ DATA SOURCES ═══ */}
+        {agent.zillowProfileUrl && (
+          <section className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-semibold">Sources:</span>
+            <a
+              href={agent.zillowProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+            >
+              Transaction data from Zillow
+              <ArrowUpRight className="w-3 h-3" />
+            </a>
+          </section>
+        )}
 
         {/* ═══ SPECIALIZATIONS ═══ */}
         <section>

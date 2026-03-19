@@ -101,6 +101,14 @@ export default function SetupPage() {
   const [profileBuilderReady, setProfileBuilderReady] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
 
+  // Step 1: Zillow integration
+  const [zillowSearchResult, setZillowSearchResult] = useState<{ platform: string; url: string; found: boolean; totalTransactions: number | null; rating: number | null } | null>(null)
+  const [zillowSearching, setZillowSearching] = useState(false)
+  const [zillowUrl, setZillowUrl] = useState('')
+  const [zillowFetching, setZillowFetching] = useState(false)
+  const [zillowData, setZillowData] = useState<{ totalTransactions: number | null; reviewCount: number | null; rating: number | null; name: string | null; found: boolean; error?: string } | null>(null)
+  const [proposedTotalTransactions, setProposedTotalTransactions] = useState<number | null>(null)
+
   // Step 3: Affiliate
   const [affiliateData, setAffiliateData] = useState<{
     referralCode: string | null
@@ -959,24 +967,104 @@ export default function SetupPage() {
     fetchProposedProfile()
   }, [currentStep, profile, profileBuilderReady])
 
+  // Zillow web search: auto-search when profile builder loads
+  useEffect(() => {
+    if (currentStep !== 1 || !profile?.full_name) return
+    if (zillowSearchResult !== null || zillowSearching) return
+
+    setZillowSearching(true)
+
+    let brokerageName = ''
+    if (profile.brokerage) {
+      brokerageName = (profile.brokerage as { name?: string })?.name || ''
+    }
+
+    fetch('/api/profile-builder/web-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: profile.full_name,
+        area: profile.primary_area || '',
+        brokerage: brokerageName,
+        licenseNumber: profile.license_number || '',
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sources && data.sources.length > 0) {
+          const zSource = data.sources[0]
+          setZillowSearchResult(zSource)
+          if (zSource.found) {
+            setZillowUrl(zSource.url)
+            if (zSource.totalTransactions) {
+              setProposedTotalTransactions(zSource.totalTransactions)
+            }
+          }
+        }
+      })
+      .catch(() => {
+        setZillowSearchResult({ platform: 'zillow', url: '', found: false, totalTransactions: null, rating: null })
+      })
+      .finally(() => setZillowSearching(false))
+  }, [currentStep, profile, zillowSearchResult, zillowSearching])
+
+  // Fetch Zillow profile data from a URL
+  const fetchZillowProfile = useCallback(async (url: string) => {
+    if (!url) return
+    setZillowFetching(true)
+    setZillowData(null)
+
+    try {
+      const res = await fetch('/api/profile-builder/zillow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zillowUrl: url }),
+      })
+
+      const data = await res.json()
+      setZillowData(data)
+
+      if (data.found && data.totalTransactions) {
+        setProposedTotalTransactions(data.totalTransactions)
+      }
+    } catch {
+      setZillowData({ totalTransactions: null, reviewCount: null, rating: null, name: null, found: false, error: 'Failed to fetch Zillow profile' })
+    } finally {
+      setZillowFetching(false)
+    }
+  }, [])
+
   // Save profile builder data and advance to Service Area
   const handleProfileAccept = useCallback(async () => {
     if (!profile?.id) return
     setProfileSaving(true)
 
     try {
+      const profileData: Record<string, unknown> = {
+        id: profile.id,
+        bio: proposedBio,
+        tags: proposedSpecializations,
+        deals_per_year: proposedDealsPerYear,
+        avatar_url: profilePhotoUrl,
+      }
+
+      // Include Zillow data if available
+      if (zillowUrl) {
+        profileData.zillow_profile_url = zillowUrl
+      }
+      if (proposedTotalTransactions) {
+        profileData.total_transactions = proposedTotalTransactions
+      }
+      if (zillowUrl || proposedTotalTransactions) {
+        const sources: Record<string, string> = {}
+        if (zillowUrl) sources.transactions = 'zillow'
+        profileData.data_sources = sources
+      }
+
       const res = await fetch('/api/onboarding/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profile: {
-            id: profile.id,
-            bio: proposedBio,
-            tags: proposedSpecializations,
-            deals_per_year: proposedDealsPerYear,
-            avatar_url: profilePhotoUrl,
-          },
-        }),
+        body: JSON.stringify({ profile: profileData }),
       })
 
       if (!res.ok) {
@@ -992,7 +1080,7 @@ export default function SetupPage() {
     } finally {
       setProfileSaving(false)
     }
-  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, saveStepProgress, refreshProfile])
+  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, zillowUrl, proposedTotalTransactions, saveStepProgress, refreshProfile])
 
   const handleComplete = useCallback(async () => {
     localStorage.setItem('ar_setup_wizard_completed', 'true')
@@ -1266,12 +1354,118 @@ export default function SetupPage() {
                   </div>
                 </div>
 
-                {/* Web search notice */}
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-6">
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
-                    <Sparkles className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
-                    Profile generated from your intake data. Web search auto-fill coming soon &mdash; we&apos;ll find your reviews, headshot, and transaction history automatically.
-                  </p>
+                {/* Zillow Profile Section */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden mb-6">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Search className="w-4 h-4 text-blue-500" />
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Zillow Profile</label>
+                    </div>
+
+                    {/* Auto-search results */}
+                    {zillowSearching && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Searching for your Zillow profile...
+                      </div>
+                    )}
+
+                    {zillowSearchResult?.found && !zillowData && (
+                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-3">
+                        <p className="text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          We found your profile on Zillow!
+                          <a
+                            href={zillowSearchResult.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:no-underline font-medium inline-flex items-center gap-0.5"
+                          >
+                            View <ArrowUpRight className="w-3 h-3" />
+                          </a>
+                        </p>
+                      </div>
+                    )}
+
+                    {zillowSearchResult && !zillowSearchResult.found && !zillowUrl && (
+                      <div className="p-3 rounded-lg bg-muted/50 border border-border mb-3">
+                        <p className="text-sm text-muted-foreground">
+                          We couldn&apos;t automatically find your Zillow profile. Paste your Zillow profile URL below to import your transaction data.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Zillow URL input */}
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="url"
+                        value={zillowUrl}
+                        onChange={(e) => setZillowUrl(e.target.value)}
+                        placeholder="https://www.zillow.com/profile/yourscreenname"
+                        className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                      <button
+                        onClick={() => fetchZillowProfile(zillowUrl)}
+                        disabled={zillowFetching || !zillowUrl}
+                        className="h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 shrink-0"
+                      >
+                        {zillowFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                        {zillowData?.found ? 'Update from Zillow' : 'Fetch'}
+                      </button>
+                    </div>
+
+                    {/* Fetched Zillow data */}
+                    {zillowFetching && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Fetching profile data from Zillow...
+                      </div>
+                    )}
+
+                    {zillowData?.error && (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-3">
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                          {zillowData.error}
+                        </p>
+                      </div>
+                    )}
+
+                    {zillowData?.found && (
+                      <div className="grid grid-cols-3 gap-3">
+                        {zillowData.totalTransactions !== null && (
+                          <div className="p-3 rounded-lg border border-border bg-background text-center">
+                            <div className="text-lg font-extrabold">{zillowData.totalTransactions}</div>
+                            <div className="text-[10px] text-muted-foreground">Total Transactions</div>
+                            <div className="text-[9px] text-blue-500 font-medium mt-0.5">Source: Zillow</div>
+                          </div>
+                        )}
+                        {zillowData.rating !== null && (
+                          <div className="p-3 rounded-lg border border-border bg-background text-center">
+                            <div className="text-lg font-extrabold">{zillowData.rating}</div>
+                            <div className="text-[10px] text-muted-foreground">Rating</div>
+                            <div className="text-[9px] text-blue-500 font-medium mt-0.5">Source: Zillow</div>
+                          </div>
+                        )}
+                        {zillowData.reviewCount !== null && (
+                          <div className="p-3 rounded-lg border border-border bg-background text-center">
+                            <div className="text-lg font-extrabold">{zillowData.reviewCount}</div>
+                            <div className="text-[10px] text-muted-foreground">Reviews</div>
+                            <div className="text-[9px] text-blue-500 font-medium mt-0.5">Source: Zillow</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Total Transactions override */}
+                    {proposedTotalTransactions !== null && (
+                      <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                          <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                          Total transactions ({proposedTotalTransactions}) will be shown on your profile instead of &quot;Deals/Year&quot;.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {saveError && <p className="text-sm text-destructive mb-3">{saveError}</p>}

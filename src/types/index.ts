@@ -30,6 +30,9 @@ export interface Agent {
   responseTime?: string // "< 1hr", "< 4hr", etc.
   closedReferrals?: number
   photoUrl?: string
+  totalTransactions?: number | null
+  zillowProfileUrl?: string | null
+  dataSources?: Record<string, string> | null // tracks where each data point came from
 }
 
 export interface Referral {

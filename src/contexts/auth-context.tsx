@@ -56,6 +56,9 @@ export interface ArProfile {
   territory_meta: { mode: string; selections: string[] } | null
   setup_step: string | null  // 'intake' | 'profile' | 'service_area' | 'invites' | 'complete' | null
   setup_completed_at: string | null
+  zillow_profile_url: string | null
+  total_transactions: number | null
+  data_sources: Record<string, string> | null
   created_at: string
   updated_at: string
 
@@ -157,6 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             territory_meta: null,
             setup_step: null,
             setup_completed_at: null,
+            zillow_profile_url: null,
+            total_transactions: null,
+            data_sources: null,
             created_at: '',
             updated_at: '',
             brokerage: null,
