@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { MapPin, Users, Check, ChevronRight, ChevronLeft, Plus, X, Mail, Sparkles, Loader2, Search } from 'lucide-react'
-import { getZipBoundary, getCentroid, getZipAtPoint } from '@/lib/zip-boundaries'
+import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -85,6 +85,20 @@ export default function SetupPage() {
 
       L.tileLayer(LIGHT_TILES, { attribution: '' }).addTo(map)
       map.attributionControl.setPrefix('')
+
+      // Add WMS zip code boundary overlay so users can see where to click
+      L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: ZCTA_WMS_LAYERS,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.3,
+      }).addTo(map)
+      L.tileLayer.wms(ZCTA_WMS_URL, {
+        layers: ZCTA_WMS_LABELS,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.5,
+      }).addTo(map)
 
       mapInstance.current = map
 
@@ -388,7 +402,7 @@ export default function SetupPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8 pb-32">
         {/* Step 1: Service Area */}
         {currentStep === 0 && (
           <div>
@@ -426,24 +440,14 @@ export default function SetupPage() {
 
             {zipError && <p className="text-sm text-destructive mb-3">{zipError}</p>}
 
-            {/* Map — full width, stable container */}
-            <div
-              ref={mapRef}
-              className="w-full h-[400px] rounded-xl border border-border mb-4"
-              style={{ background: '#f2f2f2' }}
-            />
-
-            <p className="text-xs text-muted-foreground mb-3">
+            {/* Hint + selected zips — ABOVE the map */}
+            <p className="text-xs text-muted-foreground mb-2">
               <MapPin className="w-3 h-3 inline mr-1" />
               Click on the map to add zip codes, or type them above.
             </p>
 
-            {/* Selected zips */}
             {selectedZips.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  Selected Zip Codes ({selectedZips.length})
-                </div>
+              <div className="mb-3">
                 <div className="flex flex-wrap gap-1.5">
                   {selectedZips.map((zip) => (
                     <span
@@ -459,6 +463,13 @@ export default function SetupPage() {
                 </div>
               </div>
             )}
+
+            {/* Map — full width, stable container */}
+            <div
+              ref={mapRef}
+              className="w-full h-[400px] rounded-xl border border-border mb-4 cursor-crosshair"
+              style={{ background: '#f2f2f2' }}
+            />
 
             {saveError && <p className="text-sm text-destructive mb-3">{saveError}</p>}
 
