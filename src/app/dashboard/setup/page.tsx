@@ -354,6 +354,68 @@ export default function SetupPage() {
       return
     }
 
+    // Check if input looks like a county name — use county-zips API
+    const countyMatch = input.match(/^(.+?)\s*county\s*,?\s*(\w{2})?\s*$/i)
+    if (countyMatch) {
+      const countyName = countyMatch[1].trim()
+      let stateCode = countyMatch[2]?.toUpperCase() || ''
+
+      // If no state code, try to resolve via geocode
+      if (!stateCode) {
+        try {
+          const acRes = await fetch(`/api/geocode/autocomplete?q=${encodeURIComponent(input)}`)
+          const acData = await acRes.json()
+          const match = acData.suggestions?.find((s: { subtitle?: string }) => s.subtitle === 'County')
+          if (match?.state) {
+            // Extract state code from state name
+            const stateMap: Record<string, string> = {
+              'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA',
+              'colorado':'CO','connecticut':'CT','delaware':'DE','florida':'FL','georgia':'GA',
+              'hawaii':'HI','idaho':'ID','illinois':'IL','indiana':'IN','iowa':'IA','kansas':'KS',
+              'kentucky':'KY','louisiana':'LA','maine':'ME','maryland':'MD','massachusetts':'MA',
+              'michigan':'MI','minnesota':'MN','mississippi':'MS','missouri':'MO','montana':'MT',
+              'nebraska':'NE','nevada':'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM',
+              'new york':'NY','north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK',
+              'oregon':'OR','pennsylvania':'PA','rhode island':'RI','south carolina':'SC',
+              'south dakota':'SD','tennessee':'TN','texas':'TX','utah':'UT','vermont':'VT',
+              'virginia':'VA','washington':'WA','west virginia':'WV','wisconsin':'WI','wyoming':'WY',
+            }
+            stateCode = stateMap[match.state.toLowerCase()] || ''
+          }
+        } catch { /* fall through */ }
+      }
+
+      if (stateCode) {
+        try {
+          const res = await fetch(`/api/geocode/county-zips?county=${encodeURIComponent(countyName)}&state=${encodeURIComponent(stateCode)}`)
+          const data = await res.json()
+          if (data.zips?.length > 0) {
+            const newZips = data.zips.filter((z: string) => !zipBoundariesRef.current.has(z))
+            for (let i = 0; i < newZips.length; i += 10) {
+              const batch = newZips.slice(i, i + 10)
+              const results = await Promise.all(batch.map((z: string) => getZipBoundary(z)))
+              results.forEach((ring: [number, number][] | null, idx: number) => {
+                if (ring) zipBoundariesRef.current.set(batch[idx], ring)
+              })
+            }
+            setSelectedZips((prev) => {
+              const combined = new Set([...prev, ...data.zips])
+              return Array.from(combined).slice(0, 100)
+            })
+            // Center on county
+            const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(input)}`)
+            const geo = await geoRes.json()
+            if (geo.lat && geo.lng && mapInstance.current) {
+              mapInstance.current.setView([geo.lat, geo.lng], 9, { animate: true })
+            }
+            setZipInput('')
+            setZipLoading(false)
+            return
+          }
+        } catch { /* fall through to generic geocode */ }
+      }
+    }
+
     try {
       const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(input)}`)
       const geo = await geoRes.json()

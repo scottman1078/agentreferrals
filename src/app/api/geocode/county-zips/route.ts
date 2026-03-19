@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/geocode/county-zips?county=Kalamazoo&state=MI
-// Returns all zip codes for a given US county using the HUD USPS crosswalk API
-// Falls back to Census geocoder if HUD is unavailable
+// Returns all zip codes for a given US county using TIGERweb bbox envelope query
 export async function GET(request: NextRequest) {
   const county = request.nextUrl.searchParams.get('county')
   const state = request.nextUrl.searchParams.get('state')
@@ -12,17 +11,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Approach: Use the Census Bureau's geocoder to get the county FIPS,
-    // then use a free county-to-zip dataset via the FCC API
-
-    // Step 1: Get county FIPS code from Census
     const countyName = county.replace(/\s*County\s*/i, '').trim()
-    const stateCode = state.toUpperCase().trim()
 
-    // Use Nominatim to get the county boundary bbox
+    // Step 1: Get county bounding box from Nominatim
     const nomRes = await fetch(
       `https://nominatim.openstreetmap.org/search?` +
-        `q=${encodeURIComponent(`${countyName} County, ${stateCode}, USA`)}&` +
+        `q=${encodeURIComponent(`${countyName} County, ${state}, USA`)}&` +
         `format=json&limit=1&addressdetails=1`,
       { headers: { 'User-Agent': 'AgentReferrals/1.0 (contact@agentdashboards.com)' } }
     )
@@ -38,6 +32,8 @@ export async function GET(request: NextRequest) {
 
     const result = nomResults[0]
     const bbox = result.boundingbox // [south, north, west, east]
+    const lat = parseFloat(result.lat)
+    const lng = parseFloat(result.lon)
 
     if (!bbox || bbox.length !== 4) {
       return NextResponse.json({ zips: [] })
@@ -48,52 +44,32 @@ export async function GET(request: NextRequest) {
     const west = parseFloat(bbox[2])
     const east = parseFloat(bbox[3])
 
-    // Step 2: Sample a dense grid within the county bbox to find all zips
-    // Use the TIGERweb WMS service (same as getZipAtPoint)
-    const zips = new Set<string>()
-    const latStep = (north - south) / 12  // ~12 rows
-    const lngStep = (east - west) / 12    // ~12 columns
+    // Step 2: Query TIGERweb with bbox envelope — gets ALL zips in one request
+    const envelope = JSON.stringify({ xmin: west, ymin: south, xmax: east, ymax: north })
+    const tigerUrl = `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query?` +
+      `geometry=${encodeURIComponent(envelope)}&` +
+      `geometryType=esriGeometryEnvelope&` +
+      `inSR=4326&` +
+      `spatialRel=esriSpatialRelIntersects&` +
+      `outFields=ZCTA5&` +
+      `returnGeometry=false&` +
+      `f=json`
 
-    const points: { lat: number; lng: number }[] = []
-    for (let lat = south; lat <= north; lat += latStep) {
-      for (let lng = west; lng <= east; lng += lngStep) {
-        points.push({ lat, lng })
-      }
+    const tigerRes = await fetch(tigerUrl)
+    if (!tigerRes.ok) {
+      return NextResponse.json({ zips: [] })
     }
-    // Add center and midpoints for better coverage
-    points.push({ lat: (south + north) / 2, lng: (west + east) / 2 })
 
-    // Query TIGERweb WMS in parallel batches
-    const TIGER_WMS = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query'
-
-    for (let i = 0; i < points.length; i += 15) {
-      const batch = points.slice(i, i + 15)
-      const results = await Promise.all(
-        batch.map(async (p) => {
-          try {
-            const url = `${TIGER_WMS}?` +
-              `geometry=${p.lng},${p.lat}&` +
-              `geometryType=esriGeometryPoint&` +
-              `spatialRel=esriSpatialRelIntersects&` +
-              `outFields=ZCTA5CE20&` +
-              `returnGeometry=false&` +
-              `f=json`
-            const res = await fetch(url)
-            if (!res.ok) return null
-            const data = await res.json()
-            return data.features?.[0]?.attributes?.ZCTA5CE20 || null
-          } catch {
-            return null
-          }
-        })
-      )
-      results.forEach((zip) => { if (zip) zips.add(zip) })
-    }
+    const tigerData = await tigerRes.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const zips = (tigerData.features || []).map((f: any) => f.attributes?.ZCTA5).filter(Boolean)
 
     return NextResponse.json({
-      zips: Array.from(zips).sort(),
+      zips: [...new Set(zips)].sort(),
       county: `${countyName} County`,
-      state: stateCode,
+      state,
+      lat,
+      lng,
     })
   } catch (error) {
     console.error('[county-zips] Error:', error)
