@@ -817,8 +817,13 @@ export default function AgentMap() {
         L!.DomEvent.stopPropagation(e)
         setHoveredAgent(null)
         setSelectedAgent(agent)
-        const agentBounds = L!.polygon(polygonCoords as L.LatLngExpression[][]).getBounds()
-        map.flyToBounds(agentBounds, { padding: [80, 80], maxZoom: 8, duration: 0.8 })
+        // Pan so the agent marker ends up in the top third of the screen (above the peek card)
+        const markerLatLng = marker.getLatLng()
+        const mapHeight = map.getSize().y
+        const targetPoint = map.project(markerLatLng, map.getZoom())
+        targetPoint.y -= mapHeight * 0.25 // offset up by 25% of screen height
+        const targetLatLng = map.unproject(targetPoint, map.getZoom())
+        map.flyTo(targetLatLng, map.getZoom(), { duration: 0.5 })
       })
 
       // ── Double-click → zoom all the way into service area ──
