@@ -110,9 +110,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url })
   } catch (err) {
-    console.error('[stripe/checkout] Error:', err)
+    const errMsg = err instanceof Error ? err.message : 'Unknown error'
+    const errStack = err instanceof Error ? err.stack : ''
+    console.error('[stripe/checkout] Error:', errMsg, errStack)
+    console.error('[stripe/checkout] STRIPE_SECRET_KEY set:', !!process.env.STRIPE_SECRET_KEY)
+    console.error('[stripe/checkout] Key prefix:', process.env.STRIPE_SECRET_KEY?.substring(0, 10))
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { error: errMsg, debug: { keySet: !!process.env.STRIPE_SECRET_KEY } },
       { status: 500 }
     )
   }
