@@ -138,10 +138,8 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   return (
     <div className="fixed bottom-[80px] right-4 w-[380px] z-[450]">
       <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border overflow-hidden text-sm">
-        {/* Drag handle */}
-        <div className="flex justify-center pt-1.5 pb-0.5">
-          <GripHorizontal className="w-5 h-5 text-muted-foreground/40" />
-        </div>
+        {/* Spacer for top buttons */}
+        <div className="h-2" />
 
         {/* Top-right buttons: menu + close */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
@@ -215,20 +213,17 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               <p className="text-xs text-muted-foreground">{agent.area}</p>
             </div>
 
-            {/* Large RCS circular badge */}
+            {/* RCS circular badge */}
             {rcsValue > 0 && (
-              <div className="shrink-0 flex flex-col items-center" title="Referral Communication Score">
+              <div className="shrink-0 flex flex-col items-center mr-10" title="Referral Communication Score">
                 <div
-                  className={`relative w-14 h-14 rounded-full flex items-center justify-center border-[3px] ${rcsColorClasses}`}
+                  className={`relative w-11 h-11 rounded-full flex items-center justify-center border-[2.5px] ${rcsColorClasses}`}
                   style={{ borderColor: rcsRingColor }}
                 >
-                  <span className="text-xl font-extrabold leading-none">{rcsValue}</span>
+                  <span className="text-base font-extrabold leading-none">{rcsValue}</span>
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5" style={{ color: rcsRingColor }}>
+                <span className="text-[8px] font-bold uppercase tracking-wider mt-0.5" style={{ color: rcsRingColor }}>
                   RCS
-                </span>
-                <span className="text-[9px] text-muted-foreground leading-tight text-center max-w-[80px]">
-                  {rcsLabel}
                 </span>
               </div>
             )}
