@@ -226,7 +226,27 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             </div>
           )}
 
-          {isDegreeAgent && mutualCount > 0 && (
+          {/* Connection path for degree agents */}
+          {pathAgents && pathAgents.length > 1 && (
+            <div className="flex items-center gap-1 mt-2.5 flex-wrap" title="How you're connected to this agent">
+              {pathAgents.map((p, i) => (
+                <div key={p.id} className="flex items-center gap-1">
+                  {i > 0 && <ArrowRight className="w-3 h-3 text-muted-foreground/40 shrink-0" />}
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0"
+                      style={{ background: p.color }}
+                    >
+                      {p.initials}
+                    </div>
+                    <span className="text-[11px] font-medium whitespace-nowrap">{p.name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isDegreeAgent && mutualCount > 0 && !pathAgents && (
             <p className="mt-2 text-xs text-muted-foreground" title="Agents in your network who also partner with this agent">{mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}</p>
           )}
 
