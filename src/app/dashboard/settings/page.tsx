@@ -41,13 +41,27 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
-  // Auto-select tab from URL parameter
+  const [billingToast, setBillingToast] = useState<string | null>(null)
+
+  // Auto-select tab from URL parameter + handle billing callbacks
   useEffect(() => {
     const tabParam = searchParams.get('tab')
     if (tabParam && TABS.some(t => t.id === tabParam)) {
       setActiveTab(tabParam as Tab)
     }
-  }, [searchParams])
+
+    const billing = searchParams.get('billing')
+    if (billing === 'success') {
+      setActiveTab('billing')
+      setBillingToast('Subscription activated! Your plan has been upgraded.')
+      refreshProfile()
+      window.history.replaceState({}, '', '/dashboard/settings?tab=billing')
+    } else if (billing === 'cancelled') {
+      setActiveTab('billing')
+      setBillingToast('Checkout was cancelled. No changes were made.')
+      window.history.replaceState({}, '', '/dashboard/settings?tab=billing')
+    }
+  }, [searchParams, refreshProfile])
 
   // Form state
   const [fullName, setFullName] = useState('')
@@ -1109,6 +1123,14 @@ export default function SettingsPage() {
         {/* ═══ Billing Tab ═══ */}
         {activeTab === 'billing' && (
           <div className="space-y-4">
+            {billingToast && (
+              <div className="p-4 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  <span className="text-sm font-medium">{billingToast}</span>
+                </div>
+              </div>
+            )}
             {/* Current plan summary */}
             <div className="p-5 rounded-xl border border-border bg-card">
               <div className="flex items-center justify-between">
