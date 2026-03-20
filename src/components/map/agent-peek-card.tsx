@@ -136,67 +136,13 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
-    <div className="fixed bottom-[80px] right-4 w-[380px] z-[450]">
-      <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border overflow-hidden text-sm">
-        {/* Spacer for top buttons */}
-        <div className="h-2" />
-
-        {/* Top-right buttons: menu + close */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          {/* More menu (report/block) */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="w-7 h-7 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <MoreHorizontal className="w-3.5 h-3.5" />
-            </button>
-            {showMenu && (
-              <div className="absolute top-8 right-0 w-44 rounded-xl border border-border bg-card shadow-xl py-1 z-10">
-                <button
-                  onClick={() => {
-                    setShowMenu(false)
-                    setShowReportModal(true)
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent transition-colors"
-                >
-                  <Flag className="w-3.5 h-3.5" />
-                  Report Agent
-                </button>
-                {!blocked ? (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false)
-                      setShowBlockConfirm(true)
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent transition-colors"
-                  >
-                    <Ban className="w-3.5 h-3.5" />
-                    Block Agent
-                  </button>
-                ) : (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">
-                    Agent blocked
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="px-4 pb-3">
-          {/* Agent info row with prominent RCS */}
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
+    <div className="fixed bottom-[80px] right-4 w-[340px] z-[450]">
+      <div className="bg-card backdrop-blur-xl rounded-xl shadow-2xl border border-border overflow-hidden">
+        {/* Header: avatar, name, RCS, close */}
+        <div className="p-3 pb-2">
+          <div className="flex items-start gap-2.5">
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden"
+              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 overflow-hidden"
               style={{ background: agent.color }}
             >
               {!scopeLocked && agent.photoUrl ? (
@@ -205,202 +151,109 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                 initials
               )}
             </div>
-
-            {/* Name / brokerage / area */}
             <div className="flex-1 min-w-0">
-              <span className="font-bold text-base truncate block">{displayName}</span>
-              <p className="text-xs text-muted-foreground">{agent.brokerage}</p>
-              <p className="text-xs text-muted-foreground">{agent.area}</p>
+              <span className="font-bold text-sm truncate block leading-tight">{displayName}</span>
+              <p className="text-[11px] text-muted-foreground truncate">{agent.brokerage}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{agent.area}</p>
             </div>
-
-            {/* RCS circular badge */}
             {rcsValue > 0 && (
-              <div className="shrink-0 flex flex-col items-center mr-10" title="Referral Communication Score">
+              <div className="shrink-0 flex flex-col items-center" title="Referral Communication Score">
                 <div
-                  className={`relative w-11 h-11 rounded-full flex items-center justify-center border-[2.5px] ${rcsColorClasses}`}
-                  style={{ borderColor: rcsRingColor }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center border-2"
+                  style={{ borderColor: rcsRingColor, color: rcsRingColor }}
                 >
-                  <span className="text-base font-extrabold leading-none">{rcsValue}</span>
+                  <span className="text-sm font-extrabold leading-none">{rcsValue}</span>
                 </div>
-                <span className="text-[8px] font-bold uppercase tracking-wider mt-0.5" style={{ color: rcsRingColor }}>
-                  RCS
-                </span>
+                <span className="text-[7px] font-bold uppercase mt-0.5" style={{ color: rcsRingColor }}>RCS</span>
               </div>
             )}
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                >
+                  <MoreHorizontal className="w-3 h-3" />
+                </button>
+                {showMenu && (
+                  <div className="absolute top-7 right-0 w-36 rounded-lg border border-border bg-card shadow-xl py-1 z-10">
+                    <button onClick={() => { setShowMenu(false); setShowReportModal(true) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-accent">
+                      <Flag className="w-3 h-3" /> Report
+                    </button>
+                    {!blocked ? (
+                      <button onClick={() => { setShowMenu(false); setShowBlockConfirm(true) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-accent">
+                        <Ban className="w-3 h-3" /> Block
+                      </button>
+                    ) : (
+                      <div className="px-3 py-1.5 text-[11px] text-muted-foreground">Blocked</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button onClick={onClose} className="w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
           </div>
 
-          {/* Review stars */}
-          {reviewStats && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <div className="flex items-center">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-3.5 h-3.5 ${
-                      star <= Math.round(reviewStats.avgRating)
-                        ? 'fill-amber-400 text-amber-400'
-                        : 'text-muted-foreground/30'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-bold">{reviewStats.avgRating}</span>
-              <span className="text-[11px] text-muted-foreground">
-                ({reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''})
-              </span>
-            </div>
-          )}
-
-          {/* Connection path */}
-          {pathAgents && pathAgents.length > 1 && (
-            <div className="mt-2.5 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5">
-                Connection Path
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {pathAgents.map((p, i) => (
-                  <div key={p.id} className="flex items-center gap-1.5">
-                    {i > 0 && <ArrowRight className="w-3 h-3 text-primary/40 shrink-0" />}
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
-                        style={{ background: p.color }}
-                      >
-                        {p.initials}
-                      </div>
-                      <span className="text-xs font-semibold whitespace-nowrap">{p.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-1.5 mt-2.5 rounded-lg border border-border px-2 py-2">
-            {agent.responseTime && (
-              <div className="flex flex-col items-center text-center">
-                <Clock className="w-3 h-3 text-muted-foreground mb-0.5" />
-                <span className="text-[11px] font-semibold">{agent.responseTime}</span>
-                <span className="text-[9px] text-muted-foreground">Response</span>
+          {/* Stars + Stats in one compact row */}
+          <div className="flex items-center gap-2 mt-2 text-[10px]">
+            {reviewStats && (
+              <div className="flex items-center gap-0.5">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-[11px]">{reviewStats.avgRating}</span>
+                <span className="text-muted-foreground">({reviewStats.count})</span>
               </div>
             )}
-            {agent.closedReferrals != null && agent.closedReferrals > 0 && (
-              <div className="flex flex-col items-center text-center">
-                <Handshake className="w-3 h-3 text-emerald-500 mb-0.5" />
-                <span className="text-[11px] font-semibold text-emerald-500">{agent.closedReferrals}</span>
-                <span className="text-[9px] text-muted-foreground">Closed</span>
-              </div>
-            )}
-            <div className="flex flex-col items-center text-center">
-              <span className="text-[11px] font-semibold">{agent.dealsPerYear}</span>
-              <span className="text-[9px] text-muted-foreground">Deals/yr</span>
-            </div>
-            <div className="flex flex-col items-center text-center">
-              <span className="text-[11px] font-semibold">{formatCurrency(agent.avgSalePrice)}</span>
-              <span className="text-[9px] text-muted-foreground">Avg Price</span>
-            </div>
-            {agent.yearsLicensed > 0 && (
-              <div className="flex flex-col items-center text-center">
-                <span className="text-[11px] font-semibold">{agent.yearsLicensed} yrs</span>
-                <span className="text-[9px] text-muted-foreground">Licensed</span>
-              </div>
-            )}
-            {networkSize > 0 && (
-              <div className="flex flex-col items-center text-center">
-                <Users className="w-3 h-3 text-muted-foreground mb-0.5" />
-                <span className="text-[11px] font-semibold">{networkSize}</span>
-                <span className="text-[9px] text-muted-foreground">Partners</span>
-              </div>
-            )}
+            {agent.responseTime && <span className="text-muted-foreground">{agent.responseTime}</span>}
+            <span className="text-muted-foreground">{agent.dealsPerYear} deals/yr</span>
+            <span className="text-muted-foreground">{formatCurrency(agent.avgSalePrice)}</span>
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-1 mt-2.5">
-            {agent.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                style={{ background: TAG_COLORS[tag] || '#6b7280' }}
-              >
+          <div className="flex flex-wrap gap-1 mt-2">
+            {agent.tags.slice(0, 4).map((tag) => (
+              <span key={tag} className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-white" style={{ background: TAG_COLORS[tag] || '#6b7280' }}>
                 {tag}
               </span>
             ))}
           </div>
 
-          {/* Direct partner stats */}
+          {/* Partner stats (compact) */}
           {isDirectPartner && (
-            <div className="mt-2.5 rounded-xl border border-border p-3">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex items-start gap-1.5">
-                  <CalendarClock className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-[11px] text-muted-foreground leading-tight">{lastContacted}</span>
-                </div>
-                <div className="flex items-start gap-1.5">
-                  <ArrowLeftRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-[11px] text-muted-foreground leading-tight">{activeReferrals}</span>
-                </div>
-                <div className="flex items-start gap-1.5">
-                  <Handshake className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-[11px] text-muted-foreground leading-tight">{partnerDuration ?? 'N/A'}</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+              <span>{lastContacted}</span>
+              <span>{activeReferrals}</span>
+              <span>{partnerDuration}</span>
             </div>
           )}
 
-          {/* Degree agent stats */}
-          {isDegreeAgent && (
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5">
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-[11px] text-muted-foreground">
-                  {mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}
-                </span>
-              </div>
+          {isDegreeAgent && mutualCount > 0 && (
+            <div className="mt-2 text-[10px] text-muted-foreground">
+              {mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}
             </div>
           )}
+        </div>
 
-          {/* Private notes */}
-          <AgentNotes agentId={agent.id} authorId={profile?.id ?? null} variant="inline" />
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-3">
-            {isDegreeAgent ? (
-              /* Non-partner degree agent: Request Intro only, no direct message for free tier */
-              <button
-                onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }}
-                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                Request Intro
-              </button>
-            ) : (
-              <button
-                onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }}
-                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Send Referral
-              </button>
-            )}
-            {/* Message button: only for direct partners, not for degree agents */}
-            {isDirectPartner && (
-              <button
-                onClick={() => { if (demoGuard()) return; onMessage?.(agent) }}
-                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Message
-              </button>
-            )}
-            <button
-              onClick={() => router.push(`/agent/${agent.id}`)}
-              className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl border border-border text-sm font-semibold hover:bg-accent transition-colors shrink-0"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="text-xs">Profile</span>
+        {/* Action buttons */}
+        <div className="flex items-center gap-1.5 p-3 pt-0">
+          {isDegreeAgent ? (
+            <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg border border-primary text-primary text-xs font-semibold hover:bg-primary/5">
+              <UserPlus className="w-3 h-3" /> Request Intro
             </button>
-          </div>
+          ) : (
+            <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
+              <Send className="w-3 h-3" /> Referral
+            </button>
+          )}
+          {isDirectPartner && (
+            <button onClick={() => { if (demoGuard()) return; onMessage?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg border border-border text-xs font-semibold hover:bg-accent">
+              <MessageSquare className="w-3 h-3" /> Message
+            </button>
+          )}
+          <button onClick={() => router.push(`/agent/${agent.id}`)} className="flex items-center justify-center gap-1 h-8 px-2.5 rounded-lg border border-border text-xs font-semibold hover:bg-accent shrink-0">
+            <User className="w-3 h-3" /> Profile
+          </button>
         </div>
       </div>
 
