@@ -1148,6 +1148,9 @@ export default function SetupPage() {
               </div>
             ) : (
               <>
+                <button onClick={() => setCurrentStep(0)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
+                  <ChevronLeft className="w-4 h-4" /> Back
+                </button>
                 <div className="mb-6">
                   <h1 className="text-2xl font-bold">Your Agent Profile</h1>
                   <p className="text-muted-foreground mt-1">
@@ -1406,6 +1409,9 @@ export default function SetupPage() {
       {currentStep === 2 && (<>
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-6 pb-4 w-full flex flex-col h-full">
+          <button onClick={() => setCurrentStep(1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
           <div className="mb-4">
             <h1 className="text-2xl font-bold">Define Your Service Area</h1>
             <p className="text-muted-foreground mt-1">
@@ -1674,13 +1680,7 @@ export default function SetupPage() {
         </div>
         {/* Bottom actions */}
         <div className="border-t border-border bg-card shrink-0">
-          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-            <button
-              onClick={() => setCurrentStep(1)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="w-4 h-4" /> Back
-            </button>
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-end">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSaveTerritory}
@@ -1698,6 +1698,9 @@ export default function SetupPage() {
       {currentStep === 3 && (
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
+          <button onClick={() => setCurrentStep(2)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Invite Your Network</h1>
             <p className="text-muted-foreground mt-1">
@@ -2077,14 +2080,8 @@ export default function SetupPage() {
           {/* Actions */}
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setCurrentStep(2)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="w-4 h-4" /> Back
-            </button>
-            <button
               onClick={() => setCurrentStep(4)}
-              className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
+              className="flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 ml-auto"
             >
               Continue <ChevronRight className="w-4 h-4" />
             </button>
@@ -2097,6 +2094,9 @@ export default function SetupPage() {
       {currentStep === 4 && (
         <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-8 pb-8 w-full">
+          <button onClick={() => setCurrentStep(3)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
           <div className="text-center py-6">
             <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 mb-5">
               <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -2229,16 +2229,10 @@ export default function SetupPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setCurrentStep(3)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="w-4 h-4" /> Back
-            </button>
+          <div className="text-center">
             <button
               onClick={handleComplete}
-              className="flex items-center gap-2 h-11 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
+              className="flex items-center gap-2 h-11 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 mx-auto"
             >
               Explore Dashboard <ChevronRight className="w-4 h-4" />
             </button>
