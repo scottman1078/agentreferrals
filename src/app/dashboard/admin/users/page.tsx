@@ -8,8 +8,10 @@ import { getPartnerAgentIds } from '@/data/partnerships'
 import { getInitials } from '@/lib/utils'
 import type { SubscriptionTier } from '@/lib/stripe'
 
+const ADMIN_EMAILS = ['scott@agentdashboards.com']
+
 const TIER_COLORS: Record<string, string> = {
-  starter: 'bg-gray-500/20 text-gray-600 dark:text-gray-300 border border-gray-500/30',
+  starter: 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300 border border-gray-300 dark:border-gray-500/30',
   growth: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30',
   pro: 'bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-500/30',
   elite: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
@@ -175,6 +177,30 @@ export default function AdminUsersPage() {
                 <div className="text-xs text-muted-foreground hidden md:block">
                   {user.phone_verified ? '✓ Verified' : 'Unverified'}
                 </div>
+                <button
+                  onClick={async () => {
+                    const isAdmin = user.subscription_tier === 'admin' || ADMIN_EMAILS.includes(user.email)
+                    if (ADMIN_EMAILS.includes(user.email) && isAdmin) return // Can't remove hardcoded super admin
+                    try {
+                      const res = await fetch('/api/admin/toggle-admin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: user.id, makeAdmin: !isAdmin }),
+                      })
+                      if (res.ok) {
+                        setRealUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, subscription_tier: isAdmin ? 'free' : 'admin' } : u))
+                      }
+                    } catch { /* */ }
+                  }}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    user.subscription_tier === 'admin' || ADMIN_EMAILS.includes(user.email)
+                      ? 'bg-purple-500 text-white border border-purple-500/30'
+                      : 'bg-muted text-muted-foreground border border-border hover:bg-accent cursor-pointer'
+                  }`}
+                  title={user.subscription_tier === 'admin' || ADMIN_EMAILS.includes(user.email) ? 'Admin (click to remove)' : 'Click to make admin'}
+                >
+                  {user.subscription_tier === 'admin' || ADMIN_EMAILS.includes(user.email) ? 'Admin' : 'User'}
+                </button>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${TIER_COLORS[user.subscription_tier || 'starter'] || TIER_COLORS.starter}`}>
                   {user.subscription_tier || 'starter'}
                 </span>
