@@ -1008,6 +1008,7 @@ export default function SetupPage() {
     try {
       const profileData: Record<string, unknown> = {
         id: profile.id,
+        email: profile.email,
         bio: proposedBio,
         tags: proposedSpecializations,
         deals_per_year: proposedDealsPerYear,
