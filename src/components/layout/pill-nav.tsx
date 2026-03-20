@@ -52,7 +52,7 @@ export default function PillNav() {
   const menuRef = useRef<HTMLDivElement>(null)
   const unreadCount = getUnreadCount()
   const { profile } = useAuth()
-  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '')
+  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '') || profile?.is_admin === true
 
   const allMoreItems = isAdmin
     ? [...moreItems, { href: '/dashboard/admin', icon: Shield, label: 'Admin' }]

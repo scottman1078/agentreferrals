@@ -89,7 +89,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isDemoMode, disableDemo])
 
   const ADMIN_EMAILS = ['scott@agentdashboards.com']
-  const isAdminUser = ADMIN_EMAILS.includes(profile?.email ?? '')
+  const isAdminUser = ADMIN_EMAILS.includes(profile?.email ?? '') || profile?.is_admin === true
 
   // Redirect to setup if user hasn't completed it (skip in demo mode + admins)
   useEffect(() => {

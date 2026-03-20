@@ -28,7 +28,7 @@ export function useFeatureGate() {
   const { tierOverride, setTierOverride } = useAdminTier()
   const { isDemoMode } = useDemo()
 
-  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '')
+  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '') || profile?.is_admin === true
   const canSwitchTier = isAdmin || isDemoMode
 
   const tier: SubscriptionTier = useMemo(() => {

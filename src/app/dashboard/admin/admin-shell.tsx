@@ -36,7 +36,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '')
+  const isAdmin = ADMIN_EMAILS.includes(profile?.email ?? '') || profile?.is_admin === true
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {

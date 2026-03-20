@@ -53,6 +53,7 @@ export interface ArProfile {
   license_verified_at: string | null
   license_expiration: string | null
   license_type: string | null
+  is_admin: boolean
   territory_meta: { mode: string; selections: string[] } | null
   setup_step: string | null  // 'intake' | 'profile' | 'service_area' | 'invites' | 'complete' | null
   setup_completed_at: string | null
@@ -158,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             license_verified_at: null,
             license_expiration: null,
             license_type: null,
+            is_admin: false,
             territory_meta: null,
             setup_step: null,
             setup_completed_at: null,
