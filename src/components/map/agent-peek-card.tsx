@@ -219,12 +219,12 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
 
           {/* Row 4: Partner info — single line */}
           {isDirectPartner && (
-            <div className="flex items-center gap-4 mt-2.5 text-xs text-muted-foreground whitespace-nowrap">
-              <span title="Last time you communicated with this partner">{lastContacted}</span>
-              <span>&middot;</span>
-              <span title="Current referrals in progress between you">{activeReferrals}</span>
-              <span>&middot;</span>
-              <span title="How long you've been referral partners">{partnerDuration}</span>
+            <div className="flex items-center gap-2 mt-2.5 text-[11px] text-muted-foreground overflow-hidden">
+              <span className="truncate" title="Last time you communicated with this partner">{lastContacted}</span>
+              <span className="shrink-0">&middot;</span>
+              <span className="truncate" title="Current referrals in progress between you">{activeReferrals}</span>
+              <span className="shrink-0">&middot;</span>
+              <span className="truncate" title="How long you've been referral partners">{partnerDuration}</span>
             </div>
           )}
 
