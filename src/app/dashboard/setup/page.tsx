@@ -87,7 +87,7 @@ export default function SetupPage() {
   const [prMarket, setPrMarket] = useState('')
   const [prSalePrice, setPrSalePrice] = useState<number | null>(null)
   const [prCloseYear, setPrCloseYear] = useState<number | null>(null)
-  const [showPastReferralForm, setShowPastReferralForm] = useState(false)
+  const [showPastReferralForm, setShowPastReferralForm] = useState(true)
 
   // Step 1: Profile Builder
   const [profileBuilderLoading, setProfileBuilderLoading] = useState(false)
@@ -2229,10 +2229,16 @@ export default function SetupPage() {
             </div>
           )}
 
-          <div className="text-center">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setCurrentStep(3)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
             <button
               onClick={handleComplete}
-              className="flex items-center gap-2 h-11 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 mx-auto"
+              className="flex items-center gap-2 h-11 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
             >
               Explore Dashboard <ChevronRight className="w-4 h-4" />
             </button>
