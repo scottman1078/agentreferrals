@@ -11,8 +11,8 @@ import type { SubscriptionTier } from '@/lib/stripe'
 const ADMIN_EMAILS = ['scott@agentdashboards.com']
 
 const TIER_COLORS: Record<string, string> = {
-  starter: 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300 border border-gray-300 dark:border-gray-500/30',
-  free: 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300 border border-gray-300 dark:border-gray-500/30',
+  starter: 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100 border border-gray-300 dark:border-gray-500',
+  free: 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100 border border-gray-300 dark:border-gray-500',
   growth: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30',
   pro: 'bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-500/30',
   elite: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
