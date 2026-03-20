@@ -137,8 +137,16 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
 
   return (
     <div className="fixed bottom-[80px] right-4 w-[460px] z-[450]">
-      <div className="bg-card backdrop-blur-xl rounded-xl shadow-2xl border border-border overflow-hidden">
-        <div className="p-4">
+      <div className="bg-card backdrop-blur-xl rounded-xl shadow-2xl border border-border overflow-hidden relative">
+        {scopeLocked && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/50 rounded-xl">
+            <div className="text-center">
+              <button onClick={() => window.location.href = '/dashboard/settings?tab=billing'} className="text-sm font-bold text-primary-foreground px-6 py-2.5 rounded-lg bg-primary shadow-lg hover:opacity-90 transition-opacity">Upgrade to view</button>
+              <p className="text-[11px] text-muted-foreground mt-2">This agent is outside your current plan</p>
+            </div>
+          </div>
+        )}
+        <div className={`p-4 ${scopeLocked ? 'blur-[4px] select-none' : ''}`}>
           {/* Row 1: Avatar + Name + RCS + Actions */}
           <div className="flex items-center gap-3">
             <div
