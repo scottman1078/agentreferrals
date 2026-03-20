@@ -12,6 +12,8 @@ export const TAG_COLORS: Record<string, string> = {
   'Relocation': '#f97316',
   'Land & Acreage': '#d97706',
   'New Construction': '#14b8a6',
+  'Probate': '#6366f1',
+  'Downsizing': '#ec4899',
 }
 
 export const TAG_EMOJIS: Record<string, string> = {
@@ -22,6 +24,8 @@ export const TAG_EMOJIS: Record<string, string> = {
   'Relocation': '📦',
   'Land & Acreage': '🌾',
   'New Construction': '🏗',
+  'Probate': '⚖️',
+  'Downsizing': '📐',
 }
 
 export const ALL_TAGS = [
@@ -32,6 +36,8 @@ export const ALL_TAGS = [
   'Relocation',
   'Land & Acreage',
   'New Construction',
+  'Probate',
+  'Downsizing',
 ]
 
 export const PIPELINE_STAGES = [

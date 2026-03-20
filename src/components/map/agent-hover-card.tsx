@@ -27,7 +27,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const commScoreColor = commScore ? getCommScoreColor(commScore.overall) : ''
 
   // Connection path for degree-of-separation agents
-  const { scope, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { scope, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
   const { agents } = useAppData()
   const isDegreeView = scope === '1-degree' || scope === '2-degree'
   const isDegreeAgent = oneDegreeIds.includes(agent.id) || twoDegreeIds.includes(agent.id)
@@ -48,7 +48,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
 
   return (
     <div style={style}>
-      <div className="w-[240px] bg-card/95 backdrop-blur-xl rounded-xl shadow-2xl border border-border p-3 animate-in fade-in zoom-in-95 duration-150">
+      <div className={`w-[240px] bg-card/95 backdrop-blur-xl rounded-xl shadow-2xl border border-border p-3 animate-in fade-in zoom-in-95 duration-150 ${scopeLocked ? 'select-none' : ''}`}>
         <div className="flex items-center gap-2.5">
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0"
