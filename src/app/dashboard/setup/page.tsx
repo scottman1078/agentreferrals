@@ -1467,7 +1467,7 @@ export default function SetupPage() {
                 />
                 {/* Autocomplete dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-[9999] overflow-hidden">
                     {suggestions
                       .filter((s) => territoryMode === 'county' ? s.subtitle === 'County' : s.subtitle === 'City')
                       .map((s, i) => (
@@ -1585,21 +1585,37 @@ export default function SetupPage() {
           {zipError && <p className="text-sm text-destructive mb-3">{zipError}</p>}
 
           {/* Zip count + clear */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 gap-2">
             {selectedZips.length > 0 ? (
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-sm font-semibold text-primary">
-                    {territorySelections.length > 0
-                      ? territorySelections.join(', ')
-                      : `${selectedZips.length} zip code${selectedZips.length !== 1 ? 's' : ''}`
-                    }
-                  </span>
-                  {territorySelections.length > 0 && (
-                    <span className="text-xs text-primary/60">({selectedZips.length} zips)</span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {territorySelections.length > 0 ? (
+                  <>
+                    {territorySelections.map((sel) => (
+                      <div key={sel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                        <MapPin className="w-3 h-3 text-primary" />
+                        <span className="text-xs font-semibold text-primary">{sel}</span>
+                        <button
+                          onClick={() => {
+                            // Remove this selection and its zips
+                            // For now, just remove the label — user can re-add
+                            setTerritorySelections((prev) => prev.filter((s) => s !== sel))
+                          }}
+                          className="ml-0.5 text-primary/50 hover:text-primary"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <span className="text-xs text-muted-foreground">({selectedZips.length} zips)</span>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                    <MapPin className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-sm font-semibold text-primary">
+                      {selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     setSelectedZips([])
