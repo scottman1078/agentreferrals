@@ -136,11 +136,11 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
-    <div className="fixed bottom-[80px] sm:bottom-[100px] left-4 right-4 max-w-lg mx-auto z-[450] max-h-[60vh] overflow-y-auto">
-      <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border overflow-hidden">
+    <div className="fixed bottom-[80px] sm:bottom-[100px] left-4 right-4 max-w-lg mx-auto z-[450] max-h-[50vh] overflow-y-auto">
+      <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border overflow-hidden text-sm">
         {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-1">
-          <GripHorizontal className="w-6 h-6 text-muted-foreground/40" />
+        <div className="flex justify-center pt-1.5 pb-0.5">
+          <GripHorizontal className="w-5 h-5 text-muted-foreground/40" />
         </div>
 
         {/* Top-right buttons: menu + close */}
@@ -193,7 +193,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           </button>
         </div>
 
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-3">
           {/* Agent info row with prominent RCS */}
           <div className="flex items-center gap-3">
             {/* Avatar */}
