@@ -13,10 +13,7 @@ export function getStripeServer(): Stripe | null {
       console.warn('[Stripe Server] No secret key found — billing features are disabled.')
       return null
     }
-    stripeInstance = new Stripe(key, {
-      apiVersion: '2026-02-25.clover',
-      typescript: true,
-    })
+    stripeInstance = new Stripe(key)
   }
   return stripeInstance
 }
