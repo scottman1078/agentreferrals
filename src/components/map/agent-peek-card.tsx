@@ -136,7 +136,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
-    <div className="fixed bottom-[80px] right-4 w-[420px] z-[450]">
+    <div className="fixed bottom-[80px] right-4 w-[460px] z-[450]">
       <div className="bg-card backdrop-blur-xl rounded-xl shadow-2xl border border-border overflow-hidden">
         <div className="p-4">
           {/* Row 1: Avatar + Name + RCS + Actions */}
