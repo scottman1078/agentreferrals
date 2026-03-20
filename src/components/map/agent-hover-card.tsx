@@ -41,7 +41,7 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
   const style: React.CSSProperties = {
     position: 'fixed',
     left: Math.min(position.x - 120, window.innerWidth - 260),
-    top: Math.max(position.y - 180, 10),
+    top: Math.max(position.y - 150, 10),
     zIndex: 500,
     pointerEvents: 'none',
   }
