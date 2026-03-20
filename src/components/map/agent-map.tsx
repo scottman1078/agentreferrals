@@ -704,13 +704,14 @@ export default function AgentMap() {
         allBounds.push(poly.getBounds())
 
         // Hover + click on polygon
-        const showHoverPoly = (e: L.LeafletMouseEvent) => {
+        const showHoverPoly = () => {
           if (selectedAgent) return
-          const containerPoint = map.latLngToContainerPoint(e.latlng)
+          // Use marker position for consistent card placement above the avatar
+          const markerPoint = map.latLngToContainerPoint(marker.getLatLng())
           const mapEl = map.getContainer().getBoundingClientRect()
           setHoveredAgent({
             agent,
-            position: { x: mapEl.left + containerPoint.x, y: mapEl.top + containerPoint.y },
+            position: { x: mapEl.left + markerPoint.x, y: mapEl.top + markerPoint.y - 25 },
           })
         }
         poly.on('mouseover', showHoverPoly)
@@ -802,13 +803,14 @@ export default function AgentMap() {
       const marker = L!.marker(center, { icon: markerIcon })
 
       // ── Marker hover → show lightweight preview ──
-      marker.on('mouseover', (e: L.LeafletMouseEvent) => {
+      marker.on('mouseover', () => {
         if (selectedAgent) return
-        const containerPoint = map.latLngToContainerPoint(e.latlng)
+        // Use marker's actual position (top of avatar) for consistent card placement
+        const markerPoint = map.latLngToContainerPoint(marker.getLatLng())
         const mapEl = map.getContainer().getBoundingClientRect()
         setHoveredAgent({
           agent,
-          position: { x: mapEl.left + containerPoint.x, y: mapEl.top + containerPoint.y },
+          position: { x: mapEl.left + markerPoint.x, y: mapEl.top + markerPoint.y - 25 },
         })
       })
       marker.on('mouseout', () => {
