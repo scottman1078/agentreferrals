@@ -9,7 +9,7 @@ export async function GET() {
     // Only fetch real users (exclude demo/seeded agents)
     const { data, error } = await supabase
       .from('ar_profiles')
-      .select('id, email, full_name, primary_area, phone, avatar_url, tags, status, subscription_tier, phone_verified, is_on_team, team_name, years_licensed, deals_per_year, avg_sale_price, is_demo, created_at')
+      .select('id, email, full_name, primary_area, phone, avatar_url, tags, status, subscription_tier, phone_verified, is_on_team, team_name, years_licensed, deals_per_year, avg_sale_price, is_demo, is_admin, created_at')
       .or('is_demo.is.null,is_demo.eq.false')
       .order('created_at', { ascending: false })
 

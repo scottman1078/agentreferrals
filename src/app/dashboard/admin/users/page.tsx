@@ -56,6 +56,7 @@ interface RealUser {
   years_licensed: number | null
   deals_per_year: number | null
   created_at: string | null
+  is_admin: boolean | null
 }
 
 export default function AdminUsersPage() {
@@ -178,13 +179,13 @@ export default function AdminUsersPage() {
                 <div className="text-xs text-muted-foreground hidden md:block">
                   {user.phone_verified ? '✓ Verified' : 'Unverified'}
                 </div>
-                {(user.subscription_tier === 'admin' || ADMIN_EMAILS.includes(user.email)) && (
+                {(user.is_admin || ADMIN_EMAILS.includes(user.email)) && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500 text-white border border-purple-500/30">
                     Admin
                   </span>
                 )}
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${TIER_COLORS[user.subscription_tier || 'free'] || TIER_COLORS.starter}`}>
-                  {user.subscription_tier === 'free' || !user.subscription_tier ? 'Starter' : user.subscription_tier === 'admin' ? 'Starter' : user.subscription_tier}
+                  {user.subscription_tier === 'free' || !user.subscription_tier ? 'Starter' : user.is_admin ? 'Starter' : user.subscription_tier}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${STATUS_COLORS[user.status || 'active'] || STATUS_COLORS.active}`}>
                   {user.status || 'active'}
@@ -193,7 +194,7 @@ export default function AdminUsersPage() {
                 {!ADMIN_EMAILS.includes(user.email) && (
                   <button
                     onClick={async () => {
-                      const isAdmin = user.subscription_tier === 'admin'
+                      const isAdmin = user.is_admin
                       if (!confirm(isAdmin ? `Remove admin access for ${user.full_name}?` : `Make ${user.full_name} an admin?`)) return
                       try {
                         const res = await fetch('/api/admin/toggle-admin', {
@@ -202,17 +203,17 @@ export default function AdminUsersPage() {
                           body: JSON.stringify({ userId: user.id, makeAdmin: !isAdmin }),
                         })
                         if (res.ok) {
-                          setRealUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, subscription_tier: isAdmin ? 'free' : 'admin' } : u))
+                          setRealUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, is_admin: !isAdmin } : u))
                         }
                       } catch { /* */ }
                     }}
                     className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                      user.subscription_tier === 'admin'
+                      user.is_admin
                         ? 'bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20'
                         : 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border border-purple-500/20'
                     }`}
                   >
-                    {user.subscription_tier === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    {user.is_admin ? 'Remove Admin' : 'Make Admin'}
                   </button>
                 )}
                 {confirmDeleteUser?.id === user.id ? (
