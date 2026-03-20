@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
-import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search, Video, Trash2, Pencil } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { uploadVideo } from '@/lib/supabase/upload-video'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 
 let L: typeof import('leaflet') | null = null
@@ -106,6 +107,18 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Bio state
+  const [bio, setBio] = useState('')
+  const [bioEditing, setBioEditing] = useState(false)
+  const [bioSaving, setBioSaving] = useState(false)
+  const BIO_MAX = 500
+
+  // Video intro state
+  const [videoIntroUrl, setVideoIntroUrl] = useState<string | null>(null)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
+  const [videoError, setVideoError] = useState('')
+  const videoInputRef = useRef<HTMLInputElement>(null)
+
   const [notifications, setNotifications] = useState({
     agreementSigned: true,
     clientIntroduced: true,
@@ -125,6 +138,8 @@ export default function SettingsPage() {
       setBrokerageName(profile.brokerage?.name || '')
       setAvatarUrl(profile.avatar_url || null)
       setZillowProfileUrl(profile.zillow_profile_url || '')
+      setBio(profile.bio || '')
+      setVideoIntroUrl(profile.video_intro_url || null)
       // Load existing territory zips
       if (profile.territory_zips && Array.isArray(profile.territory_zips)) {
         setSelectedZips(profile.territory_zips as string[])
@@ -223,6 +238,117 @@ export default function SettingsPage() {
 
     await refreshProfile()
     setSaveToast('Settings saved successfully')
+    setTimeout(() => setSaveToast(''), 3000)
+  }
+
+  async function handleBioSave() {
+    if (demoGuard()) return
+    if (!profile) return
+    setBioSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('ar_profiles')
+      .update({ bio: bio.trim() || null })
+      .eq('id', profile.id)
+    setBioSaving(false)
+    if (error) {
+      setSaveToast(`Failed to save bio: ${error.message}`)
+      setTimeout(() => setSaveToast(''), 6000)
+      return
+    }
+    setBioEditing(false)
+    await refreshProfile()
+    setSaveToast('Bio updated')
+    setTimeout(() => setSaveToast(''), 3000)
+  }
+
+  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (demoGuard()) return
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+    setVideoError('')
+
+    // Validate file size (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setVideoError('Video must be under 50MB')
+      return
+    }
+
+    // Validate duration (60 seconds) by loading video metadata
+    const url = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+
+    const duration = await new Promise<number>((resolve) => {
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url)
+        resolve(video.duration)
+      }
+      video.onerror = () => {
+        URL.revokeObjectURL(url)
+        resolve(0)
+      }
+      video.src = url
+    })
+
+    if (duration === 0) {
+      setVideoError('Could not read video file. Please try a different format.')
+      return
+    }
+    if (duration > 60) {
+      setVideoError(`Video is ${Math.ceil(duration)}s — max 60 seconds allowed`)
+      return
+    }
+
+    setUploadingVideo(true)
+    const { url: videoUrl, error } = await uploadVideo(profile.id, file, 'intro')
+
+    if (error || !videoUrl) {
+      // Fallback: save a data URL if bucket doesn't exist yet
+      console.error('[Video] Upload error:', error)
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const dataUrl = reader.result as string
+        const supabase = createClient()
+        await supabase
+          .from('ar_profiles')
+          .update({ video_intro_url: dataUrl })
+          .eq('id', profile.id)
+        setVideoIntroUrl(dataUrl)
+        await refreshProfile()
+        setSaveToast('Video intro uploaded')
+        setTimeout(() => setSaveToast(''), 3000)
+        setUploadingVideo(false)
+      }
+      reader.readAsDataURL(file)
+      return
+    }
+
+    // Save URL to profile
+    const supabase = createClient()
+    await supabase
+      .from('ar_profiles')
+      .update({ video_intro_url: videoUrl })
+      .eq('id', profile.id)
+
+    setVideoIntroUrl(videoUrl)
+    await refreshProfile()
+    setSaveToast('Video intro uploaded')
+    setTimeout(() => setSaveToast(''), 3000)
+    setUploadingVideo(false)
+  }
+
+  async function handleVideoRemove() {
+    if (demoGuard()) return
+    if (!profile) return
+    const supabase = createClient()
+    await supabase
+      .from('ar_profiles')
+      .update({ video_intro_url: null })
+      .eq('id', profile.id)
+    setVideoIntroUrl(null)
+    await refreshProfile()
+    setSaveToast('Video intro removed')
     setTimeout(() => setSaveToast(''), 3000)
   }
 
@@ -847,6 +973,140 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* ── Bio Editor ── */}
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+                <div className="font-bold text-sm">Bio</div>
+                {!bioEditing && (
+                  <button
+                    onClick={() => setBioEditing(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {bioEditing ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={bio}
+                    onChange={(e) => {
+                      if (e.target.value.length <= BIO_MAX) setBio(e.target.value)
+                    }}
+                    rows={5}
+                    placeholder="Tell referral partners about yourself, your expertise, and what makes you a great partner to work with..."
+                    className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs ${bio.length >= BIO_MAX ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                      {bio.length}/{BIO_MAX} characters
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setBio(profile?.bio || '')
+                          setBioEditing(false)
+                        }}
+                        className="h-8 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleBioSave}
+                        disabled={bioSaving || !isAuthenticated}
+                        className="h-8 px-4 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+                      >
+                        {bioSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {bioSaving ? 'Saving...' : 'Save Bio'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {bio || 'No bio yet. Click Edit to add one.'}
+                </p>
+              )}
+            </div>
+
+            {/* ── Video Introduction ── */}
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <div className="font-bold text-sm mb-1 pb-3 border-b border-border flex items-center gap-2">
+                <Video className="w-4 h-4 text-primary" />
+                Video Introduction
+              </div>
+              <p className="text-xs text-muted-foreground mb-4 mt-3">
+                Record a 60-second intro to help referral partners get to know you.
+              </p>
+
+              {videoIntroUrl ? (
+                <div className="space-y-3">
+                  <div className="rounded-lg overflow-hidden border border-border bg-black">
+                    <video
+                      src={videoIntroUrl}
+                      controls
+                      className="w-full max-h-[360px]"
+                      preload="metadata"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => videoInputRef.current?.click()}
+                      disabled={uploadingVideo}
+                      className="h-8 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      Replace Video
+                    </button>
+                    <button
+                      onClick={handleVideoRemove}
+                      className="h-8 px-4 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-border rounded-lg">
+                  <Video className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-semibold mb-1">No video intro yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Upload an MP4, MOV, or WebM file (max 60s, max 50MB)</p>
+                  <button
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={uploadingVideo || !isAuthenticated}
+                    className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+                  >
+                    {uploadingVideo ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Video className="w-3.5 h-3.5" />
+                        Upload Video Intro
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {videoError && (
+                <p className="text-xs text-red-500 font-semibold mt-2">{videoError}</p>
+              )}
+
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                onChange={handleVideoUpload}
+                className="hidden"
+              />
             </div>
 
             {/* Sign out moved to avatar dropdown in top bar */}

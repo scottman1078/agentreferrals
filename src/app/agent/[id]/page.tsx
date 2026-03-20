@@ -28,7 +28,7 @@ import {
   Video,
 } from 'lucide-react'
 import Link from 'next/link'
-import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection } from './client-sections'
+import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection, ClientBioFromDB, ClientVideoIntroFromDB } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore } from '@/data/communication-score'
 import { getVerifiedCount } from '@/data/verified-referrals'
@@ -369,24 +369,14 @@ export default async function AgentProfilePage({ params }: PageProps) {
         </AuthGate>
 
         {/* ═══ ABOUT / BIO ═══ */}
-        <section>
-          <h2 className="text-lg font-bold mb-3">About</h2>
-          <div className="p-5 rounded-xl border border-border bg-card">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {agent.name} is a licensed real estate professional with{' '}
-              {agent.yearsLicensed} years of experience serving the {agent.area} market.
-              Specializing in{' '}
-              {agent.tags.length > 1
-                ? agent.tags.slice(0, -1).join(', ') + ' and ' + agent.tags[agent.tags.length - 1]
-                : agent.tags[0]}
-              , {agent.name.split(' ')[0]} consistently delivers exceptional results with{' '}
-              {agent.dealsPerYear} transactions per year and an average sale price of{' '}
-              {formatCurrency(agent.avgSalePrice)}. As a member of {agent.brokerage},{' '}
-              {agent.name.split(' ')[0]} brings deep local market knowledge and a commitment to
-              client satisfaction that makes referral partnerships seamless and productive.
-            </p>
-          </div>
-        </section>
+        <ClientBioFromDB
+          agentId={agent.id}
+          agentName={agent.name}
+          fallbackBio={`${agent.name} is a licensed real estate professional with ${agent.yearsLicensed} years of experience serving the ${agent.area} market. Specializing in ${agent.tags.length > 1 ? agent.tags.slice(0, -1).join(', ') + ' and ' + agent.tags[agent.tags.length - 1] : agent.tags[0]}, ${agent.name.split(' ')[0]} consistently delivers exceptional results with ${agent.dealsPerYear} transactions per year and an average sale price of ${formatCurrency(agent.avgSalePrice)}. As a member of ${agent.brokerage}, ${agent.name.split(' ')[0]} brings deep local market knowledge and a commitment to client satisfaction that makes referral partnerships seamless and productive.`}
+        />
+
+        {/* ═══ VIDEO INTRO FROM DB ═══ */}
+        <ClientVideoIntroFromDB agentId={agent.id} agentName={agent.name} />
 
         {/* ═══ ENDORSEMENTS ═══ */}
         <AuthGate agentName={agent.name} section="endorsements">

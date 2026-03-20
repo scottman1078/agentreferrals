@@ -58,6 +58,7 @@ export interface ArProfile {
   setup_completed_at: string | null
   zillow_profile_url: string | null
   total_transactions: number | null
+  video_intro_url: string | null
   data_sources: Record<string, string> | null
   created_at: string
   updated_at: string
@@ -162,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setup_completed_at: null,
             zillow_profile_url: null,
             total_transactions: null,
+            video_intro_url: null,
             data_sources: null,
             created_at: '',
             updated_at: '',

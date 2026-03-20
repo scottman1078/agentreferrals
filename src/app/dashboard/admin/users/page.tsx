@@ -216,31 +216,13 @@ export default function AdminUsersPage() {
                     {user.is_admin ? 'Remove Admin' : 'Make Admin'}
                   </button>
                 )}
-                {confirmDeleteUser?.id === user.id ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleDeleteRealUser(user)}
-                      disabled={deletingUser === user.id}
-                      className="text-[10px] px-2 py-1 rounded bg-destructive text-destructive-foreground font-bold hover:opacity-90 disabled:opacity-50"
-                    >
-                      {deletingUser === user.id ? 'Deleting...' : 'Confirm'}
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteUser(null)}
-                      className="text-[10px] px-2 py-1 rounded border border-border font-bold hover:bg-accent"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
+                <button
                     onClick={() => setConfirmDeleteUser(user)}
                     className="text-muted-foreground hover:text-destructive transition-colors"
                     title="Delete user"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                )}
               </div>
             ))}
           </div>
@@ -430,6 +412,55 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* ═══ Delete User Confirmation Modal ═══ */}
+      {confirmDeleteUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setConfirmDeleteUser(null)}
+        >
+          <div
+            className="w-full max-w-md mx-4 p-6 rounded-xl border border-border bg-card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-6 h-6 text-destructive" />
+              </div>
+              <h3 className="text-lg font-bold">Delete User</h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">
+                  {confirmDeleteUser.full_name || 'this user'}
+                </span>{' '}
+                ({confirmDeleteUser.email})? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={() => setConfirmDeleteUser(null)}
+                className="flex-1 h-10 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteRealUser(confirmDeleteUser)}
+                disabled={deletingUser === confirmDeleteUser.id}
+                className="flex-1 h-10 rounded-lg bg-destructive text-destructive-foreground text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deletingUser === confirmDeleteUser.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
