@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
-import { TAG_COLORS, TAG_EMOJIS } from '@/lib/constants'
+import { useSpecializations } from '@/hooks/use-specializations'
 import { formatCurrency } from '@/lib/utils'
 import { Eye, EyeOff, ArrowRightLeft, SlidersHorizontal, Sparkles, MapPin, Search, X, Loader2, Send, Lock } from 'lucide-react'
 import { AppMark } from '@/components/ui/app-logo'
@@ -46,6 +46,7 @@ export default function AgentMap() {
   const router = useRouter()
   const { resolvedTheme } = useTheme()
   const { filteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
+  const { specs: dbSpecs, colorMap: TAG_COLORS } = useSpecializations()
   const { voidZones } = useAppData()
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())
@@ -932,13 +933,7 @@ export default function AgentMap() {
 
   const tagChips = [
     { key: 'all', label: 'All', color: 'hsl(43 96% 50%)' },
-    { key: 'Homes for Heroes', label: 'Homes for Heroes', color: TAG_COLORS['Homes for Heroes'] },
-    { key: 'Luxury', label: 'Luxury', color: TAG_COLORS['Luxury'] },
-    { key: 'First-Time Buyers', label: 'First-Time Buyers', color: TAG_COLORS['First-Time Buyers'] },
-    { key: 'Investment', label: 'Investment', color: TAG_COLORS['Investment'] },
-    { key: 'Relocation', label: 'Relocation', color: TAG_COLORS['Relocation'] },
-    { key: 'Land & Acreage', label: 'Land & Acreage', color: TAG_COLORS['Land & Acreage'] },
-    { key: 'New Construction', label: 'New Construction', color: TAG_COLORS['New Construction'] },
+    ...dbSpecs.map((s) => ({ key: s.name, label: s.name, color: s.color })),
   ]
 
   const [showFilters, setShowFilters] = useState(false)

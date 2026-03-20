@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { brokerages } from '@/data/brokerages'
-import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
+import { useSpecializations } from '@/hooks/use-specializations'
 import {
   Check,
   CheckCircle2,
@@ -109,6 +109,7 @@ export default function NoraOnboardingChat({
   onComplete,
 }: NoraOnboardingChatProps) {
   const supabase = createClient()
+  const { names: ALL_TAGS, colorMap: TAG_COLORS } = useSpecializations()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTyping, setIsTyping] = useState(false)

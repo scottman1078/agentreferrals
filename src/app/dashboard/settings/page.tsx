@@ -12,6 +12,7 @@ import { LocationAutocomplete } from '@/components/ui/location-autocomplete'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { uploadVideo } from '@/lib/supabase/upload-video'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
+import ExpectationsSelector from '@/components/expectations/expectations-selector'
 
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -1109,6 +1110,12 @@ export default function SettingsPage() {
               />
             </div>
 
+            {/* ── Social Media Links ── */}
+            <SocialLinksEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
+
+            {/* ── Referral Expectations ── */}
+            <ReferralExpectationsEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
+
             {/* Sign out moved to avatar dropdown in top bar */}
           </div>
         )}
@@ -1534,6 +1541,316 @@ export default function SettingsPage() {
         >
           {!saveToast.includes('Failed') && <Check className="w-4 h-4" />}
           {saveToast}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Social Media Links Editor (sub-component) ──
+function SocialLinksEditor({
+  profile,
+  isAuthenticated,
+  refreshProfile,
+  demoGuard,
+}: {
+  profile: import('@/contexts/auth-context').ArProfile | null
+  isAuthenticated: boolean
+  refreshProfile: () => Promise<void>
+  demoGuard: () => boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
+
+  const [instagram, setInstagram] = useState(profile?.social_instagram || '')
+  const [facebook, setFacebook] = useState(profile?.social_facebook || '')
+  const [linkedin, setLinkedin] = useState(profile?.social_linkedin || '')
+  const [tiktok, setTiktok] = useState(profile?.social_tiktok || '')
+  const [youtube, setYoutube] = useState(profile?.social_youtube || '')
+  const [twitter, setTwitter] = useState(profile?.social_twitter || '')
+
+  useEffect(() => {
+    if (profile) {
+      setInstagram(profile.social_instagram || '')
+      setFacebook(profile.social_facebook || '')
+      setLinkedin(profile.social_linkedin || '')
+      setTiktok(profile.social_tiktok || '')
+      setYoutube(profile.social_youtube || '')
+      setTwitter(profile.social_twitter || '')
+    }
+  }, [profile])
+
+  const hasAny = instagram || facebook || linkedin || tiktok || youtube || twitter
+
+  async function handleSave() {
+    if (demoGuard()) return
+    if (!profile) return
+    setSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('ar_profiles')
+      .update({
+        social_instagram: instagram.trim() || null,
+        social_facebook: facebook.trim() || null,
+        social_linkedin: linkedin.trim() || null,
+        social_tiktok: tiktok.trim() || null,
+        social_youtube: youtube.trim() || null,
+        social_twitter: twitter.trim() || null,
+      })
+      .eq('id', profile.id)
+    setSaving(false)
+    if (error) {
+      setToast(`Failed to save: ${error.message}`)
+      setTimeout(() => setToast(''), 6000)
+      return
+    }
+    setEditing(false)
+    await refreshProfile()
+    setToast('Social links updated')
+    setTimeout(() => setToast(''), 3000)
+  }
+
+  const PLATFORMS = [
+    { key: 'instagram', label: 'Instagram', value: instagram, set: setInstagram, placeholder: '@yourhandle or full URL' },
+    { key: 'facebook', label: 'Facebook', value: facebook, set: setFacebook, placeholder: 'facebook.com/yourpage' },
+    { key: 'linkedin', label: 'LinkedIn', value: linkedin, set: setLinkedin, placeholder: 'linkedin.com/in/yourprofile' },
+    { key: 'tiktok', label: 'TikTok', value: tiktok, set: setTiktok, placeholder: '@yourhandle' },
+    { key: 'youtube', label: 'YouTube', value: youtube, set: setYoutube, placeholder: 'youtube.com/@yourchannel' },
+    { key: 'twitter', label: 'X (Twitter)', value: twitter, set: setTwitter, placeholder: '@yourhandle' },
+  ] as const
+
+  return (
+    <div className="p-5 rounded-xl border border-border bg-card">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+        <div className="font-bold text-sm">Social Media</div>
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
+        )}
+      </div>
+
+      {toast && (
+        <p className={`text-xs font-semibold mb-3 ${toast.includes('Failed') ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {toast}
+        </p>
+      )}
+
+      {editing ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {PLATFORMS.map((p) => (
+              <div key={p.key}>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{p.label}</label>
+                <input
+                  value={p.value}
+                  onChange={(e) => p.set(e.target.value)}
+                  placeholder={p.placeholder}
+                  className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              onClick={() => {
+                setInstagram(profile?.social_instagram || '')
+                setFacebook(profile?.social_facebook || '')
+                setLinkedin(profile?.social_linkedin || '')
+                setTiktok(profile?.social_tiktok || '')
+                setYoutube(profile?.social_youtube || '')
+                setTwitter(profile?.social_twitter || '')
+                setEditing(false)
+              }}
+              className="h-8 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || !isAuthenticated}
+              className="h-8 px-4 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      ) : hasAny ? (
+        <div className="flex flex-wrap gap-2">
+          {PLATFORMS.filter((p) => p.value).map((p) => (
+            <span
+              key={p.key}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+            >
+              {p.label}: {p.value}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">No social links added yet. Click Edit to add your social media profiles.</p>
+      )}
+    </div>
+  )
+}
+
+// ── Referral Expectations Editor (sub-component) ──
+function ReferralExpectationsEditor({
+  profile,
+  isAuthenticated,
+  refreshProfile,
+  demoGuard,
+}: {
+  profile: import('@/contexts/auth-context').ArProfile | null
+  isAuthenticated: boolean
+  refreshProfile: () => Promise<void>
+  demoGuard: () => boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
+  const [updateMethod, setUpdateMethod] = useState(profile?.referral_update_method || 'email')
+  const [responseTime, setResponseTime] = useState(profile?.referral_response_time || '24hrs')
+
+  useEffect(() => {
+    if (profile) {
+      setUpdateMethod(profile.referral_update_method || 'email')
+      setResponseTime(profile.referral_response_time || '24hrs')
+    }
+  }, [profile])
+
+  async function handleSavePrefs() {
+    if (demoGuard()) return
+    if (!profile) return
+    setSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('ar_profiles')
+      .update({
+        referral_update_method: updateMethod,
+        referral_response_time: responseTime,
+      })
+      .eq('id', profile.id)
+    setSaving(false)
+    if (error) {
+      setToast(`Failed to save: ${error.message}`)
+      setTimeout(() => setToast(''), 6000)
+      return
+    }
+    setEditing(false)
+    await refreshProfile()
+    setToast('Referral preferences updated')
+    setTimeout(() => setToast(''), 3000)
+  }
+
+  const METHOD_LABELS: Record<string, string> = { email: 'Email', text: 'Text Message', phone: 'Phone Call', in_app: 'In-App' }
+  const TIME_LABELS: Record<string, string> = { same_day: 'Same Day', '24hrs': 'Within 24 Hours', '48hrs': 'Within 48 Hours' }
+
+  return (
+    <div className="p-5 rounded-xl border border-border bg-card">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+        <div className="font-bold text-sm">Referral Expectations</div>
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
+        )}
+      </div>
+
+      {toast && (
+        <p className={`text-xs font-semibold mb-3 ${toast.includes('Failed') ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {toast}
+        </p>
+      )}
+
+      {editing ? (
+        <div className="space-y-4">
+          {/* Preferences */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Preferred Update Method</label>
+              <select
+                value={updateMethod}
+                onChange={(e) => setUpdateMethod(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+              >
+                <option value="email">Email</option>
+                <option value="text">Text Message</option>
+                <option value="phone">Phone Call</option>
+                <option value="in_app">In-App Notification</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Response Time Commitment</label>
+              <select
+                value={responseTime}
+                onChange={(e) => setResponseTime(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+              >
+                <option value="same_day">Same Day</option>
+                <option value="24hrs">Within 24 Hours</option>
+                <option value="48hrs">Within 48 Hours</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Expectations selectors */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-xs font-bold text-muted-foreground mb-2">When I Refer Out (What I Expect)</h3>
+              {profile && (
+                <ExpectationsSelector agentId={profile.id} side="send" autoSave />
+              )}
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-muted-foreground mb-2">When I Receive a Referral (What I Commit To)</h3>
+              {profile && (
+                <ExpectationsSelector agentId={profile.id} side="receive" autoSave />
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              onClick={() => {
+                setUpdateMethod(profile?.referral_update_method || 'email')
+                setResponseTime(profile?.referral_response_time || '24hrs')
+                setEditing(false)
+              }}
+              className="h-8 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
+            >
+              Done
+            </button>
+            <button
+              onClick={handleSavePrefs}
+              disabled={saving || !isAuthenticated}
+              className="h-8 px-4 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              Updates via: {METHOD_LABELS[updateMethod] || updateMethod}
+            </span>
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              Response: {TIME_LABELS[responseTime] || responseTime}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">Click Edit to configure your referral expectations for buyer and seller transactions.</p>
         </div>
       )}
     </div>

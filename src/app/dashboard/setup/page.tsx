@@ -15,6 +15,7 @@ import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYE
 import { uploadVideo } from '@/lib/supabase/upload-video'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import ExpectationsSelector from '@/components/expectations/expectations-selector'
 import { ReferralCodeEditor } from '@/components/ui/referral-code-editor'
 import type { OnboardingData, PastReferralEntry } from '@/types/onboarding'
 
@@ -109,6 +110,20 @@ export default function SetupPage() {
   const [uploadingVideo, setUploadingVideo] = useState(false)
   const [videoError, setVideoError] = useState('')
   const videoInputRef = useRef<HTMLInputElement>(null)
+
+  // Step 1: Social media links
+  const [socialInstagram, setSocialInstagram] = useState('')
+  const [socialFacebook, setSocialFacebook] = useState('')
+  const [socialLinkedin, setSocialLinkedin] = useState('')
+  const [socialTiktok, setSocialTiktok] = useState('')
+  const [socialYoutube, setSocialYoutube] = useState('')
+  const [socialTwitter, setSocialTwitter] = useState('')
+
+  // Step 1: Referral expectations
+  const [expectationsSend, setExpectationsSend] = useState<string[]>([])
+  const [expectationsReceive, setExpectationsReceive] = useState<string[]>([])
+  const [referralUpdateMethod, setReferralUpdateMethod] = useState('email')
+  const [referralResponseTime, setReferralResponseTime] = useState('24hrs')
 
   // Step 1: Zillow integration
   const [zillowSearchResult, setZillowSearchResult] = useState<{ platform: string; url: string; found: boolean; totalTransactions: number | null; rating: number | null } | null>(null)
@@ -1091,6 +1106,18 @@ export default function SetupPage() {
         video_intro_url: videoIntroUrl,
       }
 
+      // Include referral preferences
+      profileData.referral_update_method = referralUpdateMethod
+      profileData.referral_response_time = referralResponseTime
+
+      // Include social media links
+      if (socialInstagram.trim()) profileData.social_instagram = socialInstagram.trim()
+      if (socialFacebook.trim()) profileData.social_facebook = socialFacebook.trim()
+      if (socialLinkedin.trim()) profileData.social_linkedin = socialLinkedin.trim()
+      if (socialTiktok.trim()) profileData.social_tiktok = socialTiktok.trim()
+      if (socialYoutube.trim()) profileData.social_youtube = socialYoutube.trim()
+      if (socialTwitter.trim()) profileData.social_twitter = socialTwitter.trim()
+
       // Include Zillow data if available
       if (zillowUrl) {
         profileData.zillow_profile_url = zillowUrl
@@ -1115,6 +1142,18 @@ export default function SetupPage() {
         throw new Error(data.error || 'Failed to save profile')
       }
 
+      // Save referral expectations (optional — may be empty)
+      if (expectationsSend.length > 0 || expectationsReceive.length > 0) {
+        await fetch('/api/expectations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentId: profile.id,
+            selections: { send: expectationsSend, receive: expectationsReceive },
+          }),
+        })
+      }
+
       saveStepProgress('profile')
       await refreshProfile()
       setCurrentStep(2)
@@ -1123,7 +1162,7 @@ export default function SetupPage() {
     } finally {
       setProfileSaving(false)
     }
-  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, videoIntroUrl, zillowUrl, proposedTotalTransactions, saveStepProgress, refreshProfile])
+  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, videoIntroUrl, zillowUrl, proposedTotalTransactions, socialInstagram, socialFacebook, socialLinkedin, socialTiktok, socialYoutube, socialTwitter, expectationsSend, expectationsReceive, referralUpdateMethod, referralResponseTime, saveStepProgress, refreshProfile])
 
   const handleComplete = useCallback(async () => {
     localStorage.setItem('ar_setup_wizard_completed', 'true')
@@ -1531,6 +1570,140 @@ export default function SetupPage() {
                       onChange={handleVideoUpload}
                       className="hidden"
                     />
+                  </div>
+                </div>
+
+                {/* Social Media Links */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden mb-6">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Link2 className="w-4 h-4 text-primary" />
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Social Media</label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Add your social profiles so referral partners can connect with you. These are optional and will show on your public profile.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Instagram</label>
+                        <input
+                          value={socialInstagram}
+                          onChange={(e) => setSocialInstagram(e.target.value)}
+                          placeholder="@yourhandle or full URL"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Facebook</label>
+                        <input
+                          value={socialFacebook}
+                          onChange={(e) => setSocialFacebook(e.target.value)}
+                          placeholder="facebook.com/yourpage"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">LinkedIn</label>
+                        <input
+                          value={socialLinkedin}
+                          onChange={(e) => setSocialLinkedin(e.target.value)}
+                          placeholder="linkedin.com/in/yourprofile"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">TikTok</label>
+                        <input
+                          value={socialTiktok}
+                          onChange={(e) => setSocialTiktok(e.target.value)}
+                          placeholder="@yourhandle"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">YouTube</label>
+                        <input
+                          value={socialYoutube}
+                          onChange={(e) => setSocialYoutube(e.target.value)}
+                          placeholder="youtube.com/@yourchannel"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">X (Twitter)</label>
+                        <input
+                          value={socialTwitter}
+                          onChange={(e) => setSocialTwitter(e.target.value)}
+                          placeholder="@yourhandle"
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Referral Expectations (optional) */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden mb-6">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ClipboardPaste className="w-4 h-4 text-primary" />
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Referral Expectations</label>
+                      <span className="text-[10px] text-muted-foreground/60 font-medium ml-1">(Optional)</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Set expectations for referral transactions. Other agents will see what you commit to, and you&apos;ll get automatic updates based on your preferences.
+                    </p>
+
+                    {/* Preferences */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 p-3 rounded-lg bg-muted/50 border border-border">
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Preferred Update Method</label>
+                        <select
+                          value={referralUpdateMethod}
+                          onChange={(e) => setReferralUpdateMethod(e.target.value)}
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        >
+                          <option value="email">Email</option>
+                          <option value="text">Text Message</option>
+                          <option value="phone">Phone Call</option>
+                          <option value="in_app">In-App Notification</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Response Time Commitment</label>
+                        <select
+                          value={referralResponseTime}
+                          onChange={(e) => setReferralResponseTime(e.target.value)}
+                          className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm"
+                        >
+                          <option value="same_day">Same Day</option>
+                          <option value="24hrs">Within 24 Hours</option>
+                          <option value="48hrs">Within 48 Hours</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Two-column: Send / Receive */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-xs font-bold text-muted-foreground mb-2">When I Refer Out (What I Expect)</h3>
+                        <ExpectationsSelector
+                          agentId={profile?.id ?? ''}
+                          side="send"
+                          onSelectionsChange={setExpectationsSend}
+                          compact
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-muted-foreground mb-2">When I Receive a Referral (What I Commit To)</h3>
+                        <ExpectationsSelector
+                          agentId={profile?.id ?? ''}
+                          side="receive"
+                          onSelectionsChange={setExpectationsReceive}
+                          compact
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

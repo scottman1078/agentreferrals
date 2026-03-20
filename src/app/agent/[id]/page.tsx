@@ -28,7 +28,7 @@ import {
   Video,
 } from 'lucide-react'
 import Link from 'next/link'
-import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection, ClientBioFromDB, ClientVideoIntroFromDB } from './client-sections'
+import { ClientReviews, ClientMap, ClientNotes, ClientEndorsements, ClientVideoSection, ClientBioFromDB, ClientVideoIntroFromDB, ClientSocialLinks, ClientExpectationsDisplay } from './client-sections'
 import { getMentorProfile } from '@/data/mentoring'
 import { getCommScore } from '@/data/communication-score'
 import { getVerifiedCount } from '@/data/verified-referrals'
@@ -377,6 +377,12 @@ export default async function AgentProfilePage({ params }: PageProps) {
 
         {/* ═══ VIDEO INTRO FROM DB ═══ */}
         <ClientVideoIntroFromDB agentId={agent.id} agentName={agent.name} />
+
+        {/* ═══ SOCIAL MEDIA LINKS ═══ */}
+        <ClientSocialLinks agentId={agent.id} />
+
+        {/* ═══ REFERRAL EXPECTATIONS ═══ */}
+        <ClientExpectationsDisplay agentId={agent.id} />
 
         {/* ═══ ENDORSEMENTS ═══ */}
         <AuthGate agentName={agent.name} section="endorsements">

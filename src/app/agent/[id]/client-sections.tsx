@@ -30,6 +30,14 @@ const AgentVideoIntroFromDB = dynamic(
   () => import('./agent-bio-video').then(m => ({ default: m.AgentVideoIntroFromDB })),
   { ssr: false }
 )
+const AgentSocialLinks = dynamic(
+  () => import('./agent-social-links').then(m => ({ default: m.AgentSocialLinks })),
+  { ssr: false }
+)
+const AgentExpectationsDisplay = dynamic(
+  () => import('./agent-expectations-display').then(m => ({ default: m.AgentExpectationsDisplay })),
+  { ssr: false }
+)
 
 export function ClientReviews({ agentId, agentName }: { agentId: string; agentName: string }) {
   return <AgentProfileReviews agentId={agentId} agentName={agentName} />
@@ -57,4 +65,12 @@ export function ClientBioFromDB({ agentId, agentName, fallbackBio }: { agentId: 
 
 export function ClientVideoIntroFromDB({ agentId, agentName }: { agentId: string; agentName: string }) {
   return <AgentVideoIntroFromDB agentId={agentId} agentName={agentName} />
+}
+
+export function ClientSocialLinks({ agentId }: { agentId: string }) {
+  return <AgentSocialLinks agentId={agentId} />
+}
+
+export function ClientExpectationsDisplay({ agentId }: { agentId: string }) {
+  return <AgentExpectationsDisplay agentId={agentId} />
 }

@@ -61,6 +61,14 @@ export interface ArProfile {
   total_transactions: number | null
   video_intro_url: string | null
   data_sources: Record<string, string> | null
+  referral_update_method: string | null
+  referral_response_time: string | null
+  social_instagram: string | null
+  social_facebook: string | null
+  social_linkedin: string | null
+  social_tiktok: string | null
+  social_youtube: string | null
+  social_twitter: string | null
   created_at: string
   updated_at: string
 
@@ -167,6 +175,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             total_transactions: null,
             video_intro_url: null,
             data_sources: null,
+            referral_update_method: null,
+            referral_response_time: null,
+            social_instagram: null,
+            social_facebook: null,
+            social_linkedin: null,
+            social_tiktok: null,
+            social_youtube: null,
+            social_twitter: null,
             created_at: '',
             updated_at: '',
             brokerage: null,

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ALL_TAGS, TAG_COLORS } from '@/lib/constants'
+import { useSpecializations } from '@/hooks/use-specializations'
 import { X } from 'lucide-react'
 
 export default function InviteModal({ onClose }: { onClose: () => void }) {
+  const { names: ALL_TAGS, colorMap: TAG_COLORS } = useSpecializations()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const toggleTag = (tag: string) => setSelectedTags((p) => p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag])
 
