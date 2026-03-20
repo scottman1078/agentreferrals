@@ -37,12 +37,11 @@ export default function AgentHoverCard({ agent, position }: AgentHoverCardProps)
     return a ? maskName(a.name) : id
   }) ?? []
 
-  // Position card well above the avatar so users can click through
-  const cardHeight = 200 // approximate card height
+  // Position card just above the avatar with enough clearance to click
   const style: React.CSSProperties = {
     position: 'fixed',
     left: Math.min(position.x - 120, window.innerWidth - 260),
-    top: Math.max(position.y - cardHeight - 30, 10),
+    top: Math.max(position.y - 180, 10),
     zIndex: 500,
     pointerEvents: 'none',
   }
