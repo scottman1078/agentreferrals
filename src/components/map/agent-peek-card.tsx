@@ -153,7 +153,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             </div>
             <div className="flex-1 min-w-0">
               <span className="font-bold text-[15px] truncate block">{displayName}</span>
-              <p className="text-xs text-muted-foreground truncate">{agent.brokerage} &middot; {agent.area?.split(',')[0]}</p>
+              <p className="text-xs text-muted-foreground truncate" title={`${agent.brokerage} — Service area: ${agent.area}`}>{agent.brokerage} &middot; {agent.area?.split(',')[0]}</p>
             </div>
             {rcsValue > 0 && (
               <div className="shrink-0 flex flex-col items-center" title="Referral Communication Score">
@@ -165,7 +165,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
             )}
             <div className="flex items-center gap-1 shrink-0">
               <div className="relative">
-                <button onClick={() => setShowMenu(!showMenu)} className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                <button onClick={() => setShowMenu(!showMenu)} title="More options" className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
                 {showMenu && (
@@ -183,7 +183,7 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                   </div>
                 )}
               </div>
-              <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
+              <button onClick={onClose} title="Close" className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -192,26 +192,26 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           {/* Row 2: Key stats — single line, no wrapping */}
           <div className="flex items-center gap-3 mt-3 text-xs whitespace-nowrap overflow-x-auto">
             {reviewStats && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 cursor-default" title={`Agent rating: ${reviewStats.avgRating} out of 5 from ${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''}`}>
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span className="font-bold">{reviewStats.avgRating}</span>
                 <span className="text-muted-foreground">({reviewStats.count})</span>
               </span>
             )}
             {agent.responseTime && (
-              <span className="flex items-center gap-1 text-muted-foreground">
+              <span className="flex items-center gap-1 text-muted-foreground cursor-default" title="Average response time to messages and referral inquiries">
                 <Clock className="w-3 h-3" /> {agent.responseTime}
               </span>
             )}
-            <span className="text-muted-foreground">{agent.dealsPerYear} deals/yr</span>
-            <span className="text-muted-foreground">{formatCurrency(agent.avgSalePrice)}</span>
-            {agent.yearsLicensed > 0 && <span className="text-muted-foreground">{agent.yearsLicensed} yrs exp</span>}
+            <span className="text-muted-foreground cursor-default" title="Number of real estate deals closed per year">{agent.dealsPerYear} deals/yr</span>
+            <span className="text-muted-foreground cursor-default" title="Average home sale price in their market">{formatCurrency(agent.avgSalePrice)}</span>
+            {agent.yearsLicensed > 0 && <span className="text-muted-foreground cursor-default" title="Years as a licensed real estate agent">{agent.yearsLicensed} yrs exp</span>}
           </div>
 
           {/* Row 3: Tags — single line */}
           <div className="flex gap-1.5 mt-2.5 overflow-x-auto">
             {agent.tags.slice(0, 5).map((tag) => (
-              <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white whitespace-nowrap shrink-0" style={{ background: TAG_COLORS[tag] || '#6b7280' }}>
+              <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white whitespace-nowrap shrink-0 cursor-default" title={`Specializes in: ${tag}`} style={{ background: TAG_COLORS[tag] || '#6b7280' }}>
                 {tag}
               </span>
             ))}
@@ -220,35 +220,35 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
           {/* Row 4: Partner info — single line */}
           {isDirectPartner && (
             <div className="flex items-center gap-4 mt-2.5 text-xs text-muted-foreground whitespace-nowrap">
-              <span>{lastContacted}</span>
+              <span title="Last time you communicated with this partner">{lastContacted}</span>
               <span>&middot;</span>
-              <span>{activeReferrals}</span>
+              <span title="Current referrals in progress between you">{activeReferrals}</span>
               <span>&middot;</span>
-              <span>{partnerDuration}</span>
+              <span title="How long you've been referral partners">{partnerDuration}</span>
             </div>
           )}
 
           {isDegreeAgent && mutualCount > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">{mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}</p>
+            <p className="mt-2 text-xs text-muted-foreground" title="Agents in your network who also partner with this agent">{mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}</p>
           )}
 
           {/* Row 5: Buttons */}
           <div className="flex items-center gap-2 mt-3">
             {isDegreeAgent ? (
-              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border-2 border-primary text-primary text-sm font-semibold hover:bg-primary/5">
+              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} title="Request an introduction through a mutual connection" className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border-2 border-primary text-primary text-sm font-semibold hover:bg-primary/5">
                 <UserPlus className="w-3.5 h-3.5" /> Request Intro
               </button>
             ) : (
-              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
+              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} title="Send a referral to this agent" className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
                 <Send className="w-3.5 h-3.5" /> Send Referral
               </button>
             )}
             {isDirectPartner && (
-              <button onClick={() => { if (demoGuard()) return; onMessage?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-sm font-semibold hover:bg-accent">
+              <button onClick={() => { if (demoGuard()) return; onMessage?.(agent) }} title="Send a direct message" className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-sm font-semibold hover:bg-accent">
                 <MessageSquare className="w-3.5 h-3.5" /> Message
               </button>
             )}
-            <button onClick={() => router.push(`/agent/${agent.id}`)} className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent shrink-0">
+            <button onClick={() => router.push(`/agent/${agent.id}`)} title="View full agent profile" className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent shrink-0">
               <User className="w-3.5 h-3.5" /> Profile
             </button>
           </div>
