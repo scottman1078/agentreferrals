@@ -13,7 +13,10 @@ export function getStripeServer(): Stripe | null {
       console.warn('[Stripe Server] No secret key found — billing features are disabled.')
       return null
     }
-    stripeInstance = new Stripe(key)
+    stripeInstance = new Stripe(key, {
+      maxNetworkRetries: 1,
+      timeout: 10000,
+    })
   }
   return stripeInstance
 }
