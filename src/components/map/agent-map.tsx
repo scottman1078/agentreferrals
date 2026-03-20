@@ -307,7 +307,9 @@ export default function AgentMap() {
   const myMarkerRef = useRef<L.Marker | null>(null)
   useEffect(() => {
     if (!mapInstance.current || !L || showMyZips) return
-    if (!profile?.primary_area) return
+    // Use primary_area or fall back to first territory zip
+    const geocodeQuery = profile?.primary_area || (profile?.territory_zips as string[] | undefined)?.[0]
+    if (!geocodeQuery) return
     const map = mapInstance.current
 
     // Remove old marker
@@ -316,8 +318,8 @@ export default function AgentMap() {
       myMarkerRef.current = null
     }
 
-    // Geocode primary area to get coordinates
-    fetch(`/api/geocode?q=${encodeURIComponent(profile.primary_area)}`)
+    // Geocode to get coordinates
+    fetch(`/api/geocode?q=${encodeURIComponent(geocodeQuery)}`)
       .then((r) => r.json())
       .then((geo) => {
         if (!geo.lat || !geo.lng || !L || !mapInstance.current) return
@@ -353,7 +355,8 @@ export default function AgentMap() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.primary_area, profile?.avatar_url, leafletLoaded, showMyZips])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.primary_area, profile?.territory_zips, profile?.avatar_url, leafletLoaded, showMyZips])
 
   // Show territory zip polygons only when zoomed in (same threshold as other agents)
   const TERRITORY_ZOOM_THRESHOLD = POLYGON_ZOOM_THRESHOLD
