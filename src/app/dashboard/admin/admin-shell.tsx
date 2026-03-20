@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Funnel,
+  Tag,
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['scott@agentdashboards.com']
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/dashboard/admin/invites', icon: Mail, label: 'Invites' },
   { href: '/dashboard/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/dashboard/admin/setup-analytics', icon: Funnel, label: 'Setup Analytics' },
+  { href: '/dashboard/admin/specializations', icon: Tag, label: 'Specializations' },
   { href: '/dashboard/admin/nora', icon: Sparkles, label: 'NORA Config' },
   { href: '/dashboard/admin/settings', icon: Settings, label: 'Settings' },
 ]

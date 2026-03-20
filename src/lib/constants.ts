@@ -4,6 +4,9 @@ export const APP_DOMAIN = 'agentreferrals.ai'
 export const APP_ACCENT_WORD = 'Referrals'
 export const APP_TAGLINE = 'AI-powered referral network for real estate agents'
 
+// NOTE: The database table `ar_specializations` is the source of truth for specializations.
+// These hardcoded values serve as fallbacks. The app should read from /api/specializations
+// for the latest data. See: /api/admin/specializations for management.
 export const TAG_COLORS: Record<string, string> = {
   'Homes for Heroes': '#3b82f6',
   'Luxury': '#f0a500',
