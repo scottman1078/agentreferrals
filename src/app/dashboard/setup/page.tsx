@@ -9,9 +9,11 @@ import {
   MapPin, Users, Check, ChevronRight, ChevronLeft, Plus, X, Mail, Sparkles,
   Loader2, Search, Gift, Copy, Link2, ArrowUpRight, TrendingUp, MessageSquare,
   Clock, BarChart3, CheckCircle2, LogOut, Smartphone, Download, QrCode,
-  User, Pencil, Camera, Briefcase, Award, Upload, FileText, ClipboardPaste, ContactRound,
+  User, Pencil, Camera, Briefcase, Award, Upload, FileText, ClipboardPaste, ContactRound, Video, Trash2,
 } from 'lucide-react'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
+import { uploadVideo } from '@/lib/supabase/upload-video'
+import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { ReferralCodeEditor } from '@/components/ui/referral-code-editor'
 import type { OnboardingData, PastReferralEntry } from '@/types/onboarding'
@@ -101,6 +103,12 @@ export default function SetupPage() {
   const [editingVolume, setEditingVolume] = useState(false)
   const [profileBuilderReady, setProfileBuilderReady] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
+
+  // Step 1: Video intro
+  const [videoIntroUrl, setVideoIntroUrl] = useState<string | null>(null)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
+  const [videoError, setVideoError] = useState('')
+  const videoInputRef = useRef<HTMLInputElement>(null)
 
   // Step 1: Zillow integration
   const [zillowSearchResult, setZillowSearchResult] = useState<{ platform: string; url: string; found: boolean; totalTransactions: number | null; rating: number | null } | null>(null)
@@ -968,11 +976,12 @@ export default function SetupPage() {
     fetchProposedProfile()
   }, [currentStep, profile, profileBuilderReady])
 
-  // Load existing Zillow data from profile
+  // Load existing Zillow data and video intro from profile
   useEffect(() => {
     if (currentStep !== 1 || !profile) return
     if (profile.zillow_profile_url) setZillowUrl(profile.zillow_profile_url)
     if (profile.total_transactions) setProposedTotalTransactions(profile.total_transactions)
+    if (profile.video_intro_url) setVideoIntroUrl(profile.video_intro_url)
   }, [currentStep, profile])
 
   // Fetch Zillow profile data from a URL
@@ -1001,6 +1010,71 @@ export default function SetupPage() {
     }
   }, [])
 
+  // Video upload handler
+  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+    setVideoError('')
+
+    // Validate file size (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setVideoError('Video must be under 50MB')
+      return
+    }
+
+    // Validate duration (60 seconds) by loading video metadata
+    const url = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+
+    const duration = await new Promise<number>((resolve) => {
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url)
+        resolve(video.duration)
+      }
+      video.onerror = () => {
+        URL.revokeObjectURL(url)
+        resolve(0)
+      }
+      video.src = url
+    })
+
+    if (duration === 0) {
+      setVideoError('Could not read video file. Please try a different format.')
+      return
+    }
+    if (duration > 60) {
+      setVideoError(`Video is ${Math.ceil(duration)}s — max 60 seconds allowed`)
+      return
+    }
+
+    setUploadingVideo(true)
+    const { url: videoUrl, error } = await uploadVideo(profile.id, file, 'intro')
+
+    if (error || !videoUrl) {
+      // Fallback: save a data URL if bucket doesn't exist yet
+      console.error('[Video] Upload error:', error)
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const dataUrl = reader.result as string
+        setVideoIntroUrl(dataUrl)
+        setUploadingVideo(false)
+      }
+      reader.readAsDataURL(file)
+      return
+    }
+
+    setVideoIntroUrl(videoUrl)
+    setUploadingVideo(false)
+  }
+
+  // Video remove handler
+  function handleVideoRemove() {
+    setVideoIntroUrl(null)
+    setVideoError('')
+    if (videoInputRef.current) videoInputRef.current.value = ''
+  }
+
   // Save profile builder data and advance to Service Area
   const handleProfileAccept = useCallback(async () => {
     if (!profile?.id) return
@@ -1014,6 +1088,7 @@ export default function SetupPage() {
         tags: proposedSpecializations,
         deals_per_year: proposedDealsPerYear,
         avatar_url: profilePhotoUrl,
+        video_intro_url: videoIntroUrl,
       }
 
       // Include Zillow data if available
@@ -1048,7 +1123,7 @@ export default function SetupPage() {
     } finally {
       setProfileSaving(false)
     }
-  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, zillowUrl, proposedTotalTransactions, saveStepProgress, refreshProfile])
+  }, [profile?.id, proposedBio, proposedSpecializations, proposedDealsPerYear, profilePhotoUrl, videoIntroUrl, zillowUrl, proposedTotalTransactions, saveStepProgress, refreshProfile])
 
   const handleComplete = useCallback(async () => {
     localStorage.setItem('ar_setup_wizard_completed', 'true')
@@ -1378,6 +1453,84 @@ export default function SetupPage() {
                         </p>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Video Introduction */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden mb-6">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Video className="w-4 h-4 text-primary" />
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Video Introduction</label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Record a 60-second intro video to help referral partners get to know you. Upload an MP4, MOV, or WebM file (max 60s, max 50MB).
+                    </p>
+
+                    {videoIntroUrl ? (
+                      <div className="space-y-3">
+                        <div className="rounded-lg overflow-hidden border border-border bg-black">
+                          <video
+                            src={videoIntroUrl}
+                            controls
+                            className="w-full max-h-[360px]"
+                            preload="metadata"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => videoInputRef.current?.click()}
+                            disabled={uploadingVideo}
+                            className="h-8 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            Replace Video
+                          </button>
+                          <button
+                            onClick={handleVideoRemove}
+                            className="h-8 px-4 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-border rounded-lg">
+                        <Video className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                        <p className="text-sm font-semibold mb-1">No video intro yet</p>
+                        <p className="text-xs text-muted-foreground mb-4">A short intro helps you stand out to referral partners</p>
+                        <button
+                          onClick={() => videoInputRef.current?.click()}
+                          disabled={uploadingVideo}
+                          className="h-9 px-5 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2"
+                        >
+                          {uploadingVideo ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Video className="w-3.5 h-3.5" />
+                              Upload Video Intro
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {videoError && (
+                      <p className="text-xs text-red-500 font-semibold mt-2">{videoError}</p>
+                    )}
+
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                    />
                   </div>
                 </div>
 
