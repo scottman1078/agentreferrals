@@ -15,7 +15,8 @@ export function getStripeServer(): Stripe | null {
     }
     stripeInstance = new Stripe(key, {
       maxNetworkRetries: 1,
-      timeout: 10000,
+      timeout: 15000,
+      httpClient: Stripe.createFetchHttpClient(),
     })
   }
   return stripeInstance
