@@ -136,13 +136,13 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const activeReferrals = isDirectPartner ? getActiveReferralsLabel(agent.id, agent.closedReferrals) : null
 
   return (
-    <div className="fixed bottom-[80px] right-4 w-[340px] z-[450]">
+    <div className="fixed bottom-[80px] right-4 w-[420px] z-[450]">
       <div className="bg-card backdrop-blur-xl rounded-xl shadow-2xl border border-border overflow-hidden">
-        {/* Header: avatar, name, RCS, close */}
-        <div className="p-3 pb-2">
-          <div className="flex items-start gap-2.5">
+        <div className="p-4">
+          {/* Row 1: Avatar + Name + RCS + Actions */}
+          <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 overflow-hidden"
+              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden"
               style={{ background: agent.color }}
             >
               {!scopeLocked && agent.photoUrl ? (
@@ -152,108 +152,106 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <span className="font-bold text-sm truncate block leading-tight">{displayName}</span>
-              <p className="text-[11px] text-muted-foreground truncate">{agent.brokerage}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{agent.area}</p>
+              <span className="font-bold text-[15px] truncate block">{displayName}</span>
+              <p className="text-xs text-muted-foreground truncate">{agent.brokerage} &middot; {agent.area?.split(',')[0]}</p>
             </div>
             {rcsValue > 0 && (
               <div className="shrink-0 flex flex-col items-center" title="Referral Communication Score">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center border-2"
-                  style={{ borderColor: rcsRingColor, color: rcsRingColor }}
-                >
-                  <span className="text-sm font-extrabold leading-none">{rcsValue}</span>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center border-2" style={{ borderColor: rcsRingColor, color: rcsRingColor }}>
+                  <span className="text-[15px] font-extrabold">{rcsValue}</span>
                 </div>
-                <span className="text-[7px] font-bold uppercase mt-0.5" style={{ color: rcsRingColor }}>RCS</span>
+                <span className="text-[8px] font-bold uppercase mt-0.5" style={{ color: rcsRingColor }}>RCS</span>
               </div>
             )}
             <div className="flex items-center gap-1 shrink-0">
               <div className="relative">
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                >
-                  <MoreHorizontal className="w-3 h-3" />
+                <button onClick={() => setShowMenu(!showMenu)} className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                  <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
                 {showMenu && (
-                  <div className="absolute top-7 right-0 w-36 rounded-lg border border-border bg-card shadow-xl py-1 z-10">
-                    <button onClick={() => { setShowMenu(false); setShowReportModal(true) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-accent">
-                      <Flag className="w-3 h-3" /> Report
+                  <div className="absolute top-8 right-0 w-40 rounded-lg border border-border bg-card shadow-xl py-1 z-10">
+                    <button onClick={() => { setShowMenu(false); setShowReportModal(true) }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent">
+                      <Flag className="w-3.5 h-3.5" /> Report
                     </button>
                     {!blocked ? (
-                      <button onClick={() => { setShowMenu(false); setShowBlockConfirm(true) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-accent">
-                        <Ban className="w-3 h-3" /> Block
+                      <button onClick={() => { setShowMenu(false); setShowBlockConfirm(true) }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent">
+                        <Ban className="w-3.5 h-3.5" /> Block
                       </button>
                     ) : (
-                      <div className="px-3 py-1.5 text-[11px] text-muted-foreground">Blocked</div>
+                      <div className="px-3 py-2 text-xs text-muted-foreground">Blocked</div>
                     )}
                   </div>
                 )}
               </div>
-              <button onClick={onClose} className="w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                <X className="w-3 h-3" />
+              <button onClick={onClose} className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Stars + Stats in one compact row */}
-          <div className="flex items-center gap-2 mt-2 text-[10px]">
+          {/* Row 2: Key stats — single line, no wrapping */}
+          <div className="flex items-center gap-3 mt-3 text-xs whitespace-nowrap overflow-x-auto">
             {reviewStats && (
-              <div className="flex items-center gap-0.5">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-[11px]">{reviewStats.avgRating}</span>
+              <span className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span className="font-bold">{reviewStats.avgRating}</span>
                 <span className="text-muted-foreground">({reviewStats.count})</span>
-              </div>
+              </span>
             )}
-            {agent.responseTime && <span className="text-muted-foreground">{agent.responseTime}</span>}
+            {agent.responseTime && (
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="w-3 h-3" /> {agent.responseTime}
+              </span>
+            )}
             <span className="text-muted-foreground">{agent.dealsPerYear} deals/yr</span>
             <span className="text-muted-foreground">{formatCurrency(agent.avgSalePrice)}</span>
+            {agent.yearsLicensed > 0 && <span className="text-muted-foreground">{agent.yearsLicensed} yrs exp</span>}
           </div>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {agent.tags.slice(0, 4).map((tag) => (
-              <span key={tag} className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-white" style={{ background: TAG_COLORS[tag] || '#6b7280' }}>
+          {/* Row 3: Tags — single line */}
+          <div className="flex gap-1.5 mt-2.5 overflow-x-auto">
+            {agent.tags.slice(0, 5).map((tag) => (
+              <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white whitespace-nowrap shrink-0" style={{ background: TAG_COLORS[tag] || '#6b7280' }}>
                 {tag}
               </span>
             ))}
           </div>
 
-          {/* Partner stats (compact) */}
+          {/* Row 4: Partner info — single line */}
           {isDirectPartner && (
-            <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-4 mt-2.5 text-xs text-muted-foreground whitespace-nowrap">
               <span>{lastContacted}</span>
+              <span>&middot;</span>
               <span>{activeReferrals}</span>
+              <span>&middot;</span>
               <span>{partnerDuration}</span>
             </div>
           )}
 
           {isDegreeAgent && mutualCount > 0 && (
-            <div className="mt-2 text-[10px] text-muted-foreground">
-              {mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}
-            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{mutualCount} mutual partner{mutualCount !== 1 ? 's' : ''}</p>
           )}
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-1.5 p-3 pt-0">
-          {isDegreeAgent ? (
-            <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg border border-primary text-primary text-xs font-semibold hover:bg-primary/5">
-              <UserPlus className="w-3 h-3" /> Request Intro
+          {/* Row 5: Buttons */}
+          <div className="flex items-center gap-2 mt-3">
+            {isDegreeAgent ? (
+              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border-2 border-primary text-primary text-sm font-semibold hover:bg-primary/5">
+                <UserPlus className="w-3.5 h-3.5" /> Request Intro
+              </button>
+            ) : (
+              <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
+                <Send className="w-3.5 h-3.5" /> Send Referral
+              </button>
+            )}
+            {isDirectPartner && (
+              <button onClick={() => { if (demoGuard()) return; onMessage?.(agent) }} className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-sm font-semibold hover:bg-accent">
+                <MessageSquare className="w-3.5 h-3.5" /> Message
+              </button>
+            )}
+            <button onClick={() => router.push(`/agent/${agent.id}`)} className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent shrink-0">
+              <User className="w-3.5 h-3.5" /> Profile
             </button>
-          ) : (
-            <button onClick={() => { if (demoGuard()) return; onSendReferral?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
-              <Send className="w-3 h-3" /> Referral
-            </button>
-          )}
-          {isDirectPartner && (
-            <button onClick={() => { if (demoGuard()) return; onMessage?.(agent) }} className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg border border-border text-xs font-semibold hover:bg-accent">
-              <MessageSquare className="w-3 h-3" /> Message
-            </button>
-          )}
-          <button onClick={() => router.push(`/agent/${agent.id}`)} className="flex items-center justify-center gap-1 h-8 px-2.5 rounded-lg border border-border text-xs font-semibold hover:bg-accent shrink-0">
-            <User className="w-3 h-3" /> Profile
-          </button>
+          </div>
         </div>
       </div>
 
