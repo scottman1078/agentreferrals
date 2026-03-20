@@ -219,19 +219,10 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
 
           {/* Row 4: Partner info — single line */}
           {isDirectPartner && (
-            <div className="grid grid-cols-3 gap-2 mt-2.5 text-[11px] text-muted-foreground">
-              <div className="flex items-center gap-1" title="Last time you communicated with this partner">
-                <CalendarClock className="w-3 h-3 shrink-0" />
-                <span>{lastContacted}</span>
-              </div>
-              <div className="flex items-center gap-1" title="Current referrals in progress between you">
-                <ArrowLeftRight className="w-3 h-3 shrink-0" />
-                <span>{activeReferrals}</span>
-              </div>
-              <div className="flex items-center gap-1" title="How long you've been referral partners">
-                <Handshake className="w-3 h-3 shrink-0" />
-                <span>{partnerDuration}</span>
-              </div>
+            <div className="flex items-center gap-1.5 mt-2.5 text-[11px]">
+              <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap" title="Last time you communicated with this partner">{lastContacted}</span>
+              <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap" title="Current referrals in progress between you">{activeReferrals}</span>
+              <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap" title="How long you've been referral partners">{partnerDuration}</span>
             </div>
           )}
 
