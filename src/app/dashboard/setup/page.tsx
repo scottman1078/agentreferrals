@@ -55,6 +55,7 @@ export default function SetupPage() {
   // Territory mode tabs
   const [territoryMode, setTerritoryMode] = useState<'city' | 'county' | 'zip' | 'radius'>('city')
   const [territorySelections, setTerritorySelections] = useState<string[]>([])
+  const selectionZipsRef = useRef<Map<string, string[]>>(new Map())
 
   // Radius picker
   const [radiusMode, setRadiusMode] = useState(false)
@@ -1500,6 +1501,7 @@ export default function SetupPage() {
                                 if (mapInstance.current) {
                                   mapInstance.current.setView([s.lat, s.lng], 9, { animate: true })
                                 }
+                                selectionZipsRef.current.set(s.label, data.zips)
                                 setTerritorySelections((prev) => [...prev, s.label])
                               }
                             } catch {
@@ -1596,9 +1598,12 @@ export default function SetupPage() {
                         <span className="text-xs font-semibold text-primary">{sel}</span>
                         <button
                           onClick={() => {
-                            // Remove this selection and its zips
-                            // For now, just remove the label — user can re-add
+                            const zipsToRemove = new Set(selectionZipsRef.current.get(sel) || [])
+                            selectionZipsRef.current.delete(sel)
                             setTerritorySelections((prev) => prev.filter((s) => s !== sel))
+                            if (zipsToRemove.size > 0) {
+                              setSelectedZips((prev) => prev.filter((z) => !zipsToRemove.has(z)))
+                            }
                           }}
                           className="ml-0.5 text-primary/50 hover:text-primary"
                         >
