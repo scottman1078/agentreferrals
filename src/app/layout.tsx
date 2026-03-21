@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description: 'AI-powered referral network for real estate agents. Find, match, and manage referrals across brokerages.',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
     ],
-    apple: '/apple-touch-icon.svg',
+    apple: '/favicon.png',
   },
 }
 

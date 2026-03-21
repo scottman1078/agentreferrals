@@ -31,60 +31,68 @@
 
 /* ═══════════════════════════════════════
    LIGHT MODE — AgentReferrals.ai
-   Primary: Amber/Gold #F59E0B
-   Clean, professional, warm
+   Primary: Deep Blue #1F2A5A
+   Accent: Teal #1FA3A3
+   Professional, trustworthy, real estate
 ═══════════════════════════════════════ */
 :root {
   --radius: 0.625rem;
 
   --background: 0 0% 98%;
-  --foreground: 222 47% 11%;
+  --foreground: 229 49% 24%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 229 49% 24%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 217 91% 53%;
+  --popover-foreground: 229 49% 24%;
+  --primary: 229 49% 24%;
   --primary-foreground: 0 0% 100%;
   --secondary: 220 14% 96%;
   --secondary-foreground: 220 9% 46%;
   --muted: 220 14% 96%;
   --muted-foreground: 220 9% 46%;
-  --accent: 220 14% 96%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 180 68% 38%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
   --border: 220 13% 91%;
   --input: 220 13% 91%;
-  --ring: 217 91% 53%;
+  --ring: 229 49% 24%;
   --sidebar: 220 14% 96%;
-  --sidebar-foreground: 222 47% 11%;
+  --sidebar-foreground: 229 49% 24%;
+
+  /* Brand colors as custom properties */
+  --ar-deep-blue: 229 49% 24%;
+  --ar-teal: 180 68% 38%;
 }
 
 /* ═══════════════════════════════════════
    DARK MODE
 ═══════════════════════════════════════ */
 .dark {
-  --background: 224 30% 7%;
+  --background: 229 40% 7%;
   --foreground: 220 20% 92%;
-  --card: 224 25% 10%;
+  --card: 229 35% 11%;
   --card-foreground: 220 20% 92%;
-  --popover: 224 25% 10%;
+  --popover: 229 35% 11%;
   --popover-foreground: 220 20% 92%;
-  --primary: 217 91% 60%;
+  --primary: 229 49% 40%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 224 20% 14%;
+  --secondary: 229 25% 15%;
   --secondary-foreground: 220 15% 65%;
-  --muted: 224 20% 14%;
+  --muted: 229 25% 15%;
   --muted-foreground: 220 15% 55%;
-  --accent: 224 20% 16%;
-  --accent-foreground: 220 20% 92%;
+  --accent: 180 68% 42%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 63% 50%;
   --destructive-foreground: 0 0% 98%;
-  --border: 224 18% 16%;
-  --input: 224 18% 16%;
-  --ring: 217 91% 60%;
-  --sidebar: 224 25% 9%;
+  --border: 229 20% 18%;
+  --input: 229 20% 18%;
+  --ring: 229 49% 40%;
+  --sidebar: 229 35% 9%;
   --sidebar-foreground: 220 20% 92%;
+
+  --ar-deep-blue: 229 49% 40%;
+  --ar-teal: 180 68% 42%;
 }
 
 /* ═══════════════════════════════════════

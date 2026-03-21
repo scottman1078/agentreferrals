@@ -1187,10 +1187,8 @@ export default function SetupPage() {
       <div className="border-b border-border bg-card sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg>
-            </div>
-            <span className="font-extrabold text-lg hidden sm:block">Agent<span className="text-primary">Referrals</span></span>
+            <img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0" />
+            <span className="font-extrabold text-lg hidden sm:block">Agent<span className="text-accent">Referrals</span></span>
           </div>
           {/* Step indicator — compact */}
           <div className="flex items-center gap-1">

@@ -92,11 +92,9 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg>
-            </div>
+            <img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0" />
             <span className="font-extrabold text-lg tracking-tight">
-              Agent<span className="text-primary">Referrals</span>
+              Agent<span className="text-accent">Referrals</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">
@@ -517,8 +515,8 @@ export default function LandingPage() {
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center"><svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
-            <span className="font-bold text-sm">Agent<span className="text-primary">Referrals</span></span>
+            <img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0" />
+            <span className="font-extrabold text-sm">Agent<span className="text-accent">Referrals</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
@@ -537,9 +535,9 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center"><svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
+              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0" />
               <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-primary">Referrals</span>
+                Agent<span className="text-accent">Referrals</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
@@ -996,9 +994,9 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center"><svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" /></svg></div>
+              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0" />
               <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-primary">Referrals</span>
+                Agent<span className="text-accent">Referrals</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">

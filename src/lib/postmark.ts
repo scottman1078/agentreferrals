@@ -42,8 +42,8 @@ export async function sendInviteEmail(data: InviteEmailData) {
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:40px;height:40px;background:#f59e0b;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#0f1117;">A</div>
-      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#f59e0b;">Referrals</span>.ai</div>
+      <div style="display:inline-block;width:40px;height:40px;background:#1FA3A3;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#ffffff;">A</div>
+      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
     </div>
 
     <!-- Card -->
@@ -54,7 +54,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
       </p>
 
       ${data.personalMessage ? `
-      <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+      <div style="background:#e0f5f5;border-left:4px solid #1FA3A3;padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
         <p style="font-size:13px;color:#92400e;margin:0;font-style:italic;">"${data.personalMessage}"</p>
         <p style="font-size:12px;color:#b45309;margin:8px 0 0;">— ${data.inviterName}</p>
       </div>
@@ -72,7 +72,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
       </div>
 
       <div style="text-align:center;">
-        <a href="${data.referralLink}" style="display:inline-block;background:#f59e0b;color:#0f1117;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Join ${data.inviterName}'s Network</a>
+        <a href="${data.referralLink}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Join ${data.inviterName}'s Network</a>
       </div>
 
       <p style="font-size:12px;color:#9ca3af;text-align:center;margin:20px 0 0;">
@@ -83,7 +83,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p>AgentReferrals — AI-powered referral network for real estate agents</p>
-      <p style="margin-top:4px;">This email was sent because ${data.inviterName} invited you. <a href="https://agentreferrals.ai" style="color:#f59e0b;">Learn more</a></p>
+      <p style="margin-top:4px;">This email was sent because ${data.inviterName} invited you. <a href="https://agentreferrals.ai" style="color:#1FA3A3;">Learn more</a></p>
     </div>
   </div>
 </body>
@@ -118,18 +118,18 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-block;width:32px;height:32px;background:#f59e0b;border-radius:8px;line-height:32px;text-align:center;font-weight:800;font-size:14px;color:#0f1117;">A</div>
+      <div style="display:inline-block;width:32px;height:32px;background:#1FA3A3;border-radius:8px;line-height:32px;text-align:center;font-weight:800;font-size:14px;color:#ffffff;">A</div>
     </div>
     <div style="background:white;border-radius:16px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
       <h1 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">${data.heading}</h1>
       <div style="font-size:14px;color:#4b5563;line-height:1.7;margin-bottom:24px;">${data.body}</div>
       ${data.ctaText && data.ctaUrl ? `
       <div style="text-align:center;">
-        <a href="${data.ctaUrl}" style="display:inline-block;background:#f59e0b;color:#0f1117;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">${data.ctaText}</a>
+        <a href="${data.ctaUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">${data.ctaText}</a>
       </div>` : ''}
     </div>
     <div style="text-align:center;margin-top:20px;font-size:11px;color:#9ca3af;">
-      <p>AgentReferrals · <a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Manage notifications</a></p>
+      <p>AgentReferrals · <a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Manage notifications</a></p>
     </div>
   </div>
 </body>
@@ -179,8 +179,8 @@ export async function sendInviterNotification(data: InviterNotificationData) {
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:40px;height:40px;background:#f59e0b;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#0f1117;">A</div>
-      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#f59e0b;">Referrals</span>.ai</div>
+      <div style="display:inline-block;width:40px;height:40px;background:#1FA3A3;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#ffffff;">A</div>
+      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
     </div>
 
     <!-- Card -->
@@ -199,14 +199,14 @@ export async function sendInviterNotification(data: InviterNotificationData) {
       </div>
 
       <div style="text-align:center;">
-        <a href="https://agentreferrals.ai/dashboard" style="display:inline-block;background:#f59e0b;color:#0f1117;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">View Your Network</a>
+        <a href="https://agentreferrals.ai/dashboard" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">View Your Network</a>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p>AgentReferrals — AI-powered referral network for real estate agents</p>
-      <p style="margin-top:4px;"><a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Manage notifications</a></p>
+      <p style="margin-top:4px;"><a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Manage notifications</a></p>
     </div>
   </div>
 </body>
@@ -257,14 +257,14 @@ export async function sendMagicLinkEmail(data: MagicLinkEmailData) {
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
   <!-- Header -->
   <tr><td style="background:#1a1a1a;padding:24px 32px;">
-    <span style="color:#f59e0b;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
+    <span style="color:#1FA3A3;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
   </td></tr>
   <!-- Body -->
   <tr><td style="padding:32px;">
     <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">${greeting}</p>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to sign in to your AgentReferrals account. This link expires in 15 minutes.</p>
     <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
-      <a href="${data.magicUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Sign In to AgentReferrals</a>
+      <a href="${data.magicUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Sign In to AgentReferrals</a>
     </td></tr></table>
     <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">If you didn't request this link, you can safely ignore this email. Your account is secure.</p>
   </td></tr>
@@ -324,14 +324,14 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:48px;height:48px;background:#f59e0b;border-radius:12px;line-height:48px;text-align:center;font-weight:800;font-size:22px;color:#0f1117;">A</div>
-      <div style="margin-top:10px;font-weight:800;font-size:24px;color:#1a1a2e;">Agent<span style="color:#f59e0b;">Referrals</span>.ai</div>
+      <div style="display:inline-block;width:48px;height:48px;background:#1FA3A3;border-radius:12px;line-height:48px;text-align:center;font-weight:800;font-size:22px;color:#ffffff;">A</div>
+      <div style="margin-top:10px;font-weight:800;font-size:24px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
     </div>
 
     <!-- Welcome Card -->
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
       <div style="text-align:center;margin-bottom:24px;">
-        <div style="display:inline-block;width:64px;height:64px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;line-height:64px;text-align:center;font-size:28px;">&#127881;</div>
+        <div style="display:inline-block;width:64px;height:64px;background:linear-gradient(135deg,#1FA3A3,#1F2A5A);border-radius:50%;line-height:64px;text-align:center;font-size:28px;">&#127881;</div>
       </div>
 
       <h1 style="font-size:24px;font-weight:800;color:#1a1a2e;margin:0 0 8px;text-align:center;">Welcome to AgentReferrals, ${firstName}!</h1>
@@ -344,7 +344,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
         <table role="presentation" style="width:100%;border-collapse:collapse;">
           <tr>
             <td style="width:46px;vertical-align:top;padding-bottom:20px;">
-              <div style="width:32px;height:32px;background:#fef3c7;border:2px solid #f59e0b;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#d97706;">1</div>
+              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">1</div>
             </td>
             <td style="vertical-align:top;padding-bottom:20px;">
               <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Complete your profile</div>
@@ -353,7 +353,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
           </tr>
           <tr>
             <td style="width:46px;vertical-align:top;padding-bottom:20px;">
-              <div style="width:32px;height:32px;background:#fef3c7;border:2px solid #f59e0b;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#d97706;">2</div>
+              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">2</div>
             </td>
             <td style="vertical-align:top;padding-bottom:20px;">
               <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Explore the network</div>
@@ -362,7 +362,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
           </tr>
           <tr>
             <td style="width:46px;vertical-align:top;">
-              <div style="width:32px;height:32px;background:#fef3c7;border:2px solid #f59e0b;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#d97706;">3</div>
+              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">3</div>
             </td>
             <td style="vertical-align:top;">
               <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Send your first referral</div>
@@ -374,7 +374,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 
       <!-- CTA -->
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${onboardingUrl}" style="display:inline-block;background:#f59e0b;color:#0f1117;font-weight:700;font-size:16px;padding:14px 36px;border-radius:10px;text-decoration:none;">Complete Your Profile</a>
+        <a href="${onboardingUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:10px;text-decoration:none;">Complete Your Profile</a>
       </div>
 
       <!-- Divider -->
@@ -397,7 +397,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:12px 0;margin-top:20px;">
       <tr>
         <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
-          <div style="font-weight:800;font-size:22px;color:#f59e0b;">17,000+</div>
+          <div style="font-weight:800;font-size:22px;color:#1FA3A3;">17,000+</div>
           <div style="font-size:11px;color:#6b7280;margin-top:2px;">Agents on network</div>
         </td>
         <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
@@ -415,9 +415,9 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p style="margin:0 0 4px;">AgentReferrals — AI-powered referral network for real estate agents</p>
       <p style="margin:0;">
-        <a href="${dashboardUrl}" style="color:#f59e0b;">Dashboard</a> ·
-        <a href="https://agentreferrals.ai/#pricing" style="color:#f59e0b;">Pricing</a> ·
-        <a href="https://agentreferrals.ai/dashboard/settings" style="color:#f59e0b;">Settings</a>
+        <a href="${dashboardUrl}" style="color:#1FA3A3;">Dashboard</a> ·
+        <a href="https://agentreferrals.ai/#pricing" style="color:#1FA3A3;">Pricing</a> ·
+        <a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Settings</a>
       </p>
     </div>
 
@@ -470,7 +470,7 @@ export async function sendConfirmEmail(data: ConfirmEmailData) {
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
   <!-- Header -->
   <tr><td style="background:#1a1a1a;padding:24px 32px;">
-    <span style="color:#f59e0b;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
+    <span style="color:#1FA3A3;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
   </td></tr>
   <!-- Body -->
   <tr><td style="padding:32px;">
@@ -478,7 +478,7 @@ export async function sendConfirmEmail(data: ConfirmEmailData) {
     <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.6;">Thanks for signing up for AgentReferrals! Please confirm your email address to get started.</p>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to verify your email and activate your account.</p>
     <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
-      <a href="${data.confirmUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Confirm My Email</a>
+      <a href="${data.confirmUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Confirm My Email</a>
     </td></tr></table>
     <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
   </td></tr>

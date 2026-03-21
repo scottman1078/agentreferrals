@@ -932,7 +932,7 @@ export default function AgentMap() {
   }, [])
 
   const tagChips = [
-    { key: 'all', label: 'All', color: 'hsl(43 96% 50%)' },
+    { key: 'all', label: 'All', color: '#1FA3A3' },
     ...dbSpecs.map((s) => ({ key: s.name, label: s.name, color: s.color })),
   ]
 
