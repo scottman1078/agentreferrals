@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
-import { getPartnerAgentIds, get1DegreeAgentIds, get2DegreeAgentIds } from '@/data/partnerships'
 import { ChevronDown, Check, Lock } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import type { BrokerageScope } from '@/types'
@@ -26,9 +25,7 @@ export default function BrokerageSwitcher() {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
 
-  const partnerIds = getPartnerAgentIds('jason')
-  const oneDegreeIds = get1DegreeAgentIds('jason')
-  const twoDegreeIds = get2DegreeAgentIds('jason')
+  const { partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
 
   const tabs: ScopeTab[] = [
     {
@@ -40,14 +37,14 @@ export default function BrokerageSwitcher() {
     {
       id: '1-degree',
       label: '1 Degree',
-      count: oneDegreeIds.length,
+      count: agents.filter((a) => oneDegreeIds.includes(a.id)).length,
       locked: !hasFeature('networkDegree1'),
       requiredTier: requiredTier('networkDegree1') ?? undefined,
     },
     {
       id: '2-degree',
       label: '2 Degrees',
-      count: twoDegreeIds.length,
+      count: agents.filter((a) => twoDegreeIds.includes(a.id)).length,
       locked: !hasFeature('networkDegree2'),
       requiredTier: requiredTier('networkDegree2') ?? undefined,
     },
