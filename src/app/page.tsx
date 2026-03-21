@@ -146,15 +146,15 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-primary/20 bg-card shadow-lg">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent" />
                 </span>
                 <span className="font-extrabold text-2xl sm:text-3xl tracking-tight tabular-nums">
                   {spotsRemaining.toLocaleString()}
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-emerald-600">50% off for 6 months</span>
+                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-accent">50% off for 6 months</span>
               </span>
             </div>
           </div>
