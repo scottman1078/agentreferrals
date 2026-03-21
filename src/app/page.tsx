@@ -135,7 +135,7 @@ export default function LandingPage() {
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             The Agent to Agent Referral Network<br />
-            <span className="text-accent">Built on Trust.</span>
+            <span className="text-teal">Built on Trust.</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
             Build your referral network, discover vetted agents through connections you already trust, and manage every referral from agreement to close — all in one place.
@@ -154,7 +154,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-accent">50% off for 6 months</span>
+                of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-teal">50% off for 6 months</span>
               </span>
             </div>
           </div>
