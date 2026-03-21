@@ -1,23 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 
-/** Full logo — uses the actual logo PNG files */
+/** Full logo — uses the actual logo PNG files, swaps for dark mode */
 export function AppLogo({ size = 'md', href }: { size?: 'sm' | 'md' | 'lg'; href?: string; showWordmark?: boolean }) {
-  const heightMap = {
-    sm: 28,
-    md: 32,
-    lg: 40,
-  }
-  const h = heightMap[size]
-  // Logo is roughly 4:1 aspect ratio
-  const w = Math.round(h * 4)
+  const hMap = { sm: 'h-7', md: 'h-8', lg: 'h-10' }
+  const h = hMap[size]
 
   const content = (
     <>
-      <Image src="/logo.png?v=2" alt="AgentReferrals" width={w} height={h} className="shrink-0 dark:hidden" priority />
-      <Image src="/logo-dark.png?v=2" alt="AgentReferrals" width={w} height={h} className="shrink-0 hidden dark:block" priority />
+      <img src="/logo.png" alt="AgentReferrals" className={`${h} w-auto shrink-0 dark:hidden`} />
+      <img src="/logo-dark.png" alt="AgentReferrals" className={`${h} w-auto shrink-0 hidden dark:block`} />
     </>
   )
 
@@ -28,19 +21,15 @@ export function AppLogo({ size = 'md', href }: { size?: 'sm' | 'md' | 'lg'; href
   return <div className="flex items-center">{content}</div>
 }
 
-/** Just the icon mark — uses favicon PNGs */
+/** Just the icon mark — uses favicon PNGs, swaps for dark mode */
 export function AppMark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const sizeMap = {
-    sm: 28,
-    md: 32,
-    lg: 40,
-  }
-  const px = sizeMap[size]
+  const sMap = { sm: 'h-7 w-7', md: 'h-8 w-8', lg: 'h-10 w-10' }
+  const s = sMap[size]
 
   return (
     <>
-      <Image src="/favicon.png" alt="AgentReferrals" width={px} height={px} className="shrink-0 dark:hidden" />
-      <Image src="/favicon-dark.png" alt="AgentReferrals" width={px} height={px} className="shrink-0 hidden dark:block" />
+      <img src="/favicon.png" alt="AgentReferrals" className={`${s} shrink-0 dark:hidden`} />
+      <img src="/favicon-dark.png" alt="AgentReferrals" className={`${s} shrink-0 hidden dark:block`} />
     </>
   )
 }

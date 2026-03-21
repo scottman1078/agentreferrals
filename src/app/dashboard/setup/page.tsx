@@ -1187,8 +1187,8 @@ export default function SetupPage() {
       <div className="border-b border-border bg-card sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/logo.png?v=2" alt="AgentReferrals" className="h-8 w-auto shrink-0 dark:hidden" />
-            <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-8 w-auto shrink-0 hidden dark:block" />
+            <img src="/logo.png" alt="AgentReferrals" className="h-8 w-auto shrink-0 dark:hidden" />
+            <img src="/logo-dark.png" alt="AgentReferrals" className="h-8 w-auto shrink-0 hidden dark:block" />
           </div>
           {/* Step indicator — compact */}
           <div className="flex items-center gap-1">
