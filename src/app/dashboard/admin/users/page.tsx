@@ -298,6 +298,7 @@ export default function AdminUsersPage() {
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
+    cellStyle: { display: 'flex', alignItems: 'center' },
   }), [])
 
   return (
