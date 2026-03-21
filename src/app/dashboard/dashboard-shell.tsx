@@ -172,8 +172,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
 
-        {/* Admin-only floating tier switcher */}
-        <AdminTierSwitcher />
+        {/* Tier switcher moved to avatar dropdown in top-bar */}
       </div>
     </BrokerageProvider>
   )

@@ -7,10 +7,12 @@ import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import BrokerageSwitcher from './brokerage-switcher'
 import SearchModal from '@/components/search/search-modal'
-import { Search, Command, LogOut, Gift } from 'lucide-react'
+import { Search, Command, LogOut, Gift, Shield, ChevronDown } from 'lucide-react'
 import { AppLogo } from '@/components/ui/app-logo'
 import { useAuth } from '@/contexts/auth-context'
 import { useDemo } from '@/contexts/demo-context'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { PLANS, type SubscriptionTier } from '@/lib/stripe'
 
 export default function TopBar() {
   const pathname = usePathname()
@@ -20,6 +22,15 @@ export default function TopBar() {
   const avatarMenuRef = useRef<HTMLDivElement>(null)
   const { profile, signOut } = useAuth()
   const { isDemoMode } = useDemo()
+  const { canSwitchTier, tier, setAdminTier } = useFeatureGate()
+  const [showTierMenu, setShowTierMenu] = useState(false)
+
+  const TIER_COLORS: Record<SubscriptionTier, string> = {
+    starter: 'bg-gray-500',
+    growth: 'bg-blue-500',
+    pro: 'bg-violet-500',
+    elite: 'bg-amber-500',
+  }
 
   // Cmd+K / Ctrl+K global shortcut
   useEffect(() => {
@@ -141,6 +152,42 @@ export default function TopBar() {
                   >
                     Settings
                   </Link>
+                  {canSwitchTier && (
+                    <>
+                      <div className="mx-2 my-1 border-t border-border" />
+                      <button
+                        onClick={() => setShowTierMenu(!showTierMenu)}
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors"
+                      >
+                        <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="flex-1 text-left">Tier: <span className="font-semibold capitalize">{tier}</span></span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showTierMenu ? 'rotate-180' : ''}`} />
+                      </button>
+                      {showTierMenu && (
+                        <div className="px-1 pb-1">
+                          {PLANS.map((plan) => (
+                            <button
+                              key={plan.id}
+                              onClick={() => {
+                                setAdminTier(plan.id)
+                                setShowTierMenu(false)
+                                setShowAvatarMenu(false)
+                                setTimeout(() => window.location.reload(), 100)
+                              }}
+                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                tier === plan.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
+                              }`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${TIER_COLORS[plan.id]}`} />
+                              <span>{plan.name}</span>
+                              <span className="ml-auto text-[10px] text-muted-foreground">{plan.priceLabel}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="mx-2 my-1 border-t border-border" />
                   <button
                     onClick={async () => {
                       setShowAvatarMenu(false)
