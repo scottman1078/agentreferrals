@@ -253,13 +253,15 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">How It Works</span>
-            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Three steps. One closed referral.</h2>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Five steps. One closed referral.</h2>
           </div>
           <div className="space-y-12">
             {[
-              { step: '01', title: 'Tell NORA the market you need', desc: '"I need a referral partner in Nashville who does luxury and relocation." NORA searches your brokerage first, then the full network.' },
-              { step: '02', title: 'Review matched agents', desc: 'See agent profiles with RCS, Communication Score, closed referrals, specializations, and reviews. Pick your partner.' },
-              { step: '03', title: 'Send agreement & track to close', desc: 'One-click referral agreement with auto-filled terms. Track the referral through every stage — from introduction to fee received.' },
+              { step: '01', title: 'Sign up & meet NORA', desc: 'NORA, your AI assistant, walks you through onboarding — brokerage, specializations, and service territory. Complete in under 5 minutes.' },
+              { step: '02', title: 'Build your network', desc: 'Invite agents you already work with, connect with partners across brokerages, and grow your referral network organically.' },
+              { step: '03', title: 'Discover agents in any market', desc: 'Search the interactive map by market and specialization, or ask NORA to find the perfect referral partner. View RCS scores, endorsements, and referral commitments.' },
+              { step: '04', title: 'Send a referral agreement', desc: 'Match a client with a vetted agent and send a referral agreement with auto-filled terms and e-signature — one click.' },
+              { step: '05', title: 'Track to close & get paid', desc: 'Follow every referral through the pipeline from introduction to closing. Get automatic updates at each stage based on the expectations you set.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-6 items-start">
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-xl text-primary shrink-0">
