@@ -151,28 +151,26 @@ export function useAppData(): AppData {
     isAuthLoading = false
   }
 
-  // If demo mode is explicitly on, force mock data
-  if (isDemoMode) {
-    isAuthenticated = false
-    isAuthLoading = false
-  }
-
-  // Supabase hooks — only fetch when authenticated
+  // Supabase hooks — always fetch, but filter by demo flag
   const brokerageId = profile?.brokerage_id || undefined
   const {
     data: supaAgents,
     isLoading: agentsLoading,
-  } = useAgents({ brokerageId: isAuthenticated ? brokerageId : undefined, scope: 'all-network' })
+  } = useAgents({
+    brokerageId: brokerageId,
+    scope: 'all-network',
+    includeDemo: isDemoMode,
+  })
 
   const {
     data: supaReferrals,
     isLoading: referralsLoading,
-  } = useReferrals({ userId: isAuthenticated ? userId : undefined })
+  } = useReferrals({ userId: isDemoMode ? undefined : userId })
 
   const {
     data: supaInvites,
     isLoading: invitesLoading,
-  } = useInvites({ userId: isAuthenticated ? userId : undefined })
+  } = useInvites({ userId: isDemoMode ? undefined : userId })
 
   // Map Supabase data to app-compatible shapes
   const mappedAgents = useMemo(
@@ -190,11 +188,13 @@ export function useAppData(): AppData {
     [supaInvites]
   )
 
-  // Decide: use Supabase data or mock fallback
-  const useSupabase = isAuthenticated && !isAuthLoading
-  const hasSupaAgents = useSupabase && supaAgents.length > 0
-  const hasSupaReferrals = useSupabase && supaReferrals.length > 0
-  const hasSupaInvites = useSupabase && supaInvites.length > 0
+  // Demo mode: use Supabase demo data + mock fallbacks for tables without is_demo
+  // Authenticated: use real Supabase data only (empty if none)
+  const useRealData = isAuthenticated && !isAuthLoading && !isDemoMode
+
+  // Empty review helpers for authenticated users (no mock reviews)
+  const emptyReviews = () => []
+  const emptyReviewStats = () => null
 
   return {
     isAuthenticated,
@@ -202,30 +202,31 @@ export function useAppData(): AppData {
     profile,
     userId,
 
-    // Always use mock agents for now — Supabase profiles lack polygon/territory data
-    // TODO: Switch to Supabase when ar_agent_profiles has polygon data populated
-    agents: mockAgents,
-    referrals: hasSupaReferrals ? mappedReferrals : mockReferrals,
-    brokerages: mockBrokerages, // No mapping needed yet — mock brokerages used everywhere
-    documents: mockDocuments, // No Supabase table for documents yet
-    invites: hasSupaInvites ? mappedInvites : mockInvites,
-    candidatesByZone: mockCandidatesByZone, // No Supabase table yet
-    coverageGaps: mockCoverageGaps, // No Supabase table yet
-    voidZones: mockVoidZones,
-    agentsNeedingPartner: mockAgentsNeedingPartner, // No Supabase table yet
-    coverageGapOpportunities: mockCoverageGapOpportunities,
-    existingRequests: mockExistingRequests,
+    // Agents always come from Supabase (filtered by is_demo flag in the hook)
+    agents: mappedAgents,
 
-    referralCode: profile?.referral_code || mockReferralCode,
+    // Referrals/invites: real data for authenticated, mock for demo
+    referrals: isDemoMode ? mockReferrals : mappedReferrals,
+    brokerages: mockBrokerages, // Reference data, same for everyone
+    documents: isDemoMode ? mockDocuments : [],
+    invites: isDemoMode ? mockInvites : mappedInvites,
+    candidatesByZone: isDemoMode ? mockCandidatesByZone : {},
+    coverageGaps: isDemoMode ? mockCoverageGaps : [],
+    voidZones: isDemoMode ? mockVoidZones : [],
+    agentsNeedingPartner: isDemoMode ? mockAgentsNeedingPartner : [],
+    coverageGapOpportunities: isDemoMode ? mockCoverageGapOpportunities : [],
+    existingRequests: isDemoMode ? mockExistingRequests : [],
+
+    referralCode: profile?.referral_code || (isDemoMode ? mockReferralCode : ''),
     referralLink: profile?.referral_code
       ? `https://agentreferrals.ai/join?ref=${profile.referral_code}`
-      : mockReferralLink,
+      : (isDemoMode ? mockReferralLink : ''),
 
-    getAgentReviews,
-    getAgentReviewStats,
+    getAgentReviews: isDemoMode ? getAgentReviews : emptyReviews,
+    getAgentReviewStats: isDemoMode ? getAgentReviewStats : emptyReviewStats,
 
-    agentsLoading: isAuthenticated ? agentsLoading : false,
-    referralsLoading: isAuthenticated ? referralsLoading : false,
-    invitesLoading: isAuthenticated ? invitesLoading : false,
+    agentsLoading,
+    referralsLoading: isDemoMode ? false : referralsLoading,
+    invitesLoading: isDemoMode ? false : invitesLoading,
   }
 }

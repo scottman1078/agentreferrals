@@ -22,17 +22,18 @@ interface BrokerageContextType {
 const BrokerageContext = createContext<BrokerageContextType | null>(null)
 
 export function BrokerageProvider({ children }: { children: ReactNode }) {
-  const { agents, brokerages } = useAppData()
+  const { agents, brokerages, userId, isAuthenticated } = useAppData()
   const { hasFeature } = useFeatureGate()
   const [currentBrokerageId, setCurrentBrokerageId] = useState('real')
   const [scope, setScope] = useState<BrokerageScope>('my-network')
 
   const currentBrokerage = brokerages.find((b) => b.id === currentBrokerageId) || brokerages[0]
 
-  // Get partner IDs for "My Network" scope (Jason's partners)
-  const partnerIds = useMemo(() => getPartnerAgentIds('jason'), [])
-  const oneDegreeIds = useMemo(() => get1DegreeAgentIds('jason'), [])
-  const twoDegreeIds = useMemo(() => get2DegreeAgentIds('jason'), [])
+  // Get partner IDs — use real user ID when authenticated, 'jason' for demo
+  const agentId = isAuthenticated && userId ? userId : 'jason'
+  const partnerIds = useMemo(() => getPartnerAgentIds(agentId), [agentId])
+  const oneDegreeIds = useMemo(() => get1DegreeAgentIds(agentId), [agentId])
+  const twoDegreeIds = useMemo(() => get2DegreeAgentIds(agentId), [agentId])
 
   const scopeLocked = useMemo(() => {
     if (scope === 'my-network') return false

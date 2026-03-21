@@ -8,6 +8,8 @@ interface UseAgentsOptions {
   brokerageId?: string | null
   scope?: 'my-brokerage' | 'all-network'
   search?: string
+  /** When true, include demo agents. When false, exclude them. */
+  includeDemo?: boolean
 }
 
 interface UseAgentsReturn {
@@ -21,6 +23,7 @@ export function useAgents({
   brokerageId,
   scope = 'my-brokerage',
   search,
+  includeDemo = false,
 }: UseAgentsOptions = {}): UseAgentsReturn {
   const [data, setData] = useState<ArProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,6 +39,15 @@ export function useAgents({
       .from('ar_profiles')
       .select(`*, brokerage:ar_brokerages(*)`)
       .eq('status', 'active')
+
+    // Filter demo agents based on mode
+    if (includeDemo) {
+      // Demo mode: show only demo agents
+      query = query.eq('is_demo', true)
+    } else {
+      // Production: exclude demo agents
+      query = query.eq('is_demo', false)
+    }
 
     // Filter by brokerage if scoped
     if (scope === 'my-brokerage' && brokerageId) {
@@ -59,7 +71,7 @@ export function useAgents({
     }
 
     setIsLoading(false)
-  }, [supabase, brokerageId, scope, search])
+  }, [supabase, brokerageId, scope, search, includeDemo])
 
   useEffect(() => {
     fetchData()
