@@ -16,8 +16,8 @@ export function AppLogo({ size = 'md', href }: { size?: 'sm' | 'md' | 'lg'; href
 
   const content = (
     <>
-      <Image src="/logo.png" alt="AgentReferrals" width={w} height={h} className="shrink-0 dark:hidden" priority />
-      <Image src="/logo-dark.png" alt="AgentReferrals" width={w} height={h} className="shrink-0 hidden dark:block" priority />
+      <Image src="/logo.png?v=2" alt="AgentReferrals" width={w} height={h} className="shrink-0 dark:hidden" priority />
+      <Image src="/logo-dark.png?v=2" alt="AgentReferrals" width={w} height={h} className="shrink-0 hidden dark:block" priority />
     </>
   )
 

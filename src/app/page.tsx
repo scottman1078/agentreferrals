@@ -91,11 +91,9 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <><img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 hidden dark:block" /></>
-            <span className="font-extrabold text-lg tracking-tight">
-              Agent<span className="text-accent">Referrals</span>
-            </span>
+          <div className="flex items-center">
+            <img src="/logo.png?v=2" alt="AgentReferrals" className="h-10 sm:h-12 w-auto shrink-0 dark:hidden" />
+            <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-10 sm:h-12 w-auto shrink-0 hidden dark:block" />
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -136,7 +134,7 @@ export default function LandingPage() {
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
             The Agent to Agent Referral Network<br />
-            <span className="text-primary">Built on Trust.</span>
+            <span className="text-accent">Built on Trust.</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
             Build your referral network, discover vetted agents through connections you already trust, and manage every referral from agreement to close — all in one place.
@@ -514,9 +512,9 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <><img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 hidden dark:block" /></>
-            <span className="font-extrabold text-sm">Agent<span className="text-accent">Referrals</span></span>
+          <div className="flex items-center">
+            <img src="/logo.png?v=2" alt="AgentReferrals" className="h-7 w-auto shrink-0 dark:hidden" />
+            <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-7 w-auto shrink-0 hidden dark:block" />
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
@@ -534,11 +532,9 @@ export default function LandingPage() {
           onClick={(e) => { if (e.target === e.currentTarget) { setShowLogin(false); setAuthError(null); resetSignupState() } }}
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center gap-2.5 mb-2">
-              <><img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 hidden dark:block" /></>
-              <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-accent">Referrals</span>
-              </span>
+            <div className="flex items-center mb-2">
+              <img src="/logo.png?v=2" alt="AgentReferrals" className="h-9 w-auto shrink-0 dark:hidden" />
+              <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-9 w-auto shrink-0 hidden dark:block" />
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               {authMode === 'signin' ? 'Sign in to your referral network' : 'Join the referral network'}
@@ -993,11 +989,9 @@ export default function LandingPage() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowForgotPassword(false) }}
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-2.5 mb-2">
-              <><img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 hidden dark:block" /></>
-              <span className="font-extrabold text-xl tracking-tight">
-                Agent<span className="text-accent">Referrals</span>
-              </span>
+            <div className="flex items-center mb-2">
+              <img src="/logo.png?v=2" alt="AgentReferrals" className="h-9 w-auto shrink-0 dark:hidden" />
+              <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-9 w-auto shrink-0 hidden dark:block" />
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Enter your email and we&apos;ll send you a link to reset your password.

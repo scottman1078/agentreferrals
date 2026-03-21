@@ -1186,9 +1186,9 @@ export default function SetupPage() {
       {/* Header */}
       <div className="border-b border-border bg-card sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <><img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 hidden dark:block" /></>
-            <span className="font-extrabold text-lg hidden sm:block">Agent<span className="text-accent">Referrals</span></span>
+          <div className="flex items-center">
+            <img src="/logo.png?v=2" alt="AgentReferrals" className="h-8 w-auto shrink-0 dark:hidden" />
+            <img src="/logo-dark.png?v=2" alt="AgentReferrals" className="h-8 w-auto shrink-0 hidden dark:block" />
           </div>
           {/* Step indicator — compact */}
           <div className="flex items-center gap-1">
