@@ -18,7 +18,7 @@ function LogoMark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
       alt="AgentReferrals"
       width={px}
       height={px}
-      className="shrink-0"
+      className="shrink-0 dark:brightness-[1.8]"
     />
   )
 }

@@ -92,7 +92,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0" />
+            <img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 dark:brightness-[1.8]" />
             <span className="font-extrabold text-lg tracking-tight">
               Agent<span className="text-accent">Referrals</span>
             </span>
@@ -515,7 +515,7 @@ export default function LandingPage() {
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0" />
+            <img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 dark:brightness-[1.8]" />
             <span className="font-extrabold text-sm">Agent<span className="text-accent">Referrals</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -535,7 +535,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2.5 mb-2">
-              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0" />
+              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:brightness-[1.8]" />
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-accent">Referrals</span>
               </span>
@@ -994,7 +994,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
-              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0" />
+              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:brightness-[1.8]" />
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-accent">Referrals</span>
               </span>

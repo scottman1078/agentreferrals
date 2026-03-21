@@ -166,7 +166,7 @@ export default function AuthCallback() {
   return (
     <div className="flex items-center justify-center h-screen bg-background">
       <div className="text-center">
-        <img src="/favicon.png" alt="AgentReferrals" width={40} height={40} className="shrink-0 animate-pulse mx-auto mb-4" />
+        <img src="/favicon.png" alt="AgentReferrals" width={40} height={40} className="shrink-0 animate-pulse mx-auto mb-4 dark:brightness-[1.8]" />
         <p className="text-sm text-muted-foreground">{status}</p>
       </div>
     </div>

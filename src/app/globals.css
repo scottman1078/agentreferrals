@@ -75,7 +75,7 @@
   --card-foreground: 220 20% 92%;
   --popover: 229 35% 11%;
   --popover-foreground: 220 20% 92%;
-  --primary: 229 49% 40%;
+  --primary: 180 68% 38%;
   --primary-foreground: 0 0% 100%;
   --secondary: 229 25% 15%;
   --secondary-foreground: 220 15% 65%;
@@ -87,12 +87,12 @@
   --destructive-foreground: 0 0% 98%;
   --border: 229 20% 18%;
   --input: 229 20% 18%;
-  --ring: 229 49% 40%;
+  --ring: 180 68% 38%;
   --sidebar: 229 35% 9%;
   --sidebar-foreground: 220 20% 92%;
 
   --ar-deep-blue: 229 49% 40%;
-  --ar-teal: 180 68% 42%;
+  --ar-teal: 180 68% 38%;
 }
 
 /* ═══════════════════════════════════════
