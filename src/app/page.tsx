@@ -205,8 +205,8 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Why AgentReferrals</span>
             <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Built by agents, for agents</h2>
-            <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Stop losing referral fees to broken processes. AgentReferrals gives you a trusted network of verified agents,<br className="hidden sm:block" /> AI-powered matching, and full pipeline visibility from agreement to close.
+            <p className="text-muted-foreground mt-4 max-w-4xl mx-auto">
+              Stop losing referral fees to broken processes. AgentReferrals gives you a trusted network of verified agents, AI-powered matching, and full pipeline visibility from agreement to close.
             </p>
           </div>
           <PlatformStats />
@@ -335,19 +335,17 @@ export default function LandingPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: 'Real Broker', agents: '3,247', color: '#F59E0B' },
-              { name: 'eXp Realty', agents: '2,891', color: '#3B82F6' },
-              { name: 'Compass', agents: '1,834', color: '#22C55E' },
-              { name: 'Keller Williams', agents: '4,102', color: '#EF4444' },
-              { name: 'Berkshire Hathaway', agents: '1,245', color: '#A855F7' },
-              { name: 'RE/MAX', agents: '2,156', color: '#F97316' },
-              { name: "Sotheby's", agents: '876', color: '#14B8A6' },
-              { name: 'Coldwell Banker', agents: '1,567', color: '#6366F1' },
+              { name: 'Real Broker', agents: '3,247', logo: '/logos/real.png' },
+              { name: 'eXp Realty', agents: '2,891', logo: '/logos/exp.png' },
+              { name: 'Compass', agents: '1,834', logo: '/logos/compass.png' },
+              { name: 'Keller Williams', agents: '4,102', logo: '/logos/kw.png' },
+              { name: 'Berkshire Hathaway', agents: '1,245', logo: '/logos/bhhs.png' },
+              { name: 'RE/MAX', agents: '2,156', logo: '/logos/remax.png' },
+              { name: "Sotheby's", agents: '876', logo: '/logos/sothebys.png' },
+              { name: 'Coldwell Banker', agents: '1,567', logo: '/logos/coldwell.png' },
             ].map((b) => (
-              <div key={b.name} className="p-5 rounded-xl border border-border bg-card hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-xs text-white mb-3 mx-auto" style={{ background: b.color }}>
-                  {b.name.charAt(0)}
-                </div>
+              <div key={b.name} className="p-5 rounded-xl border border-border bg-card hover:border-primary/20 transition-all text-center">
+                <img src={b.logo} alt={b.name} className="h-10 w-auto mx-auto mb-3 object-contain" />
                 <div className="font-bold text-sm">{b.name}</div>
                 <div className="text-xs text-muted-foreground mt-1">{b.agents} agents</div>
               </div>
