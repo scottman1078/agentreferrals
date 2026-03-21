@@ -44,8 +44,6 @@ function Toggle({
 
 export default function AdminSettingsPage() {
   const [foundingSpots, setFoundingSpots] = useState(5000)
-  const [invitesPerUser, setInvitesPerUser] = useState(3)
-  const [invitesPerElite, setInvitesPerElite] = useState(5)
   const [waitlistMode, setWaitlistMode] = useState(true)
   const [inviteOnly, setInviteOnly] = useState(true)
   const [noraEnabled, setNoraEnabled] = useState(true)
@@ -185,24 +183,7 @@ export default function AdminSettingsPage() {
               onChange={(e) => setFoundingSpots(Number(e.target.value))}
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
             />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">Invite Codes Per User</label>
-            <input
-              type="number"
-              value={invitesPerUser}
-              onChange={(e) => setInvitesPerUser(Number(e.target.value))}
-              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">Invite Codes Per Elite</label>
-            <input
-              type="number"
-              value={invitesPerElite}
-              onChange={(e) => setInvitesPerElite(Number(e.target.value))}
-              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
-            />
+            <p className="text-[10px] text-muted-foreground">Shown on the <a href="/" target="_blank" className="text-primary hover:underline">landing page</a> founding member counter.</p>
           </div>
         </div>
 
