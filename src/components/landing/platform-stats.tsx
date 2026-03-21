@@ -20,7 +20,7 @@ export default function PlatformStats() {
 
   const stats = [
     { value: activeAgents !== null ? activeAgents.toLocaleString() : '—', label: 'Active Agents', desc: 'Verified agents across all brokerages nationwide' },
-    { value: avgRcs !== null ? `${avgRcs}/100` : '—', label: 'Avg Referral Score', desc: 'Every agent is scored on communication, response time, and closed referrals' },
+    { value: avgRcs !== null ? `${avgRcs}/100` : '—', label: 'Avg Referral Communication Score', desc: 'Every agent is scored on communication, response time, and closed referrals' },
     { value: avgResponseTime, label: 'Avg Response Time', desc: 'Partners who communicate and close deals' },
     { value: '25%', label: 'Referral Fee Standard', desc: 'Transparent agreements with e-signature' },
   ]
