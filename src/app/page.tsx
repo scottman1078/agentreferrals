@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import PlatformStats from '@/components/landing/platform-stats'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
   ArrowRight, Star, ChevronRight, Sparkles, Globe, Building2,
@@ -205,24 +206,10 @@ export default function LandingPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Why AgentReferrals</span>
             <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Built by agents, for agents</h2>
             <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Stop losing referral fees to broken processes.<br className="hidden sm:block" />
-              AgentReferrals gives you a trusted network of verified agents, AI-powered matching, and full pipeline visibility from agreement to close.
+              Stop losing referral fees to broken processes. AgentReferrals gives you a trusted network of verified agents,<br className="hidden sm:block" /> AI-powered matching, and full pipeline visibility from agreement to close.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { value: '5,000', label: 'Active Agents', desc: 'Verified agents across all brokerages nationwide' },
-              { value: '92', label: 'Avg RCS', desc: 'Every agent is vetted with performance data' },
-              { value: '< 1hr', label: 'Avg Response Time', desc: 'Partners who communicate and close deals' },
-              { value: '25%', label: 'Referral Fee Standard', desc: 'Transparent agreements with e-signature' },
-            ].map((stat) => (
-              <div key={stat.label} className="p-6 rounded-xl border border-border bg-card text-center">
-                <div className="font-extrabold text-3xl text-primary mb-1">{stat.value}</div>
-                <div className="font-bold text-sm mb-2">{stat.label}</div>
-                <p className="text-xs text-muted-foreground">{stat.desc}</p>
-              </div>
-            ))}
-          </div>
+          <PlatformStats />
         </div>
       </section>
 
