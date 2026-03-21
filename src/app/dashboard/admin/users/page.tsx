@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, type ColDef, type ICellRendererParams } from 'ag-grid-community'
-import { RefreshCw, Loader2, Trash2, AlertTriangle, Users, UserCheck, Shield } from 'lucide-react'
+import { RefreshCw, Loader2, Trash2, AlertTriangle, Users, UserCheck, Shield, X, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 ModuleRegistry.registerModules([AllCommunityModule])
@@ -24,9 +24,14 @@ interface UserRow {
   years_licensed: number | null
   avg_sale_price: number | null
   tags: string[] | null
+  territory_zips: string[] | null
+  refernet_score: number | null
+  closed_referrals: number | null
   setup_completed_at: string | null
   created_at: string
   brokerage_name: string | null
+  referrals_sent: number
+  referrals_received: number
 }
 
 // Cell renderers
@@ -104,6 +109,7 @@ export default function AdminUsersPage() {
   const [showDemo, setShowDemo] = useState(false)
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserRow | null>(null)
   const [deleteToast, setDeleteToast] = useState<string | null>(null)
+  const [zipModal, setZipModal] = useState<{ name: string; zips: string[] } | null>(null)
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -111,7 +117,7 @@ export default function AdminUsersPage() {
 
     let query = supabase
       .from('ar_profiles')
-      .select('id, email, full_name, phone, primary_area, status, subscription_tier, is_demo, is_admin, deals_per_year, years_licensed, avg_sale_price, tags, setup_completed_at, created_at, brokerage:ar_brokerages(name)')
+      .select('id, email, full_name, phone, primary_area, status, subscription_tier, is_demo, is_admin, deals_per_year, years_licensed, avg_sale_price, tags, territory_zips, refernet_score, closed_referrals, setup_completed_at, created_at, brokerage:ar_brokerages(name)')
       .order('created_at', { ascending: false })
 
     if (!showDemo) {
@@ -119,10 +125,39 @@ export default function AdminUsersPage() {
     }
 
     const { data } = await query
+    const profiles = data ?? []
 
-    const mapped: UserRow[] = (data ?? []).map((row: Record<string, unknown>) => ({
+    // Fetch referral counts per agent
+    const agentIds = profiles.map((p: Record<string, unknown>) => p.id as string)
+    let sentCounts: Record<string, number> = {}
+    let receivedCounts: Record<string, number> = {}
+
+    if (agentIds.length > 0) {
+      const { data: sentData } = await supabase
+        .from('ar_referrals')
+        .select('from_agent_id')
+        .in('from_agent_id', agentIds)
+        .eq('is_demo', false)
+
+      const { data: receivedData } = await supabase
+        .from('ar_referrals')
+        .select('to_agent_id')
+        .in('to_agent_id', agentIds)
+        .eq('is_demo', false)
+
+      for (const r of sentData ?? []) {
+        sentCounts[r.from_agent_id] = (sentCounts[r.from_agent_id] || 0) + 1
+      }
+      for (const r of receivedData ?? []) {
+        if (r.to_agent_id) receivedCounts[r.to_agent_id] = (receivedCounts[r.to_agent_id] || 0) + 1
+      }
+    }
+
+    const mapped: UserRow[] = profiles.map((row: Record<string, unknown>) => ({
       ...row,
       brokerage_name: (row.brokerage as { name: string } | null)?.name || null,
+      referrals_sent: sentCounts[row.id as string] || 0,
+      referrals_received: receivedCounts[row.id as string] || 0,
     })) as UserRow[]
 
     setUsers(mapped)
@@ -184,10 +219,47 @@ export default function AdminUsersPage() {
     },
     { headerName: 'Email', field: 'email', flex: 2, minWidth: 200, filter: true },
     { headerName: 'Brokerage', field: 'brokerage_name', flex: 1.5, minWidth: 150, filter: true, cellRenderer: (params: ICellRendererParams) => <span className="text-xs">{params.value || '—'}</span> },
-    { headerName: 'Market', field: 'primary_area', flex: 1, minWidth: 120, filter: true, cellRenderer: (params: ICellRendererParams) => <span className="text-xs">{params.value || '—'}</span> },
+    {
+      headerName: 'Market',
+      field: 'primary_area',
+      flex: 1,
+      minWidth: 140,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => {
+        const zips = params.data?.territory_zips as string[] | null
+        const area = params.value as string | null
+        if (zips && zips.length > 0) {
+          return (
+            <button
+              onClick={() => setZipModal({ name: params.data?.full_name || 'Agent', zips })}
+              className="flex items-center gap-1 text-xs text-primary hover:underline cursor-pointer"
+            >
+              <MapPin className="w-3 h-3" />
+              {zips.length} zip{zips.length !== 1 ? 's' : ''}
+              {area ? <span className="text-muted-foreground ml-1">({area})</span> : ''}
+            </button>
+          )
+        }
+        return <span className="text-xs text-muted-foreground">{area || '—'}</span>
+      },
+    },
     { headerName: 'Status', field: 'status', width: 100, filter: true, cellRenderer: StatusCell },
     { headerName: 'Tier', field: 'subscription_tier', width: 100, filter: true, cellRenderer: TierCell },
     { headerName: 'Type', width: 110, cellRenderer: TypeCell, sortable: false },
+    { headerName: 'Sent', field: 'referrals_sent', width: 70, filter: 'agNumberColumnFilter' },
+    { headerName: 'Recv', field: 'referrals_received', width: 70, filter: 'agNumberColumnFilter' },
+    {
+      headerName: 'RCS',
+      field: 'refernet_score',
+      width: 80,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: (params: ICellRendererParams) => {
+        const score = params.value as number | null
+        if (!score) return <span className="text-xs text-muted-foreground">—</span>
+        const color = score >= 90 ? 'text-emerald-600' : score >= 75 ? 'text-blue-600' : score >= 60 ? 'text-orange-600' : 'text-red-600'
+        return <span className={`text-xs font-bold ${color}`}>{score}</span>
+      },
+    },
     { headerName: 'Deals/yr', field: 'deals_per_year', width: 90, filter: 'agNumberColumnFilter' },
     { headerName: 'Yrs Licensed', field: 'years_licensed', width: 100, filter: 'agNumberColumnFilter' },
     { headerName: 'Avg Price', field: 'avg_sale_price', width: 100, cellRenderer: PriceCell, filter: 'agNumberColumnFilter' },
@@ -314,6 +386,30 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
+      {/* Zip Code Modal */}
+      {zipModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setZipModal(null)}>
+          <div className="w-full max-w-sm mx-4 rounded-xl border border-border bg-card shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <h3 className="font-bold text-sm">{zipModal.name}&apos;s Territory</h3>
+                <p className="text-xs text-muted-foreground">{zipModal.zips.length} zip codes</p>
+              </div>
+              <button onClick={() => setZipModal(null)} className="w-7 h-7 rounded-lg flex items-center justify-center border border-border hover:bg-accent transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="p-5 max-h-[400px] overflow-y-auto">
+              <div className="flex flex-wrap gap-1.5">
+                {zipModal.zips.map((zip) => (
+                  <span key={zip} className="px-2.5 py-1 rounded-lg bg-muted text-xs font-mono font-semibold">{zip}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmDeleteUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteUser(null)}>
           <div className="w-full max-w-md mx-4 p-6 rounded-xl border border-border bg-card shadow-xl" onClick={(e) => e.stopPropagation()}>
