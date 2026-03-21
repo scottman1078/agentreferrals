@@ -35,17 +35,17 @@ interface UserRow {
 }
 
 // Cell renderers
+function Pill({ label, className }: { label: string; className: string }) {
+  return <span className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-bold capitalize border whitespace-nowrap ${className}`}>{label}</span>
+}
+
 function StatusCell({ value }: ICellRendererParams) {
   if (!value) return <span className="text-muted-foreground text-xs">—</span>
   const colors: Record<string, string> = {
     active: 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30',
     invited: 'bg-orange-500/20 text-orange-600 border-orange-500/30',
   }
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize border ${colors[value] || colors.active}`}>
-      {value}
-    </span>
-  )
+  return <Pill label={value} className={colors[value] || colors.active} />
 }
 
 function TierCell({ value }: ICellRendererParams) {
@@ -57,22 +57,18 @@ function TierCell({ value }: ICellRendererParams) {
     pro: 'bg-violet-500/20 text-violet-600 border-violet-500/30',
     elite: 'bg-amber-500/20 text-amber-600 border-amber-500/30',
   }
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize border ${colors[tier] || colors.starter}`}>
-      {tier === 'free' ? 'Starter' : tier}
-    </span>
-  )
+  return <Pill label={tier === 'free' ? 'Starter' : tier} className={colors[tier] || colors.starter} />
 }
 
 function TypeCell({ data }: ICellRendererParams) {
   if (!data) return null
   if (data.is_admin || ADMIN_EMAILS.includes(data.email)) {
-    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">Admin</span>
+    return <Pill label="Admin" className="bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30" />
   }
   if (data.is_demo) {
-    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30">Demo</span>
+    return <Pill label="Demo" className="bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30" />
   }
-  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100 border border-gray-300 dark:border-gray-500">User</span>
+  return <Pill label="User" className="bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100 border-gray-300 dark:border-gray-500" />
 }
 
 function SetupCell({ value }: ICellRendererParams) {
@@ -298,7 +294,8 @@ export default function AdminUsersPage() {
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    cellStyle: { display: 'flex', alignItems: 'center' },
+    cellStyle: { display: 'flex', alignItems: 'center', lineHeight: 'normal' },
+    autoHeight: false,
   }), [])
 
   return (
