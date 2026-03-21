@@ -181,7 +181,7 @@ export default function LandingPage() {
           </div>
           {/* Brokerage logos — above the fold */}
           <div className="mt-8 sm:mt-10">
-            <p className="text-xs text-muted-foreground font-medium mb-3">Trusted by agents at</p>
+            <p className="text-xs text-muted-foreground font-medium mb-3">Join agents from</p>
             <div className="flex items-center justify-center gap-6 sm:gap-8">
               {[
                 { name: 'Real Broker', src: '/logos/real.png' },
