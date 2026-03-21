@@ -334,7 +334,7 @@ export default function AdminUsersPage() {
           <Users className="w-5 h-5 text-muted-foreground" />
           <div>
             <div className="text-xl font-extrabold">{realCount}</div>
-            <div className="text-[10px] text-muted-foreground">Real Users</div>
+            <div className="text-[10px] text-muted-foreground">Users</div>
           </div>
         </div>
         <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-3">
