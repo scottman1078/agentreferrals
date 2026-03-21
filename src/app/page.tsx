@@ -157,9 +157,6 @@ export default function LandingPage() {
                 of {TOTAL_FOUNDING_SPOTS.toLocaleString()} founding member spots remaining — <span className="font-semibold text-emerald-600">50% off for 6 months</span>
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Join agents from <span className="font-semibold text-foreground">Real Broker</span>, <span className="font-semibold text-foreground">Compass</span>, <span className="font-semibold text-foreground">Keller Williams</span>, and more
-            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -181,7 +178,7 @@ export default function LandingPage() {
           </div>
           {/* Brokerage logos — above the fold */}
           <div className="mt-8 sm:mt-10">
-            <p className="text-xs text-muted-foreground font-medium mb-3">Join agents from</p>
+            <p className="text-xs text-muted-foreground font-medium mb-3">Join agents from <span className="font-semibold text-foreground">Real Broker</span>, <span className="font-semibold text-foreground">Compass</span>, <span className="font-semibold text-foreground">Keller Williams</span>, and more</p>
             <div className="flex items-center justify-center gap-6 sm:gap-8">
               {[
                 { name: 'Real Broker', src: '/logos/real.png' },
