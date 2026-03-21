@@ -7,6 +7,29 @@ const client = process.env.POSTMARK_SERVER_TOKEN
 const FROM_EMAIL = 'info@agentreferrals.ai'
 const FROM_NAME = 'AgentReferrals'
 
+// Brand colors
+const DEEP_BLUE = '#1F2A5A'
+const TEAL = '#1FA3A3'
+const TEAL_LIGHT = '#e0f5f5'
+
+// Hosted logo URL (served from the deployed app)
+const LOGO_URL = 'https://agentreferrals.ai/logo.png'
+
+// Reusable email header with logo
+const emailHeader = (size: 'sm' | 'md' | 'lg' = 'md') => {
+  const widths = { sm: 140, md: 180, lg: 220 }
+  const w = widths[size]
+  return `<div style="text-align:center;margin-bottom:32px;">
+    <img src="${LOGO_URL}" alt="AgentReferrals" width="${w}" style="display:inline-block;height:auto;" />
+  </div>`
+}
+
+// Reusable dark header (for magic link / confirm emails)
+const emailHeaderDark = () => `
+  <tr><td style="background:${DEEP_BLUE};padding:24px 32px;text-align:center;">
+    <img src="${LOGO_URL}" alt="AgentReferrals" width="160" style="display:inline-block;height:auto;filter:brightness(3);" />
+  </td></tr>`
+
 export interface InviteEmailData {
   toEmail: string
   toName: string
@@ -40,28 +63,24 @@ export async function sendInviteEmail(data: InviteEmailData) {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:40px;height:40px;background:#1FA3A3;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#ffffff;">A</div>
-      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
-    </div>
+    ${emailHeader('lg')}
 
     <!-- Card -->
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-      <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;">You've been invited to join AgentReferrals</h1>
+      <h1 style="font-size:22px;font-weight:700;color:${DEEP_BLUE};margin:0 0 8px;">You've been invited to join AgentReferrals</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;">
-        <strong style="color:#1a1a2e;">${data.inviterName}</strong> from ${data.inviterBrokerage}${data.inviterArea ? ` (${data.inviterArea})` : ''} wants to add you to their referral network.
+        <strong style="color:${DEEP_BLUE};">${data.inviterName}</strong> from ${data.inviterBrokerage}${data.inviterArea ? ` (${data.inviterArea})` : ''} wants to add you to their referral network.
       </p>
 
       ${data.personalMessage ? `
-      <div style="background:#e0f5f5;border-left:4px solid #1FA3A3;padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
-        <p style="font-size:13px;color:#92400e;margin:0;font-style:italic;">"${data.personalMessage}"</p>
-        <p style="font-size:12px;color:#b45309;margin:8px 0 0;">— ${data.inviterName}</p>
+      <div style="background:${TEAL_LIGHT};border-left:4px solid ${TEAL};padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+        <p style="font-size:13px;color:${DEEP_BLUE};margin:0;font-style:italic;">"${data.personalMessage}"</p>
+        <p style="font-size:12px;color:#6b7280;margin:8px 0 0;">— ${data.inviterName}</p>
       </div>
       ` : ''}
 
       <div style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Why agents love AgentReferrals:</h3>
+        <h3 style="font-size:14px;font-weight:700;color:${DEEP_BLUE};margin:0 0 12px;">Why agents love AgentReferrals:</h3>
         <div style="font-size:13px;color:#4b5563;line-height:1.8;">
           ✓ AI-powered agent matching (NORA finds the perfect referral partner)<br>
           ✓ Keep 100% of your referral fees — zero platform cuts<br>
@@ -72,7 +91,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
       </div>
 
       <div style="text-align:center;">
-        <a href="${data.referralLink}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Join ${data.inviterName}'s Network</a>
+        <a href="${data.referralLink}" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Join ${data.inviterName}'s Network</a>
       </div>
 
       <p style="font-size:12px;color:#9ca3af;text-align:center;margin:20px 0 0;">
@@ -83,7 +102,7 @@ export async function sendInviteEmail(data: InviteEmailData) {
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p>AgentReferrals — AI-powered referral network for real estate agents</p>
-      <p style="margin-top:4px;">This email was sent because ${data.inviterName} invited you. <a href="https://agentreferrals.ai" style="color:#1FA3A3;">Learn more</a></p>
+      <p style="margin-top:4px;">This email was sent because ${data.inviterName} invited you. <a href="https://agentreferrals.ai" style="color:${TEAL};">Learn more</a></p>
     </div>
   </div>
 </body>
@@ -117,19 +136,17 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-block;width:32px;height:32px;background:#1FA3A3;border-radius:8px;line-height:32px;text-align:center;font-weight:800;font-size:14px;color:#ffffff;">A</div>
-    </div>
+    ${emailHeader('sm')}
     <div style="background:white;border-radius:16px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-      <h1 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">${data.heading}</h1>
+      <h1 style="font-size:20px;font-weight:700;color:${DEEP_BLUE};margin:0 0 12px;">${data.heading}</h1>
       <div style="font-size:14px;color:#4b5563;line-height:1.7;margin-bottom:24px;">${data.body}</div>
       ${data.ctaText && data.ctaUrl ? `
       <div style="text-align:center;">
-        <a href="${data.ctaUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">${data.ctaText}</a>
+        <a href="${data.ctaUrl}" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">${data.ctaText}</a>
       </div>` : ''}
     </div>
     <div style="text-align:center;margin-top:20px;font-size:11px;color:#9ca3af;">
-      <p>AgentReferrals · <a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Manage notifications</a></p>
+      <p>AgentReferrals · <a href="https://agentreferrals.ai/dashboard/settings" style="color:${TEAL};">Manage notifications</a></p>
     </div>
   </div>
 </body>
@@ -177,11 +194,7 @@ export async function sendInviterNotification(data: InviterNotificationData) {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:40px;height:40px;background:#1FA3A3;border-radius:10px;line-height:40px;text-align:center;font-weight:800;font-size:18px;color:#ffffff;">A</div>
-      <div style="margin-top:8px;font-weight:800;font-size:20px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
-    </div>
+    ${emailHeader('lg')}
 
     <!-- Card -->
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
@@ -189,9 +202,9 @@ export async function sendInviterNotification(data: InviterNotificationData) {
         <div style="display:inline-block;width:56px;height:56px;background:linear-gradient(135deg,#10b981,#059669);border-radius:50%;line-height:56px;text-align:center;font-size:24px;">&#9989;</div>
       </div>
 
-      <h1 style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 8px;text-align:center;">Great news, ${firstName}!</h1>
+      <h1 style="font-size:22px;font-weight:700;color:${DEEP_BLUE};margin:0 0 8px;text-align:center;">Great news, ${firstName}!</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;text-align:center;">
-        <strong style="color:#1a1a2e;">${data.newMemberName}</strong> from ${data.newMemberBrokerage} (${data.newMemberArea}) just joined AgentReferrals using your invite.
+        <strong style="color:${DEEP_BLUE};">${data.newMemberName}</strong> from ${data.newMemberBrokerage} (${data.newMemberArea}) just joined AgentReferrals using your invite.
       </p>
 
       <div style="background:#ecfdf5;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
@@ -199,14 +212,14 @@ export async function sendInviterNotification(data: InviterNotificationData) {
       </div>
 
       <div style="text-align:center;">
-        <a href="https://agentreferrals.ai/dashboard" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">View Your Network</a>
+        <a href="https://agentreferrals.ai/dashboard" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">View Your Network</a>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p>AgentReferrals — AI-powered referral network for real estate agents</p>
-      <p style="margin-top:4px;"><a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Manage notifications</a></p>
+      <p style="margin-top:4px;"><a href="https://agentreferrals.ai/dashboard/settings" style="color:${TEAL};">Manage notifications</a></p>
     </div>
   </div>
 </body>
@@ -255,16 +268,13 @@ export async function sendMagicLinkEmail(data: MagicLinkEmailData) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
-  <!-- Header -->
-  <tr><td style="background:#1a1a1a;padding:24px 32px;">
-    <span style="color:#1FA3A3;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
-  </td></tr>
+  ${emailHeaderDark()}
   <!-- Body -->
   <tr><td style="padding:32px;">
-    <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">${greeting}</p>
+    <p style="margin:0 0 16px;font-size:16px;color:${DEEP_BLUE};">${greeting}</p>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to sign in to your AgentReferrals account. This link expires in 15 minutes.</p>
     <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
-      <a href="${data.magicUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Sign In to AgentReferrals</a>
+      <a href="${data.magicUrl}" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Sign In to AgentReferrals</a>
     </td></tr></table>
     <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">If you didn't request this link, you can safely ignore this email. Your account is secure.</p>
   </td></tr>
@@ -322,19 +332,15 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
 
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;width:48px;height:48px;background:#1FA3A3;border-radius:12px;line-height:48px;text-align:center;font-weight:800;font-size:22px;color:#ffffff;">A</div>
-      <div style="margin-top:10px;font-weight:800;font-size:24px;color:#1a1a2e;">Agent<span style="color:#1FA3A3;">Referrals</span>.ai</div>
-    </div>
+    ${emailHeader('lg')}
 
     <!-- Welcome Card -->
     <div style="background:white;border-radius:16px;padding:40px 32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
       <div style="text-align:center;margin-bottom:24px;">
-        <div style="display:inline-block;width:64px;height:64px;background:linear-gradient(135deg,#1FA3A3,#1F2A5A);border-radius:50%;line-height:64px;text-align:center;font-size:28px;">&#127881;</div>
+        <div style="display:inline-block;width:64px;height:64px;background:linear-gradient(135deg,${TEAL},${DEEP_BLUE});border-radius:50%;line-height:64px;text-align:center;font-size:28px;">&#127881;</div>
       </div>
 
-      <h1 style="font-size:24px;font-weight:800;color:#1a1a2e;margin:0 0 8px;text-align:center;">Welcome to AgentReferrals, ${firstName}!</h1>
+      <h1 style="font-size:24px;font-weight:800;color:${DEEP_BLUE};margin:0 0 8px;text-align:center;">Welcome to AgentReferrals, ${firstName}!</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 28px;text-align:center;">
         You just joined the AI-powered referral network trusted by thousands of agents across the country.
       </p>
@@ -344,28 +350,28 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
         <table role="presentation" style="width:100%;border-collapse:collapse;">
           <tr>
             <td style="width:46px;vertical-align:top;padding-bottom:20px;">
-              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">1</div>
+              <div style="width:32px;height:32px;background:${TEAL_LIGHT};border:2px solid ${TEAL};border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:${DEEP_BLUE};">1</div>
             </td>
             <td style="vertical-align:top;padding-bottom:20px;">
-              <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Complete your profile</div>
+              <div style="font-weight:700;font-size:14px;color:${DEEP_BLUE};margin-bottom:2px;">Complete your profile</div>
               <div style="font-size:13px;color:#6b7280;line-height:1.5;">Add your brokerage, service area, and specializations so agents can find you.</div>
             </td>
           </tr>
           <tr>
             <td style="width:46px;vertical-align:top;padding-bottom:20px;">
-              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">2</div>
+              <div style="width:32px;height:32px;background:${TEAL_LIGHT};border:2px solid ${TEAL};border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:${DEEP_BLUE};">2</div>
             </td>
             <td style="vertical-align:top;padding-bottom:20px;">
-              <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Explore the network</div>
+              <div style="font-weight:700;font-size:14px;color:${DEEP_BLUE};margin-bottom:2px;">Explore the network</div>
               <div style="font-size:13px;color:#6b7280;line-height:1.5;">Browse agents on the map, find partners in markets you need, and connect with NORA AI.</div>
             </td>
           </tr>
           <tr>
             <td style="width:46px;vertical-align:top;">
-              <div style="width:32px;height:32px;background:#e0f5f5;border:2px solid #1FA3A3;border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:#1F2A5A;">3</div>
+              <div style="width:32px;height:32px;background:${TEAL_LIGHT};border:2px solid ${TEAL};border-radius:50%;line-height:28px;text-align:center;font-weight:800;font-size:14px;color:${DEEP_BLUE};">3</div>
             </td>
             <td style="vertical-align:top;">
-              <div style="font-weight:700;font-size:14px;color:#1a1a2e;margin-bottom:2px;">Send your first referral</div>
+              <div style="font-weight:700;font-size:14px;color:${DEEP_BLUE};margin-bottom:2px;">Send your first referral</div>
               <div style="font-size:13px;color:#6b7280;line-height:1.5;">Match a client with a verified agent, send the agreement, and track it to close.</div>
             </td>
           </tr>
@@ -374,22 +380,22 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 
       <!-- CTA -->
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${onboardingUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:10px;text-decoration:none;">Complete Your Profile</a>
+        <a href="${onboardingUrl}" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:10px;text-decoration:none;">Complete Your Profile</a>
       </div>
 
       <!-- Divider -->
       <div style="border-top:1px solid #e5e7eb;margin:24px 0;"></div>
 
       <!-- Invite friends -->
-      <div style="background:#fefce8;border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-weight:700;font-size:14px;color:#92400e;margin-bottom:6px;">Invite agents, earn free months</div>
-        <div style="font-size:13px;color:#a16207;line-height:1.5;margin-bottom:12px;">
+      <div style="background:${TEAL_LIGHT};border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-weight:700;font-size:14px;color:${DEEP_BLUE};margin-bottom:6px;">Invite agents, earn free months</div>
+        <div style="font-size:13px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
           For every agent who joins with your link, you get 1 free month of Pro.
         </div>
-        <div style="background:white;border:1px solid #fde68a;border-radius:8px;padding:10px 16px;font-size:13px;color:#1a1a2e;word-break:break-all;">
+        <div style="background:white;border:1px solid ${TEAL};border-radius:8px;padding:10px 16px;font-size:13px;color:${DEEP_BLUE};word-break:break-all;">
           ${referralLink}
         </div>
-        <div style="font-size:11px;color:#b45309;margin-top:8px;">Your referral code: <strong>${data.referralCode}</strong></div>
+        <div style="font-size:11px;color:#6b7280;margin-top:8px;">Your referral code: <strong>${data.referralCode}</strong></div>
       </div>
     </div>
 
@@ -397,7 +403,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:12px 0;margin-top:20px;">
       <tr>
         <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
-          <div style="font-weight:800;font-size:22px;color:#1FA3A3;">17,000+</div>
+          <div style="font-weight:800;font-size:22px;color:${TEAL};">17,000+</div>
           <div style="font-size:11px;color:#6b7280;margin-top:2px;">Agents on network</div>
         </td>
         <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
@@ -405,7 +411,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
           <div style="font-size:11px;color:#6b7280;margin-top:2px;">Of fees, you keep</div>
         </td>
         <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
-          <div style="font-weight:800;font-size:22px;color:#3b82f6;">50+</div>
+          <div style="font-weight:800;font-size:22px;color:${DEEP_BLUE};">50+</div>
           <div style="font-size:11px;color:#6b7280;margin-top:2px;">Markets covered</div>
         </td>
       </tr>
@@ -415,9 +421,9 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
     <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af;">
       <p style="margin:0 0 4px;">AgentReferrals — AI-powered referral network for real estate agents</p>
       <p style="margin:0;">
-        <a href="${dashboardUrl}" style="color:#1FA3A3;">Dashboard</a> ·
-        <a href="https://agentreferrals.ai/#pricing" style="color:#1FA3A3;">Pricing</a> ·
-        <a href="https://agentreferrals.ai/dashboard/settings" style="color:#1FA3A3;">Settings</a>
+        <a href="${dashboardUrl}" style="color:${TEAL};">Dashboard</a> ·
+        <a href="https://agentreferrals.ai/#pricing" style="color:${TEAL};">Pricing</a> ·
+        <a href="https://agentreferrals.ai/dashboard/settings" style="color:${TEAL};">Settings</a>
       </p>
     </div>
 
@@ -468,17 +474,14 @@ export async function sendConfirmEmail(data: ConfirmEmailData) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
-  <!-- Header -->
-  <tr><td style="background:#1a1a1a;padding:24px 32px;">
-    <span style="color:#1FA3A3;font-weight:800;font-size:18px;">Agent</span><span style="color:#ffffff;font-weight:800;font-size:18px;">Referrals</span><span style="color:#9ca3af;font-size:12px;">.ai</span>
-  </td></tr>
+  ${emailHeaderDark()}
   <!-- Body -->
   <tr><td style="padding:32px;">
-    <p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">${greeting}</p>
+    <p style="margin:0 0 16px;font-size:16px;color:${DEEP_BLUE};">${greeting}</p>
     <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.6;">Thanks for signing up for AgentReferrals! Please confirm your email address to get started.</p>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Click the button below to verify your email and activate your account.</p>
     <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
-      <a href="${data.confirmUrl}" style="display:inline-block;background:#1FA3A3;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Confirm My Email</a>
+      <a href="${data.confirmUrl}" style="display:inline-block;background:${TEAL};color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Confirm My Email</a>
     </td></tr></table>
     <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
   </td></tr>
