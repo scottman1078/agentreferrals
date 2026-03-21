@@ -227,7 +227,7 @@ export default function LandingPage() {
               { icon: Video, title: 'Video Introductions', desc: 'Record a short video intro so referral partners can see who they\'re working with before connecting.', color: 'text-red-500' },
               { icon: Users, title: 'Degrees of Separation', desc: 'See how you\'re connected to any agent through your network. Request warm introductions through mutual partners — just like LinkedIn for referrals.', color: 'text-purple-500' },
               { icon: BarChart3, title: 'Pipeline Tracking', desc: 'Kanban board tracks every referral from agreement to close. Never lose track of a deal again.', color: 'text-teal-500' },
-              { icon: FileText, title: 'Smart Agreements', desc: 'Auto-generated referral agreements with e-signature. Terms, fees, and expiration built in.', color: 'text-orange-500' },
+              { icon: FileText, title: 'E-Signature Agreements', desc: 'Send referral agreements with built-in e-signature. Auto-filled terms, fees, and expiration — signed and executed in minutes, not days.', color: 'text-orange-500' },
               { icon: TrendingUp, title: 'ROI Dashboard', desc: 'See your referral revenue, conversion rates, top markets, and top partners at a glance.', color: 'text-rose-500' },
               { icon: UserCheck, title: 'Agent Discovery', desc: 'Find agents by production, specialization, price range, and area. Filter by brokerage or search globally.', color: 'text-cyan-500' },
               { icon: MessageSquare, title: 'Direct Messaging', desc: 'Chat directly with referral partners. No middleman, no company taking your fee.', color: 'text-indigo-500' },
