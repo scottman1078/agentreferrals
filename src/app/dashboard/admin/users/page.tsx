@@ -62,12 +62,12 @@ function TierCell({ value }: ICellRendererParams) {
 function TypeCell({ data }: ICellRendererParams) {
   if (!data) return null
   if (data.is_admin || ADMIN_EMAILS.includes(data.email)) {
-    return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Admin</span>
+    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">Admin</span>
   }
   if (data.is_demo) {
-    return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/15 text-orange-600 dark:text-orange-400">Demo</span>
+    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30">Demo</span>
   }
-  return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground">User</span>
+  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100 border border-gray-300 dark:border-gray-500">User</span>
 }
 
 function SetupCell({ value }: ICellRendererParams) {
