@@ -61,25 +61,13 @@ function TierCell({ value }: ICellRendererParams) {
 
 function TypeCell({ data }: ICellRendererParams) {
   if (!data) return null
-  const badges = []
   if (data.is_admin || ADMIN_EMAILS.includes(data.email)) {
-    badges.push(
-      <span key="admin" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500 text-white">
-        Admin
-      </span>
-    )
+    return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Admin</span>
   }
   if (data.is_demo) {
-    badges.push(
-      <span key="demo" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/20 text-orange-600 border border-orange-500/30">
-        Demo
-      </span>
-    )
+    return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/15 text-orange-600 dark:text-orange-400">Demo</span>
   }
-  if (badges.length === 0) {
-    return <span className="text-xs text-muted-foreground">User</span>
-  }
-  return <div className="flex gap-1">{badges}</div>
+  return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground">User</span>
 }
 
 function SetupCell({ value }: ICellRendererParams) {
@@ -199,8 +187,7 @@ export default function AdminUsersPage() {
     { headerName: 'Market', field: 'primary_area', flex: 1, minWidth: 120, filter: true, cellRenderer: (params: ICellRendererParams) => <span className="text-xs">{params.value || '—'}</span> },
     { headerName: 'Status', field: 'status', width: 100, filter: true, cellRenderer: StatusCell },
     { headerName: 'Tier', field: 'subscription_tier', width: 100, filter: true, cellRenderer: TierCell },
-    { headerName: 'Type', width: 100, cellRenderer: TypeCell, sortable: false },
-    { headerName: 'Specializations', field: 'tags', flex: 1, minWidth: 140, cellRenderer: TagsCell, sortable: false },
+    { headerName: 'Type', width: 110, cellRenderer: TypeCell, sortable: false },
     { headerName: 'Deals/yr', field: 'deals_per_year', width: 90, filter: 'agNumberColumnFilter' },
     { headerName: 'Yrs Licensed', field: 'years_licensed', width: 100, filter: 'agNumberColumnFilter' },
     { headerName: 'Avg Price', field: 'avg_sale_price', width: 100, cellRenderer: PriceCell, filter: 'agNumberColumnFilter' },
