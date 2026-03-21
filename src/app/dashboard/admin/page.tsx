@@ -113,19 +113,9 @@ export default function AdminOverview() {
         ))}
       </div>
 
-      {/* Recent Signups — collapsible */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <button
-          onClick={() => setSignupsOpen(!signupsOpen)}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-accent/50 transition-colors"
-        >
-          <h2 className="text-sm font-bold">Recent Signups</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{recentSignups.length} users</span>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${signupsOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </button>
-        {signupsOpen && <div className="px-5 pb-5">
+      {/* Recent Signups */}
+      <div className="p-5 rounded-xl border border-border bg-card">
+        <h2 className="text-sm font-bold mb-3">Recent Signups</h2>
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading...
@@ -160,7 +150,6 @@ export default function AdminOverview() {
             </table>
           </div>
         )}
-        </div>}
       </div>
 
       {/* Quick Actions */}
