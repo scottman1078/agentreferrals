@@ -92,7 +92,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 dark:brightness-[1.8]" />
+            <><img src="/favicon.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={32} height={32} className="shrink-0 hidden dark:block" /></>
             <span className="font-extrabold text-lg tracking-tight">
               Agent<span className="text-accent">Referrals</span>
             </span>
@@ -131,15 +131,15 @@ export default function LandingPage() {
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-6">
-            <Zap className="w-3.5 h-3.5" />
-            Built on Trust
+            <Sparkles className="w-3.5 h-3.5" />
+            Powered by NORA
           </div>
           <h1 className="font-extrabold text-3xl sm:text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
-            The Referral Network<br />
-            <span className="text-primary">Agents Actually Trust.</span>
+            The Agent to Agent Referral Network<br />
+            <span className="text-primary">Built on Trust.</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto mb-6 leading-relaxed px-2 sm:px-0">
-            The most advanced and intelligent agent-to-agent referral platform that provides referral opportunities across all brokerages, in any market.
+            Build your referral network, discover vetted agents through connections you already trust, and manage every referral from agreement to close — all in one place.
           </p>
 
           {/* Spots counter */}
@@ -515,7 +515,7 @@ export default function LandingPage() {
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 dark:brightness-[1.8]" />
+            <><img src="/favicon.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={28} height={28} className="shrink-0 hidden dark:block" /></>
             <span className="font-extrabold text-sm">Agent<span className="text-accent">Referrals</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -523,7 +523,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-foreground transition-colors">Terms</a>
             <a href="#" className="hover:text-foreground transition-colors">Contact</a>
           </div>
-          <p className="text-xs text-muted-foreground">&copy; 2025 AgentReferrals. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">&copy; 2025 Agent Dashboards, LLC. All rights reserved.</p>
         </div>
       </footer>
 
@@ -535,7 +535,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-2.5 mb-2">
-              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:brightness-[1.8]" />
+              <><img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 hidden dark:block" /></>
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-accent">Referrals</span>
               </span>
@@ -994,7 +994,7 @@ export default function LandingPage() {
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2.5 mb-2">
-              <img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:brightness-[1.8]" />
+              <><img src="/favicon.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={36} height={36} className="shrink-0 hidden dark:block" /></>
               <span className="font-extrabold text-xl tracking-tight">
                 Agent<span className="text-accent">Referrals</span>
               </span>

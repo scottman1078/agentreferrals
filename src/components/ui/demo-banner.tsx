@@ -11,7 +11,7 @@ export default function DemoBanner() {
   if (!isDemoMode || dismissed) return null
 
   return (
-    <div className="fixed bottom-[76px] left-0 right-0 z-[800] bg-gradient-to-r from-primary via-amber-500 to-primary">
+    <div className="fixed bottom-[76px] left-0 right-0 z-[800] bg-primary">
       <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-semibold">
           <Eye className="w-4 h-4 shrink-0" />

@@ -20,7 +20,7 @@ function DemoRedirect() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-3">
-        <img src="/favicon.png" alt="AgentReferrals" width={40} height={40} className="shrink-0 animate-pulse mx-auto dark:brightness-[1.8]" />
+        <><img src="/favicon.png" alt="AgentReferrals" width={40} height={40} className="shrink-0 animate-pulse mx-auto dark:hidden" /><img src="/favicon-dark.png" alt="AgentReferrals" width={40} height={40} className="shrink-0 animate-pulse mx-auto hidden dark:block" /></>
         <p className="text-sm font-semibold text-muted-foreground">Loading your referral network...</p>
       </div>
     </div>

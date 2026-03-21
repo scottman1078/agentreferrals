@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTheme } from 'next-themes'
 
-/** Favicon mark — house with referral arrow */
+/** Favicon mark — house with referral arrow. Swaps to white-house version in dark mode. */
 function LogoMark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizeMap = {
     sm: 28,
@@ -11,14 +12,16 @@ function LogoMark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
     lg: 40,
   }
   const px = sizeMap[size]
+  const { resolvedTheme } = useTheme()
+  const src = resolvedTheme === 'dark' ? '/favicon-dark.png' : '/favicon.png'
 
   return (
     <Image
-      src="/favicon.png"
+      src={src}
       alt="AgentReferrals"
       width={px}
       height={px}
-      className="shrink-0 dark:brightness-[1.8]"
+      className="shrink-0"
     />
   )
 }
