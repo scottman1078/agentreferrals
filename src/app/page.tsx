@@ -221,7 +221,7 @@ export default function LandingPage() {
             {[
               { icon: Sparkles, title: 'NORA AI Assistant', desc: 'Tell NORA the market you need a partner in. She finds verified agents across your entire network in seconds.', color: 'text-primary' },
               { icon: ShoppingBag, title: 'Referral Marketplace', desc: 'Post referral opportunities for agents to bid on. Find deals in your market posted by agents across the country.', color: 'text-pink-500' },
-              { icon: BadgeCheck, title: 'Verified Referrals', desc: 'Build your track record with verified closed referrals. Show other agents you close deals and communicate.', color: 'text-emerald-500' },
+              { icon: BadgeCheck, title: 'Referral Communication Score', desc: 'Every agent is scored on communication, response time, and closed referrals — so you know who follows through before you refer.', color: 'text-emerald-500' },
               { icon: MapPin, title: 'Network Map', desc: 'Visualize agent territories, identify coverage gaps, and spot market opportunities with an interactive map.', color: 'text-blue-500' },
               { icon: ThumbsUp, title: 'Agent Endorsements', desc: 'Give and receive endorsements from agents you\'ve worked with. Social proof that builds trust and credibility.', color: 'text-violet-500' },
               { icon: Video, title: 'Video Introductions', desc: 'Record a short video intro so referral partners can see who they\'re working with before connecting.', color: 'text-red-500' },
