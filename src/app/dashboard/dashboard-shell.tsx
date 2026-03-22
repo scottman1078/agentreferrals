@@ -13,6 +13,7 @@ import { AdminTierProvider } from '@/contexts/admin-tier-context'
 import { DemoProvider } from '@/contexts/demo-context'
 import AdminTierSwitcher from '@/components/admin/tier-switcher'
 import DemoBanner from '@/components/ui/demo-banner'
+import BugReportButton from '@/components/ui/bug-report-button'
 import { useDemo } from '@/contexts/demo-context'
 import { UserPlus, X } from 'lucide-react'
 import { nudges as initialNudges } from '@/data/nudges'
@@ -171,6 +172,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         {!isSetupPage && <NoraChat nudgeCount={nudgeList.filter((n) => !n.dismissed).length} />}
 
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+
+        {/* Bug report FAB */}
+        <BugReportButton />
 
         {/* Tier switcher moved to avatar dropdown in top-bar */}
       </div>
