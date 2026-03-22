@@ -749,56 +749,27 @@ export default function AgentMap() {
 
       const hasPhoto = !!agent.photoUrl && !scopeLocked
 
-      if (isPartner) {
-        // Partners: large, photo or initials
-        markerSize = 36
-        const content = hasPhoto
-          ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
-          : `<span style="font-size:12px;font-weight:700;color:white;">${initials}</span>`
-        markerHtml = `<div style="
-            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${hasPhoto ? '#fff' : agent.color};
-            box-shadow:0 2px 10px rgba(0,0,0,0.3);
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;overflow:hidden;
-          ">${content}</div>`
-      } else if (is1Degree) {
-        // 1-degree: medium
-        markerSize = 30
-        markerHtml = `<div style="
-            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.color};
-            box-shadow:0 2px 8px rgba(0,0,0,0.2);
-            display:flex;align-items:center;justify-content:center;
-            font-size:10px;font-weight:700;color:white;
-            font-family:var(--font-dm-sans),system-ui,sans-serif;
-            cursor:pointer;
-          ">${initials}</div>`
-      } else if (is2Degree) {
-        // 2-degree: smaller
-        markerSize = 28
-        markerHtml = `<div style="
-            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.color};
-            box-shadow:0 1px 6px rgba(0,0,0,0.15);
-            display:flex;align-items:center;justify-content:center;
-            font-size:9px;font-weight:700;color:white;
-            font-family:var(--font-dm-sans),system-ui,sans-serif;
-            cursor:pointer;
-          ">${initials}</div>`
-      } else {
-        // Not connected: smallest
-        markerSize = 26
-        markerHtml = `<div style="
-            width:${markerSize}px;height:${markerSize}px;border-radius:50%;
-            background:${agent.color};
-            box-shadow:0 1px 4px rgba(0,0,0,0.12);
-            display:flex;align-items:center;justify-content:center;
-            font-size:9px;font-weight:600;color:white;
-            font-family:var(--font-dm-sans),system-ui,sans-serif;
-            cursor:pointer;
-          ">${initials}</div>`
-      }
+      // Size based on connection level
+      if (isPartner) markerSize = 36
+      else if (is1Degree) markerSize = 30
+      else if (is2Degree) markerSize = 28
+      else markerSize = 26
+
+      const fontSize = isPartner ? 12 : is1Degree ? 10 : 9
+      const shadow = isPartner ? '0 2px 10px rgba(0,0,0,0.3)' : is1Degree ? '0 2px 8px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.12)'
+
+      // Show photo for all agents that have one (not just partners)
+      const content = hasPhoto
+        ? `<img src="${agent.photoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+        : `<span style="font-size:${fontSize}px;font-weight:700;color:white;font-family:var(--font-dm-sans),system-ui,sans-serif;">${initials}</span>`
+
+      markerHtml = `<div style="
+          width:${markerSize}px;height:${markerSize}px;border-radius:50%;
+          background:${hasPhoto ? '#fff' : agent.color};
+          box-shadow:${shadow};
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;overflow:hidden;
+        ">${content}</div>`
 
       const markerIcon = L!.divIcon({
         className: 'agent-marker',
