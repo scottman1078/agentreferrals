@@ -17,13 +17,15 @@ const DemoContext = createContext<DemoContextType>({
 })
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  // Initialize from sessionStorage synchronously to avoid a false→true flash
-  const [isDemoMode, setIsDemoMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem(DEMO_KEY) === 'true'
-    }
-    return false
-  })
+  // Start false to match SSR, then sync from sessionStorage after mount
+  const [isDemoMode, setIsDemoMode] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(DEMO_KEY) === 'true'
+    if (stored) setIsDemoMode(true)
+    setMounted(true)
+  }, [])
 
   const enableDemo = useCallback(() => {
     sessionStorage.setItem(DEMO_KEY, 'true')
@@ -34,6 +36,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(DEMO_KEY)
     setIsDemoMode(false)
   }, [])
+
+  // Don't render children until we've read sessionStorage
+  // This prevents the flash of non-demo content
+  if (!mounted) {
+    return null
+  }
 
   return (
     <DemoContext.Provider value={{ isDemoMode, enableDemo, disableDemo }}>

@@ -747,7 +747,7 @@ export default function AgentMap() {
       let markerSize: number
       let markerHtml: string
 
-      const hasPhoto = !!agent.photoUrl && !scopeLocked
+      const hasPhoto = !!agent.photoUrl
 
       // Size based on connection level
       if (isPartner) markerSize = 36
