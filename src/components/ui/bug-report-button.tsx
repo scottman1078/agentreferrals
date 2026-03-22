@@ -82,7 +82,7 @@ export default function BugReportButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-[180px] left-[10px] z-[800] w-[34px] h-[34px] rounded-lg bg-white border border-[#ccc] text-foreground shadow-sm hover:bg-gray-100 transition-all flex items-center justify-center"
+        className="fixed bottom-[180px] left-[10px] z-[800] w-[34px] h-[34px] rounded-lg bg-card border border-border text-foreground shadow-sm hover:bg-accent transition-all flex items-center justify-center"
         title="Report a Bug or Request a Feature"
       >
         <Bug className="w-4 h-4" />

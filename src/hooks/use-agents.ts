@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ArProfile } from '@/contexts/auth-context'
 
@@ -8,7 +8,7 @@ interface UseAgentsOptions {
   brokerageId?: string | null
   scope?: 'my-brokerage' | 'all-network'
   search?: string
-  /** When true, include demo agents. When false, exclude them. */
+  /** When true, show demo agents. When false, exclude them. */
   includeDemo?: boolean
 }
 
@@ -28,33 +28,30 @@ export function useAgents({
   const [data, setData] = useState<ArProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const supabase = createClient()
+  const hasFetched = useRef(false)
+  const lastIncludeDemo = useRef(includeDemo)
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+
+    const supabase = createClient()
 
     let query = supabase
       .from('ar_profiles')
       .select(`*, brokerage:ar_brokerages(*)`)
       .eq('status', 'active')
 
-    // Filter demo agents based on mode
     if (includeDemo) {
-      // Demo mode: show only demo agents
       query = query.eq('is_demo', true)
     } else {
-      // Production: exclude demo agents
       query = query.eq('is_demo', false)
     }
 
-    // Filter by brokerage if scoped
     if (scope === 'my-brokerage' && brokerageId) {
       query = query.eq('brokerage_id', brokerageId)
     }
 
-    // Text search on name
     if (search) {
       query = query.ilike('full_name', `%${search}%`)
     }
@@ -71,11 +68,16 @@ export function useAgents({
     }
 
     setIsLoading(false)
-  }, [supabase, brokerageId, scope, search, includeDemo])
+    hasFetched.current = true
+    lastIncludeDemo.current = includeDemo
+  }, [brokerageId, scope, search, includeDemo])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    // Only re-fetch if includeDemo actually changed or first fetch
+    if (!hasFetched.current || lastIncludeDemo.current !== includeDemo) {
+      fetchData()
+    }
+  }, [fetchData, includeDemo])
 
   return { data, isLoading, error, mutate: fetchData }
 }
