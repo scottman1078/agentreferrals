@@ -19,9 +19,9 @@ interface ProviderConfig {
   id: 'fub' | 'lofty'
   name: string
   description: string
-  logo: string
-  docsUrl: string
-  placeholder: string
+  authType: 'oauth' | 'apikey'
+  placeholder?: string
+  helpText?: string
 }
 
 const PROVIDERS: ProviderConfig[] = [
@@ -29,17 +29,16 @@ const PROVIDERS: ProviderConfig[] = [
     id: 'fub',
     name: 'Follow Up Boss',
     description: 'Sync contacts from your FUB account',
-    logo: '/images/crm/fub-logo.svg',
-    docsUrl: 'https://www.followupboss.com/api',
-    placeholder: 'Enter your FUB API key...',
+    authType: 'oauth',
+    helpText: 'You\'ll be redirected to Follow Up Boss to authorize access.',
   },
   {
     id: 'lofty',
     name: 'Lofty',
     description: 'Sync contacts from your Lofty CRM',
-    logo: '/images/crm/lofty-logo.svg',
-    docsUrl: 'https://api.lofty.com',
+    authType: 'apikey',
     placeholder: 'Enter your Lofty API key...',
+    helpText: 'Find your API key in Lofty under Settings → API.',
   },
 ]
 
@@ -250,83 +249,92 @@ function CrmProviderCard({
       {/* Expandable Connect Form */}
       {expanded && !isConnected && (
         <div className="border-t border-border p-3 bg-muted/30 space-y-3">
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              API Key
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => {
-                setApiKey(e.target.value)
-                setTestResult(null)
-                setError(null)
-              }}
-              className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder={provider.placeholder}
-            />
-            <a
-              href={provider.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] text-primary hover:underline mt-1 inline-block"
-            >
-              Where do I find my API key?
-            </a>
-          </div>
-
-          {/* Test result */}
-          {testResult && (
-            <div
-              className={`text-xs p-2 rounded-md ${
-                testResult.valid
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-red-500/10 text-red-600 dark:text-red-400'
-              }`}
-            >
-              {testResult.valid ? 'Connection successful!' : testResult.error ?? 'Invalid API key'}
-            </div>
-          )}
-
-          {error && (
-            <div className="text-xs p-2 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleTest}
-              disabled={!apiKey.trim() || testing}
-              className="h-8 px-3 rounded-md border border-border text-xs font-semibold hover:bg-accent transition-colors disabled:opacity-40 flex items-center gap-1"
-            >
-              <TestTube className="w-3.5 h-3.5" />
-              {testing ? 'Testing...' : 'Test Connection'}
-            </button>
-            <button
-              onClick={handleConnect}
-              disabled={!apiKey.trim() || connecting}
-              className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center gap-1"
-            >
-              {connecting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Check className="w-3.5 h-3.5" />
+          {provider.authType === 'oauth' ? (
+            /* OAuth flow for FUB */
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">{provider.helpText}</p>
+              {error && (
+                <div className="text-xs p-2 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">{error}</div>
               )}
-              {connecting ? 'Connecting...' : 'Save & Connect'}
-            </button>
-            <button
-              onClick={() => {
-                setExpanded(false)
-                setApiKey('')
-                setTestResult(null)
-                setError(null)
-              }}
-              className="h-8 px-3 rounded-md border border-border text-xs font-semibold hover:bg-accent transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    // Redirect to FUB OAuth authorization URL
+                    const clientId = process.env.NEXT_PUBLIC_FUB_CLIENT_ID || ''
+                    const redirectUri = `${window.location.origin}/api/crm/fub/callback`
+                    const authUrl = `https://app.followupboss.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`
+                    window.location.href = authUrl
+                  }}
+                  className="h-9 px-4 rounded-md bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  Connect with Follow Up Boss
+                </button>
+                <button
+                  onClick={() => { setExpanded(false); setError(null) }}
+                  className="h-9 px-3 rounded-md border border-border text-xs font-semibold hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* API Key flow for Lofty */
+            <>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value)
+                    setTestResult(null)
+                    setError(null)
+                  }}
+                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder={provider.placeholder}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">{provider.helpText}</p>
+              </div>
+
+              {testResult && (
+                <div className={`text-xs p-2 rounded-md ${testResult.valid ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                  {testResult.valid ? 'Connection successful!' : testResult.error ?? 'Invalid API key'}
+                </div>
+              )}
+
+              {error && (
+                <div className="text-xs p-2 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">{error}</div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleTest}
+                  disabled={!apiKey.trim() || testing}
+                  className="h-8 px-3 rounded-md border border-border text-xs font-semibold hover:bg-accent transition-colors disabled:opacity-40 flex items-center gap-1"
+                >
+                  <TestTube className="w-3.5 h-3.5" />
+                  {testing ? 'Testing...' : 'Test Connection'}
+                </button>
+                <button
+                  onClick={handleConnect}
+                  disabled={!apiKey.trim() || connecting}
+                  className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center gap-1"
+                >
+                  {connecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {connecting ? 'Connecting...' : 'Save & Connect'}
+                </button>
+                <button
+                  onClick={() => { setExpanded(false); setApiKey(''); setTestResult(null); setError(null) }}
+                  className="h-8 px-3 rounded-md border border-border text-xs font-semibold hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

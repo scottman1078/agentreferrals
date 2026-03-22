@@ -43,22 +43,26 @@ function NewMessageModal({
   onCreateGroup,
   existingConversationIds,
   agents,
+  currentUserId,
 }: {
   onClose: () => void
   onSelect: (agentId: string) => void
   onCreateGroup: (agentIds: string[]) => void
   existingConversationIds: Set<string>
   agents: { id: string; name: string; brokerage: string; area: string; color: string }[]
+  currentUserId?: string
 }) {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [groupName, setGroupName] = useState('')
 
   const filteredAgents = useMemo(() => {
-    if (!search) return agents.filter((a) => a.id !== 'jason').slice(0, 10)
+    // Filter out the current user from the list
+    const selfIds = new Set(['jason', ...(currentUserId ? [currentUserId] : [])])
+    const available = agents.filter((a) => !selfIds.has(a.id))
+    if (!search) return available.slice(0, 10)
     const q = search.toLowerCase()
-    return agents
-      .filter((a) => a.id !== 'jason')
+    return available
       .filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
@@ -66,7 +70,7 @@ function NewMessageModal({
           a.area.toLowerCase().includes(q)
       )
       .slice(0, 10)
-  }, [search])
+  }, [search, agents, currentUserId])
 
   function toggleAgent(agentId: string) {
     setSelectedIds((prev) => {
@@ -697,8 +701,8 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Partners waiting on updates banner */}
-      {(() => {
+      {/* Partners waiting on updates banner — demo only (no real nudge data yet) */}
+      {isDemoMode && (() => {
         const commNudges = getCommNudges('jason').filter((n) => n.agentId !== 'jason')
         if (commNudges.length === 0) return null
         return (
@@ -713,13 +717,15 @@ export default function MessagesPage() {
         )
       })()}
 
-      {/* Suggested Outreach from NORA */}
-      <SuggestedOutreach
-        nudges={nudgeList}
-        onDismiss={handleDismissNudge}
-        onSendMessage={handleNudgeSendMessage}
-        onCustomize={handleNudgeCustomize}
-      />
+      {/* Suggested Outreach from NORA — demo only (no real nudge data yet) */}
+      {isDemoMode && (
+        <SuggestedOutreach
+          nudges={nudgeList}
+          onDismiss={handleDismissNudge}
+          onSendMessage={handleNudgeSendMessage}
+          onCustomize={handleNudgeCustomize}
+        />
+      )}
 
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
@@ -970,6 +976,7 @@ export default function MessagesPage() {
           onCreateGroup={handleCreateGroup}
           existingConversationIds={existingConversationIds}
           agents={agents}
+          currentUserId={userId}
         />
       )}
       </div>
