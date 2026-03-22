@@ -45,9 +45,12 @@ export default function AgentMap() {
   const [referralAgent, setReferralAgent] = useState<Agent | null>(null)
   const router = useRouter()
   const { resolvedTheme } = useTheme()
-  const { filteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
+  const { filteredAgents: allFilteredAgents, scope, partnerIds, oneDegreeIds, twoDegreeIds, scopeLocked } = useBrokerage()
   const { specs: dbSpecs, colorMap: TAG_COLORS } = useSpecializations()
-  const { voidZones } = useAppData()
+  const { voidZones, userId } = useAppData()
+
+  // Exclude the current user from the map — they shouldn't see themselves as a marker
+  const filteredAgents = userId ? allFilteredAgents.filter((a) => a.id !== userId) : allFilteredAgents
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())
   const [countyLoadCount, setCountyLoadCount] = useState(0)

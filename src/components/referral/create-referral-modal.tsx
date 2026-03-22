@@ -111,10 +111,10 @@ export default function CreateReferralModal({
   )
 
   const filteredAgents = useMemo(() => {
-    if (!searchQuery.trim()) return agents.filter((a) => a.id !== 'jason') // exclude self
+    if (!searchQuery.trim()) return agents.filter((a) => a.id !== user?.id) // exclude self
     const q = searchQuery.toLowerCase()
     return agents
-      .filter((a) => a.id !== 'jason') // exclude self
+      .filter((a) => a.id !== user?.id) // exclude self
       .filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
