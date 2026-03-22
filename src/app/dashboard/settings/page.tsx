@@ -13,11 +13,12 @@ import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { uploadVideo } from '@/lib/supabase/upload-video'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import ExpectationsSelector from '@/components/expectations/expectations-selector'
+import { CrmConnections } from '@/components/settings/crm-connections'
 
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
-type Tab = 'profile' | 'territory' | 'billing' | 'referrals' | 'notifications'
+type Tab = 'profile' | 'territory' | 'billing' | 'referrals' | 'notifications' | 'integrations'
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'referrals', label: 'Referral Defaults', icon: FileText },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'integrations', label: 'Integrations', icon: SettingsIcon as typeof User },
 ]
 
 function formatPhoneDisplay(phone: string): string {
@@ -1540,6 +1542,11 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* ═══ Integrations Tab ═══ */}
+        {activeTab === 'integrations' && (
+          <CrmConnections />
         )}
       </div>
 
