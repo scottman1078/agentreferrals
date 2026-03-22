@@ -136,7 +136,7 @@ export default function PipelinePageGated() {
 
 function PipelinePage() {
   const demoGuard = useDemoGuard()
-  const { referrals, referralsLoading } = useAppData()
+  const { referrals, referralsLoading, agents } = useAppData()
   const [referralList, setReferralList] = useState<Referral[]>(referrals)
 
   // Sync when data source changes (e.g., auth state resolves)
@@ -285,18 +285,23 @@ function PipelinePage() {
         />
       )}
 
-      {agreementReferral && (
-        <AgreementBuilder
-          onClose={() => setAgreementReferral(null)}
-          prefill={{
-            receivingAgentName: agreementReferral.toAgent,
-            clientName: agreementReferral.clientName,
-            market: agreementReferral.market,
-            estimatedPrice: agreementReferral.estimatedPrice,
-            feePercent: agreementReferral.feePercent,
-          }}
-        />
-      )}
+      {agreementReferral && (() => {
+        const receivingAgent = agents.find((a) => a.id === agreementReferral.toAgent)
+        return (
+          <AgreementBuilder
+            onClose={() => setAgreementReferral(null)}
+            prefill={{
+              receivingAgentName: receivingAgent?.name || agreementReferral.toAgent,
+              receivingAgentBrokerage: receivingAgent?.brokerage,
+              receivingAgentEmail: receivingAgent?.email,
+              clientName: agreementReferral.clientName,
+              market: agreementReferral.market,
+              estimatedPrice: agreementReferral.estimatedPrice,
+              feePercent: agreementReferral.feePercent,
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }

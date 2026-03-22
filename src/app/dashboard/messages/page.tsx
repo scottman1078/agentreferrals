@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import { getInitials } from '@/lib/utils'
-import { agents } from '@/data/agents'
+import { useAppData } from '@/lib/data-provider'
 import {
   conversations as mockConversations,
   getLastMessage,
@@ -40,11 +40,13 @@ function NewMessageModal({
   onSelect,
   onCreateGroup,
   existingConversationIds,
+  agents,
 }: {
   onClose: () => void
   onSelect: (agentId: string) => void
   onCreateGroup: (agentIds: string[]) => void
   existingConversationIds: Set<string>
+  agents: { id: string; name: string; brokerage: string; area: string; color: string }[]
 }) {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -338,6 +340,7 @@ function ConversationItem({
 
 export default function MessagesPage() {
   const demoGuard = useDemoGuard()
+  const { agents } = useAppData()
   // Read ?agent= param from window.location on mount (avoids useSearchParams Suspense issues)
   const [preselectedAgent, setPreselectedAgent] = useState<string | null>(null)
 
@@ -863,6 +866,7 @@ export default function MessagesPage() {
           onSelect={handleSelectAgent}
           onCreateGroup={handleCreateGroup}
           existingConversationIds={existingConversationIds}
+          agents={agents}
         />
       )}
       </div>

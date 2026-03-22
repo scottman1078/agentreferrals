@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
+import { useAuth } from '@/contexts/auth-context'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { AgentReviewBadge } from '@/components/reviews/agent-review-badge'
@@ -69,8 +70,9 @@ export default function CreateReferralModal({
 }: CreateReferralModalProps) {
   const [step, setStep] = useState<Step>(preselectedAgentId ? 0 : 0)
   const [submitted, setSubmitted] = useState(false)
-  const { agents } = useAppData()
+  const { agents, mutateReferrals } = useAppData()
   const demoGuard = useDemoGuard()
+  const { user } = useAuth()
 
   // Step 1 — Client Info
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
@@ -157,11 +159,46 @@ export default function CreateReferralModal({
     if (step > 0) setStep((step - 1) as Step)
   }
 
-  function handleSubmit() {
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit() {
     if (demoGuard()) return
-    // In the future, insert into ar_referrals via Supabase
-    // For now, just show success state
+    if (submitting) return
+    setSubmitting(true)
+
+    try {
+      const res = await fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromAgentId: user?.id,
+          toAgentId: selectedAgentId,
+          clientName: clientInfo.name,
+          clientEmail: clientInfo.email,
+          clientPhone: clientInfo.phone,
+          representation: clientInfo.representation,
+          budget: clientInfo.budget,
+          notes: clientInfo.notes,
+          market: terms.market,
+          feePercent: terms.feePercent,
+          estimatedPrice: terms.estimatedPrice,
+          commissionRate: terms.commissionRate,
+          estCloseDate: terms.estCloseDate,
+          agreementExpDays: terms.agreementExpDays,
+          personalNote: terms.personalNote,
+        }),
+      })
+
+      if (res.ok) {
+        // Refresh the referrals list so pipeline updates
+        await mutateReferrals()
+      }
+    } catch (err) {
+      console.error('[CreateReferral] Failed to persist:', err)
+    }
+
     setSubmitted(true)
+    setSubmitting(false)
   }
 
   function handleSelectAgent(agent: Agent) {
@@ -877,10 +914,11 @@ export default function CreateReferralModal({
             ) : (
               <button
                 onClick={handleSubmit}
-                className="flex items-center gap-1.5 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                disabled={submitting}
+                className="flex items-center gap-1.5 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
-                Send Referral
+                {submitting ? 'Sending...' : 'Send Referral'}
               </button>
             )}
           </div>

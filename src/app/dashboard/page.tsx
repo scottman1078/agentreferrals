@@ -17,13 +17,11 @@ function MapLoader() {
 }
 
 const AgentMap = dynamic(() => import('@/components/map/agent-map'), { ssr: false, loading: () => <MapLoader /> })
-const MarketplaceFeed = dynamic(() => import('@/components/marketplace/marketplace-feed'), { ssr: false })
 
 export default function MapPage() {
   return (
     <div className="w-full h-full">
       <AgentMap />
-      <MarketplaceFeed />
     </div>
   )
 }

@@ -121,6 +121,9 @@ interface AppData {
   agentsLoading: boolean
   referralsLoading: boolean
   invitesLoading: boolean
+
+  // Mutation helpers
+  mutateReferrals: () => Promise<void>
 }
 
 export function useAppData(): AppData {
@@ -165,6 +168,7 @@ export function useAppData(): AppData {
   const {
     data: supaReferrals,
     isLoading: referralsLoading,
+    mutate: mutateReferrals,
   } = useReferrals({ userId: isDemoMode ? undefined : userId })
 
   const {
@@ -202,8 +206,8 @@ export function useAppData(): AppData {
     profile,
     userId,
 
-    // Agents always come from Supabase (filtered by is_demo flag in the hook)
-    agents: mappedAgents,
+    // Agents: Supabase data if available, fall back to mock in demo mode
+    agents: isDemoMode && mappedAgents.length === 0 ? mockAgents : mappedAgents,
 
     // Referrals/invites: real data for authenticated, mock for demo
     referrals: isDemoMode ? mockReferrals : mappedReferrals,
@@ -228,5 +232,7 @@ export function useAppData(): AppData {
     agentsLoading,
     referralsLoading: isDemoMode ? false : referralsLoading,
     invitesLoading: isDemoMode ? false : invitesLoading,
+
+    mutateReferrals: isDemoMode ? (async () => {}) : mutateReferrals,
   }
 }

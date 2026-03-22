@@ -77,9 +77,9 @@ export function useMarketplace(): MarketplaceData {
           myBidsRes.json(),
         ])
 
-        if (openData.source === 'supabase' && openData.posts?.length > 0) {
+        if (openData.source === 'supabase') {
           // Map Supabase format to mock format for compatibility
-          setOpenPosts(openData.posts.map(mapSupabasePost))
+          setOpenPosts((openData.posts || []).map(mapSupabasePost))
           setMyPosts((myPostsData.posts || []).map(mapSupabasePost))
           setMyBids((myBidsData.bids || []).map(mapSupabaseBid))
           setSource('supabase')

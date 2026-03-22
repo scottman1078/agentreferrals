@@ -44,6 +44,7 @@ import {
   Timer,
 } from 'lucide-react'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 
 type Tab = 'browse' | 'my-posts' | 'my-bids'
 
@@ -525,6 +526,8 @@ function BidForm({
   postingAgentName: string
 }) {
   const demoGuardBid = useDemoGuard()
+  const { hasFeature } = useFeatureGate()
+  const canBid = hasFeature('marketplaceBid')
   const [isOpen, setIsOpen] = useState(false)
   const [pitch, setPitch] = useState('')
   const [highlights, setHighlights] = useState('')
@@ -545,6 +548,27 @@ function BidForm({
             </p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (!canBid) {
+    return (
+      <div className="p-4 rounded-xl border border-primary/20 bg-primary/[0.03] text-center space-y-2">
+        <div className="flex items-center justify-center gap-2 text-sm font-semibold text-primary">
+          <Shield className="w-4 h-4" />
+          Upgrade to Bid on Referrals
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Bidding on marketplace opportunities requires the Growth plan or higher.
+        </p>
+        <a
+          href="/dashboard/billing"
+          className="inline-flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          Upgrade Plan
+        </a>
       </div>
     )
   }

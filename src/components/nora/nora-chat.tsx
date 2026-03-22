@@ -15,12 +15,12 @@ import { getCommNudges } from '@/data/comm-nudges'
 import { getOpenPosts, getBidsByAgent } from '@/data/referral-posts'
 import { getEndorsementCount } from '@/data/endorsements'
 import { getCommScore } from '@/data/communication-score'
-import { referrals as mockReferrals } from '@/data/referrals'
+// appReferrals removed — NORA uses referrals from useAppData()
 import { getVerifiedCount, getPendingCount } from '@/data/verified-referrals'
 import type { Agent, NoraMessage } from '@/types'
 
 // ── Pattern-matching fallback (used when no API key) ──────────────────
-function buildNoraResponses(agentList: Agent[]) {
+function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = []) {
   const activeNudges = getActiveNudges(nudges)
   const inactivePartnerNudges = activeNudges.filter((n) => n.type === 'inactive_partner')
 
@@ -47,9 +47,9 @@ function buildNoraResponses(agentList: Agent[]) {
 
     // ── Pipeline command ──
     { patterns: ['my pipeline', 'pipeline status', 'active referrals', 'show pipeline'], response: (() => {
-      const active = mockReferrals.filter((r) => (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) && r.stage !== 'Fee Received')
+      const active = referralList.filter((r) => r.stage !== 'Fee Received')
       if (active.length === 0) return "Your pipeline is empty! Want to post a referral opportunity or find a partner?"
-      return `📊 Your Active Pipeline:\n\n${active.map((r) => `• ${r.clientName} — ${r.market} — ${r.stage}\n  ${r.fromAgent.includes("Smith") ? `→ To: ${r.toAgent}` : `← From: ${r.fromAgent}`} · ${r.feePercent}% · Est. $${(r.estimatedPrice / 1000).toFixed(0)}k`).join('\n\n')}\n\nWant me to draft updates for any of these?`
+      return `📊 Your Active Pipeline:\n\n${active.map((r) => `• ${r.clientName} — ${r.market} — ${r.stage}\n  ${r.feePercent}% · Est. $${(r.estimatedPrice / 1000).toFixed(0)}k`).join('\n\n')}\n\nWant me to draft updates for any of these?`
     })(), matchLogic: undefined },
 
     // ── Comm score command ──
@@ -81,9 +81,9 @@ function buildNoraResponses(agentList: Agent[]) {
   ]
 }
 
-function findResponse(query: string, agentList: Agent[]): { text: string; agents: Agent[] } {
+function findResponse(query: string, agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = []): { text: string; agents: Agent[] } {
   const lower = query.toLowerCase()
-  const responses = buildNoraResponses(agentList)
+  const responses = buildNoraResponses(agentList, referralList)
   for (const r of responses) {
     if (r.patterns.some((p) => lower.includes(p))) {
       return { text: r.response, agents: r.matchLogic ? r.matchLogic() : [] }
@@ -101,7 +101,7 @@ interface NoraChatProps {
 
 export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const demoGuard = useDemoGuard()
-  const { agents, getAgentReviewStats } = useAppData()
+  const { agents, getAgentReviewStats, referrals: appReferrals } = useAppData()
   const { profile } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -116,13 +116,11 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const endorsementCount = getEndorsementCount('jason')
   const verifiedCount = getVerifiedCount('jason')
   const pendingVerifications = getPendingCount('jason')
-  const activeReferrals = mockReferrals.filter((r) =>
-    (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) &&
+  const activeReferrals = appReferrals.filter((r) =>
     r.stage !== 'Fee Received'
   )
-  const closedReferrals = mockReferrals.filter((r) =>
-    (r.fromAgent.includes("Smith") || r.toAgent.includes("Smith")) &&
-    (r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')
+  const closedReferrals = appReferrals.filter((r) =>
+    r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending'
   )
   const allCommNudges = getCommNudges('jason')
   const urgentNudges = allCommNudges.filter((n) => n.priority === 'high')
@@ -284,7 +282,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
               matchedAgents,
             }])
           } else {
-            const result = findResponse(briefingMsg.content, agents)
+            const result = findResponse(briefingMsg.content, agents, appReferrals)
             setMessages((prev) => [...prev, {
               id: `n-briefing-${Date.now()}`,
               role: 'assistant',
@@ -334,7 +332,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
 
       if (data.fallback) {
         // No API key configured — use pattern matching
-        const result = findResponse(userMsg.content, agents)
+        const result = findResponse(userMsg.content, agents, appReferrals)
         setMessages((p) => [...p, {
           id: `n-${Date.now()}`,
           role: 'assistant',
@@ -360,7 +358,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
       }
     } catch {
       // API error — fall back to pattern matching
-      const result = findResponse(userMsg.content, agents)
+      const result = findResponse(userMsg.content, agents, appReferrals)
       setMessages((p) => [...p, {
         id: `n-${Date.now()}`,
         role: 'assistant',
