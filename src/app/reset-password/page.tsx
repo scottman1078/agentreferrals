@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createHubClient } from '@/lib/supabase/hub'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,6 +18,11 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+
+    if (!token) {
+      setError('Invalid reset link — please request a new one')
+      return
+    }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
@@ -29,18 +35,28 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true)
-    const hub = createHubClient()
-    const { error: updateError } = await hub.auth.updateUser({ password })
-    setLoading(false)
+    try {
+      const res = await fetch('/api/auth/password-reset/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      })
+      const data = await res.json()
+      setLoading(false)
 
-    if (updateError) {
-      setError(updateError.message)
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to reset password')
+        return
+      }
+    } catch {
+      setLoading(false)
+      setError('Network error — please try again')
       return
     }
 
     setSuccess(true)
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push('/')
     }, 2000)
   }
 
@@ -53,7 +69,7 @@ export default function ResetPasswordPage() {
           </div>
           <span className="font-extrabold text-xl tracking-tight">
             Agent<span className="text-teal">Referrals</span>
-            
+
           </span>
         </div>
         <p className="text-sm text-muted-foreground mb-6">
@@ -62,7 +78,11 @@ export default function ResetPasswordPage() {
 
         {success ? (
           <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium text-center">
-            Password updated successfully. Redirecting to dashboard...
+            Password updated successfully. Redirecting to sign in...
+          </div>
+        ) : !token ? (
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium text-center">
+            Invalid reset link. Please request a new password reset from the sign-in page.
           </div>
         ) : (
           <>

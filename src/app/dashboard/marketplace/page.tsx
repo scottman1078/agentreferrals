@@ -739,8 +739,11 @@ function MyBidCard({ bid, allPosts }: { bid: ReferralBid; allPosts: ReferralPost
 
 function PostReferralButton() {
   const demoGuard = useDemoGuard()
+  const { createPost } = useMarketplace()
   const [isOpen, setIsOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [form, setForm] = useState({
     market: '',
     neighborhood: '',
@@ -910,7 +913,13 @@ function PostReferralButton() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
+        <div className="flex flex-col gap-2 px-6 py-4 border-t border-border shrink-0">
+          {submitError && (
+            <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+              {submitError}
+            </div>
+          )}
+          <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => setIsOpen(false)}
             className="h-10 px-5 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
@@ -918,16 +927,38 @@ function PostReferralButton() {
             Cancel
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (demoGuard()) return
-              if (form.market.trim() && form.description.trim()) setSubmitted(true)
+              if (!form.market.trim() || !form.description.trim()) return
+              setSubmitting(true)
+              setSubmitError(null)
+              const result = await createPost({
+                market: form.market.trim(),
+                neighborhood: form.neighborhood.trim(),
+                representation: form.representation,
+                budgetRange: form.budgetRange.trim(),
+                timeline: form.timeline.trim(),
+                decisionDeadline: form.decisionDeadline,
+                description: form.description.trim(),
+                clientNeeds: form.clientNeeds.trim()
+                  ? form.clientNeeds.split(',').map((s: string) => s.trim()).filter(Boolean)
+                  : [],
+                feePercent: form.feePercent,
+              })
+              setSubmitting(false)
+              if (result.success) {
+                setSubmitted(true)
+              } else {
+                setSubmitError(result.error || 'Failed to post referral')
+              }
             }}
-            disabled={!form.market.trim() || !form.description.trim()}
+            disabled={!form.market.trim() || !form.description.trim() || submitting}
             className="flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Megaphone className="w-4 h-4" />
-            Post Opportunity
+            {submitting ? 'Posting...' : 'Post Opportunity'}
           </button>
+          </div>
         </div>
       </div>
     </div>

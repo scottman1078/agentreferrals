@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   Bug,
   Lightbulb,
+  DollarSign,
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['scott@agentdashboards.com']
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/dashboard/admin/expectations', icon: ClipboardCheck, label: 'Expectations' },
   { href: '/dashboard/admin/bugs', icon: Bug, label: 'Bug Tracker' },
   { href: '/dashboard/admin/features', icon: Lightbulb, label: 'Feature Requests' },
+  { href: '/dashboard/admin/pricing', icon: DollarSign, label: 'Pricing' },
   { href: '/dashboard/admin/nora', icon: Sparkles, label: 'NORA Config' },
   { href: '/dashboard/admin/settings', icon: Settings, label: 'Settings' },
 ]

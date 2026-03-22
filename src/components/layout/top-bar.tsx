@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,7 @@ import { AppLogo } from '@/components/ui/app-logo'
 import { useAuth } from '@/contexts/auth-context'
 import { useDemo } from '@/contexts/demo-context'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { usePricing } from '@/hooks/use-pricing'
 import { PLANS, type SubscriptionTier } from '@/lib/stripe'
 
 export default function TopBar() {
@@ -23,7 +24,20 @@ export default function TopBar() {
   const { profile, signOut } = useAuth()
   const { isDemoMode } = useDemo()
   const { canSwitchTier, tier, setAdminTier } = useFeatureGate()
+  const { tiers: dbTiers, isLoading: pricingLoading } = usePricing()
   const [showTierMenu, setShowTierMenu] = useState(false)
+
+  // Use DB tiers for the switcher if available, else fallback to hardcoded PLANS
+  const switcherPlans = useMemo(() => {
+    if (dbTiers.length > 0 && !pricingLoading) {
+      return dbTiers.map((t) => ({
+        id: t.slug as SubscriptionTier,
+        name: t.name,
+        priceLabel: t.price_label,
+      }))
+    }
+    return PLANS.map((p) => ({ id: p.id, name: p.name, priceLabel: p.priceLabel }))
+  }, [dbTiers, pricingLoading])
 
   const TIER_COLORS: Record<SubscriptionTier, string> = {
     starter: 'bg-gray-500',
@@ -166,7 +180,7 @@ export default function TopBar() {
                       </button>
                       {showTierMenu && (
                         <div className="px-1 pb-1">
-                          {PLANS.map((plan) => (
+                          {switcherPlans.map((plan) => (
                             <button
                               key={plan.id}
                               onClick={() => {
@@ -179,7 +193,7 @@ export default function TopBar() {
                                 tier === plan.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
                               }`}
                             >
-                              <span className={`w-2 h-2 rounded-full ${TIER_COLORS[plan.id]}`} />
+                              <span className={`w-2 h-2 rounded-full ${TIER_COLORS[plan.id] ?? 'bg-gray-500'}`} />
                               <span>{plan.name}</span>
                               <span className="ml-auto text-[10px] text-muted-foreground">{plan.priceLabel}</span>
                             </button>

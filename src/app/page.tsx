@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createHubClient } from '@/lib/supabase/hub'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import PlatformStats from '@/components/landing/platform-stats'
+import { usePricing } from '@/hooks/use-pricing'
 import {
   MapPin, Users, FileText, TrendingUp, Zap, Shield,
   ArrowRight, Star, ChevronRight, Sparkles, Globe, Building2,
@@ -31,9 +32,17 @@ export default function LandingPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
+  const [resetStep, setResetStep] = useState<'email' | 'code' | 'password'>('email')
+  const [resetChallenge, setResetChallenge] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [signupSuccess, setSignupSuccess] = useState(false)
   const [signInMethod, setSignInMethod] = useState<'magic' | 'password'>('magic')
   const [magicLinkSent, setMagicLinkSent] = useState(false)
+
+  // Dynamic pricing
+  const { tiers: pricingTiers, isLoading: pricingLoading } = usePricing()
 
   // Invite code (optional — stored for association after signup)
   const [inviteCode, setInviteCode] = useState('')
@@ -361,65 +370,62 @@ export default function LandingPage() {
             <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3 mb-4">Keep 100% of your referral fees.</h2>
             <p className="text-muted-foreground">No platform fees. No percentage cuts. Just a simple monthly subscription.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            {[
-              {
-                name: 'Starter', price: '$0', period: '/forever', desc: 'Try the network risk-free',
-                features: ['Browse the agent network', 'Basic agent profile', 'Up to 2 active referrals', 'Direct messaging', 'Coverage gap alerts'],
-                cta: 'Get Started Free', highlight: false,
-              },
-              {
-                name: 'Growth', price: '$29', period: '/month', desc: 'For agents building their network',
-                features: ['Everything in Starter', 'Up to 10 active referrals', 'Referral pipeline tracking', 'Partnership requests', 'Agent reviews', 'Invite up to 25 agents/mo'],
-                cta: 'Start Growth', highlight: false,
-              },
-              {
-                name: 'Pro', price: '$59', period: '/month', desc: 'AI-powered referral machine',
-                features: ['Everything in Growth', 'NORA AI matching', 'Unlimited referrals', 'Smart agreements & e-sign', 'ROI analytics dashboard', 'CRM integration', 'Priority in search results'],
-                cta: 'Start Pro Trial', highlight: true,
-              },
-              {
-                name: 'Elite', price: '$149', period: '/month', desc: 'Dominate your market',
-                features: ['Everything in Pro', 'Market exclusivity (limited slots)', 'Verified Elite badge', 'White-label referral page', 'Brokerage admin tools', 'API access', 'Dedicated success manager'],
-                cta: 'Contact Sales', highlight: false,
-              },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className={`p-8 rounded-2xl border ${plan.highlight ? 'border-primary shadow-xl shadow-primary/10 relative' : 'border-border'} bg-card`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold">
-                    Most Popular
+          {pricingLoading || pricingTiers.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="p-8 rounded-2xl border border-border bg-card animate-pulse">
+                  <div className="h-4 w-20 bg-muted rounded mb-4" />
+                  <div className="h-10 w-24 bg-muted rounded mb-2" />
+                  <div className="h-3 w-40 bg-muted rounded mb-6" />
+                  <div className="h-11 w-full bg-muted rounded mb-6" />
+                  <div className="space-y-3">
+                    {[0, 1, 2, 3, 4].map((j) => (
+                      <div key={j} className="h-3 w-full bg-muted rounded" />
+                    ))}
                   </div>
-                )}
-                <div className="text-sm font-semibold text-muted-foreground mb-2">{plan.name}</div>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="font-extrabold text-3xl sm:text-4xl">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
-                <button
-                  onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
-                  className={`w-full h-11 rounded-lg font-bold text-sm transition-all ${
-                    plan.highlight
-                      ? 'bg-primary text-primary-foreground hover:opacity-90'
-                      : 'border border-border bg-card hover:bg-accent'
-                  }`}
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {pricingTiers.map((pt) => (
+                <div
+                  key={pt.slug}
+                  className={`p-8 rounded-2xl border ${pt.is_recommended ? 'border-primary shadow-xl shadow-primary/10 relative' : 'border-border'} bg-card`}
                 >
-                  {plan.cta}
-                </button>
-                <div className="mt-6 space-y-3">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-sm">
-                      <span className="text-primary">&#10003;</span>
-                      {f}
+                  {pt.is_recommended && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold">
+                      Most Popular
                     </div>
-                  ))}
+                  )}
+                  <div className="text-sm font-semibold text-muted-foreground mb-2">{pt.name}</div>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="font-extrabold text-3xl sm:text-4xl">{pt.price_label.replace(/\/mo$/, '').replace(/\/month$/, '')}</span>
+                    <span className="text-sm text-muted-foreground">{pt.period}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-6">{pt.description}</p>
+                  <button
+                    onClick={() => { setShowLogin(true); setAuthMode('signup'); resetSignupState() }}
+                    className={`w-full h-11 rounded-lg font-bold text-sm transition-all ${
+                      pt.is_recommended
+                        ? 'bg-primary text-primary-foreground hover:opacity-90'
+                        : 'border border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    {pt.cta_label}
+                  </button>
+                  <div className="mt-6 space-y-3">
+                    {(pt.landing_features ?? []).map((f) => (
+                      <div key={f} className="flex items-center gap-2 text-sm">
+                        <span className="text-primary">&#10003;</span>
+                        {f}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <p className="text-center text-sm text-muted-foreground mt-8">
             Zero platform fees. Zero referral cuts. <span className="text-primary font-semibold">You keep 100% of every referral fee you earn.</span>
           </p>
@@ -970,7 +976,7 @@ export default function LandingPage() {
       {showForgotPassword && (
         <div
           className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowForgotPassword(false) }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowForgotPassword(false); setResetStep('email'); setResetError(null); setResetMessage(null) } }}
         >
           <div className="w-[420px] max-w-full rounded-2xl border border-border bg-card p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center mb-2">
@@ -978,7 +984,9 @@ export default function LandingPage() {
               <img src="/logo-dark.png" alt="AgentReferrals" className="h-9 w-auto shrink-0 hidden dark:block" />
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              Enter your email and we&apos;ll send you a link to reset your password.
+              {resetStep === 'email' && "Enter your email and we'll send you a reset code."}
+              {resetStep === 'code' && `We sent a 6-digit code to ${resetEmail}`}
+              {resetStep === 'password' && 'Set your new password.'}
             </p>
 
             {resetMessage && (
@@ -993,40 +1001,166 @@ export default function LandingPage() {
               </div>
             )}
 
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              setResetLoading(true)
-              setResetError(null)
-              setResetMessage(null)
-              const hub = createHubClient()
-              const { error } = await hub.auth.resetPasswordForEmail(resetEmail, {
-                redirectTo: 'https://agentreferrals.ai/reset-password',
-              })
-              setResetLoading(false)
-              if (error) {
-                setResetError(error.message)
-                return
-              }
-              setResetMessage('Check your email for a reset link')
-            }}>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
-              <input
-                type="email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                required
-              />
-              <button
-                type="submit"
-                disabled={resetLoading}
-                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {resetLoading ? 'Sending...' : 'Send Reset Link'}
-              </button>
-            </form>
+            {/* STEP 1: Enter email */}
+            {resetStep === 'email' && (
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                setResetLoading(true)
+                setResetError(null)
+                setResetMessage(null)
+                try {
+                  const res = await fetch('/api/auth/password-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: resetEmail }),
+                  })
+                  const data = await res.json()
+                  if (!res.ok || !data.success) {
+                    setResetError(data.error || 'Something went wrong')
+                    setResetLoading(false)
+                    return
+                  }
+                  setResetChallenge(data.challenge || '')
+                  setResetStep('code')
+                } catch {
+                  setResetError('Network error — please try again')
+                }
+                setResetLoading(false)
+              }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {resetLoading ? 'Sending...' : 'Send Reset Code'}
+                </button>
+              </form>
+            )}
+
+            {/* STEP 2: Enter code */}
+            {resetStep === 'code' && (
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                setResetError(null)
+                if (resetCode.trim().length !== 6) {
+                  setResetError('Please enter the 6-digit code')
+                  return
+                }
+                setResetStep('password')
+              }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">6-Digit Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full h-12 px-3 rounded-lg border border-input bg-background text-center text-2xl font-mono tracking-[0.5em] mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="000000"
+                  required
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={resetCode.length !== 6}
+                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  Verify Code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setResetStep('email'); setResetCode(''); setResetError(null) }}
+                  className="w-full mt-2 text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Didn&apos;t receive it? Try again
+                </button>
+              </form>
+            )}
+
+            {/* STEP 3: New password */}
+            {resetStep === 'password' && (
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                setResetError(null)
+                if (newPassword.length < 6) {
+                  setResetError('Password must be at least 6 characters')
+                  return
+                }
+                if (newPassword !== confirmNewPassword) {
+                  setResetError('Passwords do not match')
+                  return
+                }
+                setResetLoading(true)
+                try {
+                  const res = await fetch('/api/auth/password-reset/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challenge: resetChallenge, code: resetCode, password: newPassword }),
+                  })
+                  const data = await res.json()
+                  if (!res.ok || !data.success) {
+                    setResetError(data.error || 'Failed to reset password')
+                    setResetLoading(false)
+                    return
+                  }
+                } catch {
+                  setResetError('Network error — please try again')
+                  setResetLoading(false)
+                  return
+                }
+                setResetLoading(false)
+                setResetMessage('Password updated! You can now sign in.')
+                setTimeout(() => {
+                  setShowForgotPassword(false)
+                  setShowLogin(true)
+                  setResetStep('email')
+                  setResetCode('')
+                  setNewPassword('')
+                  setConfirmNewPassword('')
+                  setResetChallenge('')
+                  setResetMessage(null)
+                }, 2000)
+              }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="At least 6 characters"
+                  required
+                  minLength={6}
+                />
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Confirm Password</label>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Re-enter your password"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {resetLoading ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
+            )}
+
             <button
-              onClick={() => setShowForgotPassword(false)}
+              onClick={() => { setShowForgotPassword(false); setResetStep('email'); setResetError(null); setResetMessage(null); setResetCode(''); setNewPassword(''); setConfirmNewPassword('') }}
               className="w-full mt-3 text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Back to Sign In

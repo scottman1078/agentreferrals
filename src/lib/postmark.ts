@@ -242,6 +242,75 @@ export async function sendInviterNotification(data: InviterNotificationData) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PASSWORD RESET EMAIL — sends a 6-digit code via Postmark
+// ═══════════════════════════════════════════════════════════════
+
+export interface PasswordResetEmailData {
+  toEmail: string
+  firstName: string
+  code: string
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
+  if (!client) {
+    console.log('[Postmark] No token — skipping password reset email to', data.toEmail)
+    return { success: false, reason: 'no_token' }
+  }
+
+  const greeting = data.firstName && data.firstName !== 'there'
+    ? `Hi ${data.firstName},`
+    : 'Hi there,'
+
+  const digits = data.code.split('')
+
+  const htmlBody = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+  ${emailHeaderDark()}
+  <!-- Body -->
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 16px;font-size:16px;color:${DEEP_BLUE};">${greeting}</p>
+    <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.6;">We received a request to reset the password for your AgentReferrals account.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Enter this code to verify your identity:</p>
+    <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+      <div style="display:inline-block;background:#f3f4f6;border-radius:12px;padding:16px 24px;letter-spacing:8px;font-size:32px;font-weight:800;color:${DEEP_BLUE};font-family:monospace;">
+        ${digits.map(d => `<span style="display:inline-block;width:36px;height:48px;line-height:48px;background:white;border:2px solid #e5e7eb;border-radius:8px;text-align:center;margin:0 3px;letter-spacing:0;">${d}</span>`).join('')}
+      </div>
+    </td></tr></table>
+    <p style="margin:20px 0 0;font-size:13px;color:#6b7280;text-align:center;">This code expires in <strong>15 minutes</strong>.</p>
+    <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;line-height:1.5;">If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center;">AgentReferrals — The AI-powered agent referral network</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+  try {
+    const result = await client.sendEmail({
+      From: `${FROM_NAME} <${FROM_EMAIL}>`,
+      To: data.toEmail,
+      Subject: `${data.code} is your AgentReferrals password reset code`,
+      HtmlBody: htmlBody,
+      TextBody: `${greeting}\n\nWe received a request to reset the password for your AgentReferrals account.\n\nYour reset code is: ${data.code}\n\nThis code expires in 15 minutes.\n\nIf you didn't request this, you can safely ignore this email.\n\n— AgentReferrals`,
+      MessageStream: 'outbound',
+    })
+    return { success: true, messageId: result.MessageID }
+  } catch (error) {
+    console.error('[Postmark] Send password reset email failed:', error)
+    return { success: false, reason: 'send_failed', error }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAGIC LINK EMAIL — branded sign-in link
 // ═══════════════════════════════════════════════════════════════
 
