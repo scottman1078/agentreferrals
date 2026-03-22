@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Plus, Trash2, Loader2, RefreshCw, AlertTriangle, Bug, ChevronDown,
-  CheckCircle2, Clock, XCircle, ArrowUp, ArrowDown, Minus, Sparkles,
-  ImagePlus, X, Lightbulb,
+  CheckCircle2, Clock, XCircle, ArrowUp, ArrowDown, Minus,
+  ImagePlus, X, Sparkles,
 } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 
 interface BugRow {
   id: string
@@ -70,6 +71,9 @@ export default function AdminBugsPage() {
 
   // Delete
   const [confirmDelete, setConfirmDelete] = useState<BugRow | null>(null)
+
+  const { profile } = useAuth()
+  const currentUserEmail = profile?.email || 'Admin'
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
@@ -138,11 +142,7 @@ export default function AdminBugsPage() {
     setConfirmDelete(null)
   }
 
-  const [viewMode, setViewMode] = useState<'bugs' | 'features'>('bugs')
-
-  const bugItems = bugs.filter((b) => b.category !== 'feature')
-  const featureItems = bugs.filter((b) => b.category === 'feature')
-  const categoryItems = viewMode === 'bugs' ? bugItems : featureItems
+  const categoryItems = bugs.filter((b) => b.category !== 'feature')
 
   const displayItems = filterStatus === 'all' ? categoryItems
     : filterStatus === 'completed' ? categoryItems.filter((b) => b.verified_status === 'confirmed')
@@ -185,18 +185,6 @@ export default function AdminBugsPage() {
         </div>
       )}
 
-      {/* Bugs / Features toggle */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border w-fit">
-        <button onClick={() => setViewMode('bugs')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'bugs' ? 'bg-card border border-border shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-          <Bug className="w-3 h-3" /> Bugs ({bugItems.length})
-        </button>
-        <button onClick={() => setViewMode('features')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'features' ? 'bg-card border border-border shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-          <Sparkles className="w-3 h-3" /> Feature Requests ({featureItems.length})
-        </button>
-      </div>
-
       {/* Status filter tabs */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border w-fit flex-wrap">
         {[
@@ -204,8 +192,8 @@ export default function AdminBugsPage() {
           { key: 'open', label: 'Open' },
           { key: 'in_progress', label: 'In Progress' },
           { key: 'fixed', label: 'Fixed' },
-          { key: 'completed', label: 'Completed' },
-          { key: 'not_fixed', label: 'Not Fixed' },
+          { key: 'completed', label: 'Verified' },
+          { key: 'not_fixed', label: 'Still Not Fixed' },
         ].map((s) => (
           <button key={s.key} onClick={() => setFilterStatus(s.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -273,17 +261,8 @@ export default function AdminBugsPage() {
         </div>
       ) : displayItems.length === 0 ? (
         <div className="p-8 rounded-xl border border-border bg-card text-center">
-          {viewMode === 'features' ? (
-            <>
-              <Sparkles className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No feature requests yet.</p>
-            </>
-          ) : (
-            <>
-              <Bug className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No bugs found. Nice!</p>
-            </>
-          )}
+          <Bug className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No bugs found. Nice!</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -363,7 +342,7 @@ export default function AdminBugsPage() {
                     {bug.verified_status && (
                       <div className={`p-3 rounded-lg border ${bug.verified_status === 'confirmed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
                         <p className={`text-xs font-bold ${bug.verified_status === 'confirmed' ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {bug.verified_status === 'confirmed' ? '✓ Verified as fixed' : '✗ Verified as NOT fixed'}
+                          {bug.verified_status === 'confirmed' ? '✓ Verified' : '✗ Still Not Fixed'}
                           {bug.verified_by && ` by ${bug.verified_by}`}
                         </p>
                         {bug.verification_notes && <p className="text-xs text-muted-foreground mt-1">{bug.verification_notes}</p>}
@@ -373,9 +352,13 @@ export default function AdminBugsPage() {
                       </div>
                     )}
 
+                    {bug.reported_by_email && (
+                      <p className="text-[10px] text-muted-foreground">Reported by: <span className="font-semibold">{bug.reported_by_email}</span></p>
+                    )}
+
                     {/* Verify fix buttons — show on fixed bugs without verification */}
                     {bug.status === 'fixed' && !bug.verified_status && (
-                      <VerifyFixForm bug={bug} onUpdate={(updated) => setBugs((prev) => prev.map((b) => b.id === updated.id ? updated : b))} />
+                      <VerifyFixForm bug={bug} verifierEmail={currentUserEmail} onUpdate={(updated) => setBugs((prev) => prev.map((b) => b.id === updated.id ? updated : b))} />
                     )}
 
                     {/* Actions */}
@@ -430,7 +413,7 @@ export default function AdminBugsPage() {
 }
 
 // Inline verification form for fixed bugs
-function VerifyFixForm({ bug, onUpdate }: { bug: BugRow; onUpdate: (b: BugRow) => void }) {
+function VerifyFixForm({ bug, verifierEmail, onUpdate }: { bug: BugRow; verifierEmail: string; onUpdate: (b: BugRow) => void }) {
   const [notes, setNotes] = useState('')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -455,7 +438,7 @@ function VerifyFixForm({ bug, onUpdate }: { bug: BugRow; onUpdate: (b: BugRow) =
           verified_status,
           verification_notes: notes.trim() || null,
           verification_screenshot_url: screenshot || null,
-          verified_by: 'Tester',
+          verified_by: verifierEmail,
         }),
       })
       const data = await res.json()
@@ -493,11 +476,11 @@ function VerifyFixForm({ bug, onUpdate }: { bug: BugRow; onUpdate: (b: BugRow) =
         <div className="flex-1" />
         <button onClick={() => submit('not_fixed')} disabled={submitting}
           className="flex items-center gap-1 h-7 px-3 rounded-lg border border-red-500/30 text-red-600 text-[11px] font-semibold hover:bg-red-500/10 disabled:opacity-50">
-          <XCircle className="w-3 h-3" /> Not Fixed
+          <XCircle className="w-3 h-3" /> Still Not Fixed
         </button>
         <button onClick={() => submit('confirmed')} disabled={submitting}
           className="flex items-center gap-1 h-7 px-3 rounded-lg bg-emerald-500 text-white text-[11px] font-semibold hover:opacity-90 disabled:opacity-50">
-          {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />} Completed
+          {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />} Verified
         </button>
       </div>
     </div>

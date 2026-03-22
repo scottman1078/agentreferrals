@@ -385,7 +385,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
         <div className={`fixed z-[900] flex flex-col border-t sm:border border-border bg-card shadow-2xl overflow-hidden transition-all duration-300 ${
           isFullScreen
             ? 'inset-4 sm:inset-6 rounded-2xl'
-            : 'inset-x-0 bottom-[88px] sm:inset-x-auto sm:bottom-[152px] sm:right-6 sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] sm:rounded-2xl'
+            : 'inset-x-0 bottom-[88px] sm:inset-x-auto sm:bottom-[80px] sm:right-6 sm:w-[380px] h-[calc(100vh-10rem)] sm:h-[520px] sm:rounded-2xl'
         }`}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
