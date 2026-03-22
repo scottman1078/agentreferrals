@@ -63,9 +63,12 @@ export async function POST(request: NextRequest) {
       expiresAt,
     } = body
 
-    if (!postingAgentId || !market || !description || !decisionDeadline) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!postingAgentId || !market || !description) {
+      return NextResponse.json({ error: 'Missing required fields: postingAgentId, market, and description are required' }, { status: 400 })
     }
+
+    // Default decisionDeadline to 14 days from now if not provided
+    const effectiveDeadline = decisionDeadline || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     const supabase = createAdminClient()
 
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
         commission_rate: commissionRate || 3,
         description,
         client_needs: clientNeeds || [],
-        decision_deadline: decisionDeadline,
+        decision_deadline: effectiveDeadline,
         expires_at: expiresAt || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         // early_access_until is auto-set by trigger
       })
@@ -92,7 +95,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('[Marketplace] POST error:', error)
+      console.error('[Marketplace] POST error:', error.message, error.details, error.hint)
+      // FK violation = user doesn't have a profile in ar_profiles
+      if (error.code === '23503') {
+        return NextResponse.json({ error: 'Your profile is not fully set up. Please complete onboarding first.' }, { status: 400 })
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 

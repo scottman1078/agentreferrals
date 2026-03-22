@@ -930,6 +930,8 @@ function PostReferralButton() {
             onClick={async () => {
               if (demoGuard()) return
               if (!form.market.trim() || !form.description.trim()) return
+              // Default decisionDeadline to 14 days from now if not set
+              const deadline = form.decisionDeadline || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
               setSubmitting(true)
               setSubmitError(null)
               const result = await createPost({
@@ -938,7 +940,7 @@ function PostReferralButton() {
                 representation: form.representation,
                 budgetRange: form.budgetRange.trim(),
                 timeline: form.timeline.trim(),
-                decisionDeadline: form.decisionDeadline,
+                decisionDeadline: deadline,
                 description: form.description.trim(),
                 clientNeeds: form.clientNeeds.trim()
                   ? form.clientNeeds.split(',').map((s: string) => s.trim()).filter(Boolean)

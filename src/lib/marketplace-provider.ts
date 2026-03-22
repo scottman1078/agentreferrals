@@ -116,6 +116,9 @@ export function useMarketplace(): MarketplaceData {
   }, [source])
 
   const createPost = useCallback(async (post: Record<string, unknown>) => {
+    if (!userId) {
+      return { success: false, error: 'You must be signed in to post a referral' }
+    }
     try {
       const res = await fetch('/api/marketplace', {
         method: 'POST',
@@ -123,13 +126,18 @@ export function useMarketplace(): MarketplaceData {
         body: JSON.stringify({ ...post, postingAgentId: userId }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        console.error('[Marketplace] POST failed:', data)
+        return { success: false, error: data.error || `Server error (${res.status})` }
+      }
       if (data.success) {
-        fetchData() // refetch
+        await fetchData() // refetch to show the new post
         return { success: true }
       }
-      return { success: false, error: data.error }
+      return { success: false, error: data.error || 'Unknown error' }
     } catch (err) {
-      return { success: false, error: 'Network error' }
+      console.error('[Marketplace] POST network error:', err)
+      return { success: false, error: 'Network error — please try again' }
     }
   }, [userId, fetchData])
 
