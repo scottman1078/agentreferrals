@@ -205,14 +205,23 @@ export function useAppData(): AppData {
   const emptyReviews = () => []
   const emptyReviewStats = () => null
 
-  return {
-    isAuthenticated,
-    isLoading: isAuthLoading,
-    profile,
-    userId,
+  // In demo mode, override isAuthenticated so auth state doesn't interfere
+  const effectiveIsAuthenticated = isDemoMode ? false : isAuthenticated
 
-    // Agents: Supabase data if available, fall back to mock in demo mode
-    agents: isDemoMode && mappedAgents.length === 0 ? mockAgents : mappedAgents,
+  // Demo agent resolution:
+  // - While agents are still loading in demo mode, use mock agents immediately
+  //   (prevents flash of stale real agents during the includeDemo transition)
+  // - Once loaded, use Supabase demo agents if available, otherwise mock fallback
+  const demoAgents = (agentsLoading || mappedAgents.length === 0) ? mockAgents : mappedAgents
+
+  return {
+    isAuthenticated: effectiveIsAuthenticated,
+    isLoading: isDemoMode ? false : isAuthLoading,
+    profile: isDemoMode ? null : profile,
+    userId: isDemoMode ? undefined : userId,
+
+    // Agents: in demo mode use resolved demo agents; otherwise Supabase data
+    agents: isDemoMode ? demoAgents : mappedAgents,
 
     // Referrals/invites: real data for authenticated, mock for demo
     referrals: isDemoMode ? mockReferrals : mappedReferrals,

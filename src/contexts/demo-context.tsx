@@ -17,12 +17,13 @@ const DemoContext = createContext<DemoContextType>({
 })
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const [isDemoMode, setIsDemoMode] = useState(false)
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem(DEMO_KEY)
-    if (stored === 'true') setIsDemoMode(true)
-  }, [])
+  // Initialize from sessionStorage synchronously to avoid a false→true flash
+  const [isDemoMode, setIsDemoMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(DEMO_KEY) === 'true'
+    }
+    return false
+  })
 
   const enableDemo = useCallback(() => {
     sessionStorage.setItem(DEMO_KEY, 'true')

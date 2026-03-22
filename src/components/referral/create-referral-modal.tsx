@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
+import { useBrokerage } from '@/contexts/brokerage-context'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { AgentReviewBadge } from '@/components/reviews/agent-review-badge'
@@ -20,6 +22,7 @@ import {
   Send,
   Star,
   DollarSign,
+  Lock,
 } from 'lucide-react'
 import type { Agent, PipelineStage } from '@/types'
 
@@ -74,6 +77,8 @@ export default function CreateReferralModal({
   const { agents, mutateReferrals } = useAppData()
   const demoGuard = useDemoGuard()
   const { user } = useAuth()
+  const { tier } = useFeatureGate()
+  const { partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
 
   // Step 0 — Select Agent
   // Step 1 — Client Info
@@ -112,18 +117,31 @@ export default function CreateReferralModal({
     [selectedAgentId, agents]
   )
 
-  const filteredAgents = useMemo(() => {
+  // Tier-based agent gating: restrict who the user can send referrals to
+  const tierFilteredAgents = useMemo(() => {
     const available = agents.filter((a) => a.id !== user?.id)
-    if (!searchQuery.trim()) return available
+    if (tier === 'elite') return available
+    if (tier === 'growth' || tier === 'pro') {
+      const allowedIds = new Set([...partnerIds, ...oneDegreeIds, ...twoDegreeIds])
+      return available.filter((a) => allowedIds.has(a.id))
+    }
+    // starter: only direct partners (My Network)
+    return available.filter((a) => partnerIds.includes(a.id))
+  }, [agents, user?.id, tier, partnerIds, oneDegreeIds, twoDegreeIds])
+
+  const isTierRestricted = tierFilteredAgents.length === 0 && agents.filter((a) => a.id !== user?.id).length > 0
+
+  const filteredAgents = useMemo(() => {
+    if (!searchQuery.trim()) return tierFilteredAgents
     const q = searchQuery.toLowerCase()
-    return available.filter(
+    return tierFilteredAgents.filter(
       (a) =>
         a.name.toLowerCase().includes(q) ||
         a.area.toLowerCase().includes(q) ||
         a.brokerage.toLowerCase().includes(q) ||
         a.tags.some((t) => t.toLowerCase().includes(q))
     )
-  }, [searchQuery, agents, user?.id])
+  }, [searchQuery, tierFilteredAgents])
 
   // Fee calculations
   const commission = terms.estimatedPrice * (terms.commissionRate / 100)
@@ -469,6 +487,27 @@ export default function CreateReferralModal({
                 {filteredAgents.length} agent
                 {filteredAgents.length !== 1 ? 's' : ''} found
               </div>
+
+              {/* Upgrade prompt when tier restricts all agents */}
+              {isTierRestricted && (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+                    <Lock className="w-6 h-6 text-amber-500" />
+                  </div>
+                  <h3 className="font-bold text-sm mb-1">No agents available on your plan</h3>
+                  <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+                    {tier === 'starter'
+                      ? 'Starter plans can only send referrals to agents in your direct network. Add partners or upgrade to Growth to reach 1st and 2nd degree connections.'
+                      : 'Upgrade your plan to unlock access to more agents in the network.'}
+                  </p>
+                  <a
+                    href="/dashboard/billing"
+                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                  >
+                    Upgrade Plan
+                  </a>
+                </div>
+              )}
 
               {/* Agent List */}
               <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
