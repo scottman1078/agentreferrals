@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useTheme } from 'next-themes'
 import { useBrokerage } from '@/contexts/brokerage-context'
 import { useAppData } from '@/lib/data-provider'
@@ -50,7 +50,10 @@ export default function AgentMap() {
   const { voidZones, userId } = useAppData()
 
   // Exclude the current user from the map — they shouldn't see themselves as a marker
-  const filteredAgents = userId ? allFilteredAgents.filter((a) => a.id !== userId) : allFilteredAgents
+  const filteredAgents = useMemo(
+    () => userId ? allFilteredAgents.filter((a) => a.id !== userId) : allFilteredAgents,
+    [allFilteredAgents, userId]
+  )
   const countyPolygonsRef = useRef<Map<string, [number, number][][]>>(new Map())
   const agentZipPolygonsRef = useRef<Map<string, [number, number][]>>(new Map())
   const [countyLoadCount, setCountyLoadCount] = useState(0)
