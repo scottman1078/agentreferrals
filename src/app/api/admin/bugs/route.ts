@@ -79,6 +79,14 @@ export async function PATCH(request: NextRequest) {
     if (updates.ai_analysis !== undefined) allowed.ai_analysis = updates.ai_analysis
     if (updates.ai_suggested_files !== undefined) allowed.ai_suggested_files = updates.ai_suggested_files
     if (updates.fixed_by !== undefined) allowed.fixed_by = updates.fixed_by
+    if (updates.verified_status !== undefined) {
+      allowed.verified_status = updates.verified_status
+      allowed.verified_at = new Date().toISOString()
+      if (updates.verified_status === 'not_fixed') allowed.status = 'open'
+    }
+    if (updates.verified_by !== undefined) allowed.verified_by = updates.verified_by
+    if (updates.verification_notes !== undefined) allowed.verification_notes = updates.verification_notes
+    if (updates.verification_screenshot_url !== undefined) allowed.verification_screenshot_url = updates.verification_screenshot_url
 
     allowed.updated_at = new Date().toISOString()
 
