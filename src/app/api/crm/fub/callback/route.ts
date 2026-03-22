@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exchangeCodeForTokens, computeExpiresAt, getCallbackUrl, FUB_CONFIG } from '@/lib/integration-utils'
 
 // GET /api/crm/fub/callback — OAuth callback from Follow Up Boss
 export async function GET(request: NextRequest) {
@@ -10,62 +11,35 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const clientId = process.env.FUB_CLIENT_ID || process.env.NEXT_PUBLIC_FUB_CLIENT_ID || ''
-    const clientSecret = process.env.FUB_CLIENT_SECRET || ''
-    const redirectUri = `${request.nextUrl.origin}/api/crm/fub/callback`
+    const redirectUri = getCallbackUrl('fub')
 
-    // Exchange authorization code for access token
-    const tokenRes = await fetch('https://app.followupboss.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-      }),
+    // Exchange authorization code for tokens
+    const tokens = await exchangeCodeForTokens({
+      tokenUrl: FUB_CONFIG.tokenUrl,
+      code,
+      clientId: FUB_CONFIG.clientId,
+      clientSecret: FUB_CONFIG.clientSecret,
+      redirectUri,
     })
 
-    if (!tokenRes.ok) {
-      const errData = await tokenRes.json().catch(() => ({}))
-      console.error('[FUB OAuth] Token exchange failed:', errData)
-      return NextResponse.redirect(new URL('/dashboard/settings?tab=integrations&crm_error=token_failed', request.url))
-    }
-
-    const tokenData = await tokenRes.json()
-    const { access_token, refresh_token, expires_in } = tokenData
-
-    // Store the connection in Supabase
-    // We need the user's ID — get it from the session cookie
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = createAdminClient()
+    const expiresAt = computeExpiresAt(tokens.expires_in, tokens.created_at)
 
     // Verify the token by calling FUB /v1/me
-    const meRes = await fetch('https://api.followupboss.com/v1/me', {
-      headers: { 'Authorization': `Bearer ${access_token}` },
+    const meRes = await fetch(`${FUB_CONFIG.apiBase}/me`, {
+      headers: { 'Authorization': `Bearer ${tokens.access_token}` },
     })
 
     if (!meRes.ok) {
       return NextResponse.redirect(new URL('/dashboard/settings?tab=integrations&crm_error=verify_failed', request.url))
     }
 
-    const meData = await meRes.json()
-
-    // Store token — we'll associate it with the user via a temp cookie or query param
-    // For now, store as a pending connection that the settings page will pick up
-    const tokenExpiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString()
-
-    // Store in a temporary table or use the connection directly
-    // The user will be identified when the settings page loads and calls the API
+    // Set a secure httpOnly cookie with the token data for the settings page to consume
     const response = NextResponse.redirect(new URL('/dashboard/settings?tab=integrations&crm_connected=fub', request.url))
 
-    // Set a secure httpOnly cookie with the token data for the settings page to consume
     response.cookies.set('fub_oauth_token', JSON.stringify({
-      access_token,
-      refresh_token,
-      expires_at: tokenExpiresAt,
-      fub_user: meData.name || meData.email || 'FUB User',
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token || null,
+      expires_at: expiresAt,
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
