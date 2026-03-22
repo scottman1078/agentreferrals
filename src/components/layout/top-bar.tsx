@@ -88,7 +88,7 @@ export default function TopBar() {
         {/* Search bar — right of logo */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-2 h-9 w-full max-w-[280px] px-3 rounded-xl border border-border bg-background/50 text-muted-foreground hover:text-foreground hover:bg-background transition-all"
+          className="flex items-center gap-2 h-9 w-full max-w-[280px] px-3 rounded-xl border border-border bg-background text-foreground/70 hover:text-foreground hover:bg-background transition-all"
           title="Search for referral partners (Cmd+K)"
         >
           <Search className="w-4 h-4 shrink-0" />
@@ -101,10 +101,11 @@ export default function TopBar() {
         {/* Invite link */}
         <Link
           href="/dashboard/invite"
-          className="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shrink-0"
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shrink-0"
+          title="Invite Agents"
         >
           <Gift className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[11px] font-semibold text-primary">Invite Agents</span>
+          <span className="hidden md:inline text-[11px] font-semibold text-primary">Invite Agents</span>
         </Link>
 
         <div className="flex-1" />

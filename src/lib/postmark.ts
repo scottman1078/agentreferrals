@@ -80,9 +80,9 @@ export async function sendInviteEmail(data: InviteEmailData) {
       ` : ''}
 
       <div style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="font-size:14px;font-weight:700;color:${DEEP_BLUE};margin:0 0 12px;">Why agents love AgentReferrals:</h3>
+        <h3 style="font-size:14px;font-weight:700;color:${DEEP_BLUE};margin:0 0 12px;">What you can do on AgentReferrals:</h3>
         <div style="font-size:13px;color:#4b5563;line-height:1.8;">
-          ✓ AI-powered agent matching (NORA finds the perfect referral partner)<br>
+          ✓ AI-powered agent matching with NORA<br>
           ✓ Keep 100% of your referral fees — zero platform cuts<br>
           ✓ Pipeline tracking from agreement to close<br>
           ✓ Multi-brokerage network — search across all brokerages<br>
@@ -342,7 +342,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
 
       <h1 style="font-size:24px;font-weight:800;color:${DEEP_BLUE};margin:0 0 8px;text-align:center;">Welcome to AgentReferrals, ${firstName}!</h1>
       <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 28px;text-align:center;">
-        You just joined the AI-powered referral network trusted by thousands of agents across the country.
+        You just joined the AI-powered referral network built for real estate agents across the country.
       </p>
 
       <!-- 3 Steps -->
@@ -399,20 +399,12 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
       </div>
     </div>
 
-    <!-- Key stats -->
+    <!-- Key benefit -->
     <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:12px 0;margin-top:20px;">
       <tr>
-        <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
-          <div style="font-weight:800;font-size:22px;color:${TEAL};">17,000+</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px;">Agents on network</div>
-        </td>
-        <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
+        <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
           <div style="font-weight:800;font-size:22px;color:#22c55e;">100%</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px;">Of fees, you keep</div>
-        </td>
-        <td style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);width:33%;">
-          <div style="font-weight:800;font-size:22px;color:${DEEP_BLUE};">50+</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px;">Markets covered</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">Of your referral fees, you keep</div>
         </td>
       </tr>
     </table>

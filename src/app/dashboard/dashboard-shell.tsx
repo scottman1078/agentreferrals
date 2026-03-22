@@ -156,8 +156,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         ))}
 
         {/* Main content */}
-        <div className={`flex-1 relative overflow-hidden ${isMapPage || isSetupPage ? '' : 'pb-[76px]'}`}>
-          <div className="h-full">
+        <div className={`flex-1 relative ${isMapPage || isSetupPage ? 'overflow-hidden' : 'overflow-y-auto pb-[76px]'}`}>
+          <div className={isMapPage || isSetupPage ? 'h-full' : ''}>
             {children}
           </div>
         </div>

@@ -1200,7 +1200,7 @@ export default function SettingsPage() {
                     />
                     {/* Autocomplete dropdown */}
                     {showSuggestions && suggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-[9999] overflow-hidden">
                         {suggestions
                           .filter((s) => territoryMode === 'county' ? s.subtitle === 'County' : s.subtitle === 'City')
                           .map((s, i) => (
@@ -1435,39 +1435,46 @@ export default function SettingsPage() {
 
         {/* ═══ Referral Defaults Tab ═══ */}
         {activeTab === 'referrals' && (
-          <div className="p-5 rounded-xl border border-border bg-card">
-            <div className="font-bold text-sm mb-5 pb-3 border-b border-border">
-              Referral Defaults
-            </div>
-            {[
-              {
-                label: 'Default Referral Fee %',
-                sub: 'Applied when creating new agreements',
-                defaultVal: '25%',
-                w: 'w-20',
-              },
-              {
-                label: 'Agreement Expiration',
-                sub: 'Days before agreement expires',
-                defaultVal: '180 days',
-                w: 'w-24',
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between py-4 border-b border-border last:border-0"
-              >
-                <div>
-                  <div className="text-sm font-medium">{item.label}</div>
-                  <div className="text-[11px] text-muted-foreground">{item.sub}</div>
-                </div>
-                <input
-                  defaultValue={item.defaultVal}
-                  className={`${item.w} text-center h-9 px-3 rounded-lg border border-input bg-background text-sm`}
-                />
+          <>
+            <div className="p-5 rounded-xl border border-border bg-card">
+              <div className="font-bold text-sm mb-5 pb-3 border-b border-border">
+                Referral Defaults
               </div>
-            ))}
-          </div>
+              {[
+                {
+                  label: 'Default Referral Fee %',
+                  sub: 'Applied when creating new agreements',
+                  defaultVal: '25%',
+                  w: 'w-20',
+                },
+                {
+                  label: 'Agreement Expiration',
+                  sub: 'Days before agreement expires',
+                  defaultVal: '180 days',
+                  w: 'w-24',
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between py-4 border-b border-border last:border-0"
+                >
+                  <div>
+                    <div className="text-sm font-medium">{item.label}</div>
+                    <div className="text-[11px] text-muted-foreground">{item.sub}</div>
+                  </div>
+                  <input
+                    defaultValue={item.defaultVal}
+                    className={`${item.w} text-center h-9 px-3 rounded-lg border border-input bg-background text-sm`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* ── Communication Preferences ── */}
+            <div className="mt-6">
+              <ReferralExpectationsEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
+            </div>
+          </>
         )}
 
         {/* ═══ Notifications Tab ═══ */}

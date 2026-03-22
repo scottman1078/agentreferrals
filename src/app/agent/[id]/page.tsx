@@ -6,6 +6,7 @@ import { getAgentReviewStats } from '@/data/reviews'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { TAG_COLORS } from '@/lib/constants'
 import { APP_DOMAIN } from '@/lib/constants'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   Star,
   BadgeCheck,
@@ -40,8 +41,47 @@ import ProfileViewGate from './profile-view-gate'
 import AgentAuthWrapper from './auth-wrapper'
 
 // --------------- Static params ---------------
+export const dynamicParams = true
+
 export function generateStaticParams() {
   return agents.map((agent) => ({ id: agent.id }))
+}
+
+// --------------- Supabase fallback for real users ---------------
+async function fetchSupabaseProfile(id: string) {
+  try {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+      .from('ar_profiles')
+      .select('*, brokerage:ar_brokerages(name, color)')
+      .eq('id', id)
+      .single()
+    if (!data) return null
+    return {
+      id: data.id,
+      name: data.full_name || 'Agent',
+      brokerage: (data.brokerage as { name: string; color: string } | null)?.name || 'Independent',
+      brokerageId: data.brokerage_id || '',
+      area: data.primary_area || 'Unknown',
+      phone: data.phone || '',
+      email: data.email || '',
+      color: (data.brokerage as { name: string; color: string } | null)?.color || '#6366f1',
+      status: 'active' as const,
+      dealsPerYear: data.deals_per_year || 0,
+      yearsLicensed: data.years_licensed || 0,
+      avgSalePrice: data.avg_sale_price || 0,
+      closedReferrals: data.closed_referrals || 0,
+      tags: (data.tags || []) as string[],
+      polygon: [] as [number, number][],
+      rcsScore: data.refernet_score || 0,
+      responseTime: data.response_time_minutes ? `< ${Math.ceil(data.response_time_minutes / 60)}hr` : null,
+      totalTransactions: data.total_transactions || null,
+      zillowProfileUrl: data.zillow_profile_url || null,
+      photoUrl: data.avatar_url || undefined,
+    }
+  } catch {
+    return null
+  }
 }
 
 // --------------- OG Metadata ---------------
@@ -49,7 +89,7 @@ type PageProps = { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
-  const agent = agents.find((a) => a.id === id)
+  const agent = agents.find((a) => a.id === id) || await fetchSupabaseProfile(id)
   if (!agent) return { title: 'Agent Not Found' }
 
   const stats = getAgentReviewStats(agent.id)
@@ -69,7 +109,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // --------------- Page ---------------
 export default async function AgentProfilePage({ params }: PageProps) {
   const { id } = await params
-  const agent = agents.find((a) => a.id === id)
+  const agent = agents.find((a) => a.id === id) || await fetchSupabaseProfile(id)
   if (!agent) notFound()
 
   const stats = getAgentReviewStats(agent.id)

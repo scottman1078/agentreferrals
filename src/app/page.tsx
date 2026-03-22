@@ -105,7 +105,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <span className="hidden sm:block"><ThemeToggle /></span>
             <button
-              onClick={() => { setShowLogin(true); setAuthMode('signin') }}
+              onClick={() => { setShowLogin(true); setAuthMode('signin'); setAuthError(null); setSignupSuccess(false); resetSignupState() }}
               className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
             >
               Sign In
@@ -548,7 +548,7 @@ export default function LandingPage() {
               </div>
             )}
 
-            {signupSuccess && (
+            {signupSuccess && authMode === 'signup' && (
               <div className="flex flex-col items-center text-center py-8 px-4">
                 <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
                   <svg className="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>

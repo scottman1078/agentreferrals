@@ -342,7 +342,14 @@ function PostCard({
           {/* Bid button */}
           {showBidButton && post.status === 'open' && (
             <div className="px-4 pb-4">
-              <BidForm postId={post.id} market={post.market} postingAgentName={getDisplayName({ id: post.postingAgentId, name: post.postingAgentName })} />
+              {post.decisionDeadline && new Date(post.decisionDeadline).getTime() < Date.now() ? (
+                <div className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-muted text-muted-foreground text-sm font-bold cursor-not-allowed">
+                  <Clock className="w-4 h-4" />
+                  Deadline Passed — Pitching Closed
+                </div>
+              ) : (
+                <BidForm postId={post.id} market={post.market} postingAgentName={getDisplayName({ id: post.postingAgentId, name: post.postingAgentName })} />
+              )}
             </div>
           )}
 
