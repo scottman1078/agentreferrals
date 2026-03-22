@@ -39,12 +39,16 @@ import type { AgentNeedingPartner, CoverageGapOpportunity, PartnershipRequest } 
 // ─── Mapping functions: Supabase → mock-compatible shapes ───
 
 function mapProfileToAgent(profile: ArProfile): Agent {
+  // Use first territory zip as the area if primary_area is empty
+  const zips = profile.territory_zips || []
+  const area = profile.primary_area || (zips.length > 0 ? zips.join(', ') : '')
+
   return {
     id: profile.id,
     name: profile.full_name,
     brokerage: profile.brokerage?.name || 'Unknown',
     brokerageId: profile.brokerage_id || '',
-    area: profile.primary_area || '',
+    area,
     tags: profile.tags || [],
     status: (profile.status as 'active' | 'invited') || 'active',
     phone: '',
@@ -52,9 +56,10 @@ function mapProfileToAgent(profile: ArProfile): Agent {
     dealsPerYear: profile.deals_per_year || 0,
     yearsLicensed: profile.years_licensed || 0,
     avgSalePrice: profile.avg_sale_price || 0,
-    polygon: [], // No polygon data from Supabase
+    polygon: [], // Zip boundaries loaded separately by the map
     color: profile.brokerage?.color || '#6366f1',
     rcsScore: profile.refernet_score || undefined,
+    photoUrl: profile.avatar_url || undefined,
   }
 }
 
