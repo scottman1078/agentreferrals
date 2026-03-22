@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bug, X, Send, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { usePathname } from 'next/navigation'
@@ -12,6 +12,7 @@ export default function BugReportButton() {
   const [severity, setSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>('medium')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [enabled, setEnabled] = useState(true)
   const pathname = usePathname()
 
   let profile: { id?: string; email?: string } | null = null
@@ -19,6 +20,17 @@ export default function BugReportButton() {
     const auth = useAuth()
     profile = auth.profile
   } catch { /* not in auth provider */ }
+
+  // Check if bug reporting is enabled via admin setting
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        const val = d.settings?.bug_report_enabled?.value
+        if (val === false) setEnabled(false)
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleSubmit() {
     if (!title.trim()) return
@@ -49,15 +61,16 @@ export default function BugReportButton() {
     setSubmitting(false)
   }
 
-  // Don't show on admin pages (they have their own tracker)
+  // Don't show on admin pages or if disabled by admin
   if (pathname?.startsWith('/dashboard/admin')) return null
+  if (!enabled) return null
 
   return (
     <>
       {/* FAB */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 right-4 z-[800] w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition-all flex items-center justify-center group"
+        className="fixed bottom-[120px] right-[26px] z-[800] w-10 h-10 rounded-full bg-card border border-border text-foreground shadow-lg hover:bg-accent transition-all flex items-center justify-center group"
         title="Report a Bug"
       >
         <Bug className="w-4 h-4" />

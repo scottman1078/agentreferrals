@@ -44,6 +44,7 @@ function Toggle({
 
 export default function AdminSettingsPage() {
   const [foundingSpots, setFoundingSpots] = useState(5000)
+  const [bugReportEnabled, setBugReportEnabled] = useState(true)
   const [waitlistMode, setWaitlistMode] = useState(true)
   const [inviteOnly, setInviteOnly] = useState(true)
   const [noraEnabled, setNoraEnabled] = useState(true)
@@ -74,6 +75,8 @@ export default function AdminSettingsPage() {
       }
       setAffValues(vals)
       setAffOriginal(vals)
+      // Load bug report toggle
+      if (settings.bug_report_enabled?.value === false) setBugReportEnabled(false)
     } catch {
       setAffFeedback({ type: 'error', message: 'Failed to load affiliate settings' })
     }
@@ -136,6 +139,19 @@ export default function AdminSettingsPage() {
       description: 'Enable the NORA AI chat assistant for all users',
       checked: noraEnabled,
       onChange: setNoraEnabled,
+    },
+    {
+      label: 'Bug Report Button',
+      description: 'Show the floating bug report button for all users to submit issues',
+      checked: bugReportEnabled,
+      onChange: async (v: boolean) => {
+        setBugReportEnabled(v)
+        await fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'bug_report_enabled', value: v }),
+        })
+      },
     },
     {
       label: 'Maintenance Mode',
