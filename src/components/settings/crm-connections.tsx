@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
+import { buildOAuthAuthorizeUrl, getCallbackUrl, FUB_CONFIG } from '@/lib/integration-utils'
 
 interface ProviderConfig {
   id: 'fub' | 'lofty'
@@ -179,16 +180,12 @@ function CrmProviderCard({
       {/* Header Row */}
       <div className="flex items-center gap-3 p-3">
         {/* Provider logo */}
-        <div className="shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
           {provider.id === 'fub' && (
-            <div className="w-9 h-9 rounded-lg bg-[#0052CC] flex items-center justify-center">
-              <span className="text-[11px] font-extrabold text-white">FUB</span>
-            </div>
+            <img src="/logos/fub.png" alt="Follow Up Boss" className="w-7 h-7 object-contain" />
           )}
           {provider.id === 'lofty' && (
-            <div className="w-9 h-9 rounded-lg bg-[#7C3AED] flex items-center justify-center">
-              <span className="text-[9px] font-extrabold text-white">Lofty</span>
-            </div>
+            <img src="/logos/lofty.webp" alt="Lofty" className="w-7 h-7 object-contain" />
           )}
         </div>
         {/* Provider name + status */}
@@ -272,13 +269,14 @@ function CrmProviderCard({
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    // Redirect to FUB OAuth authorization URL
-                    const clientId = process.env.NEXT_PUBLIC_FUB_CLIENT_ID || ''
-                    const redirectUri = `${window.location.origin}/api/crm/fub/callback`
-                    const authUrl = `https://app.followupboss.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`
+                    const authUrl = buildOAuthAuthorizeUrl({
+                      authorizeUrl: FUB_CONFIG.authorizeUrl,
+                      clientId: FUB_CONFIG.clientId,
+                      redirectUri: getCallbackUrl('fub'),
+                    })
                     window.location.href = authUrl
                   }}
-                  className="h-9 px-4 rounded-md bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="h-9 px-4 rounded-md bg-[#0052CC] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
                 >
                   <Link2 className="w-3.5 h-3.5" />
                   Connect with Follow Up Boss

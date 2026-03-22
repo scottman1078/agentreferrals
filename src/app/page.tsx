@@ -376,11 +376,8 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Follow Up Boss */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-[#0052CC]/10 flex items-center justify-center mx-auto mb-4">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="40" height="40" rx="8" fill="#0052CC"/>
-                  <text x="20" y="26" textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui, sans-serif">FUB</text>
-                </svg>
+              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                <img src="/logos/fub.png" alt="Follow Up Boss" className="w-14 h-14 object-contain" />
               </div>
               <h3 className="font-bold text-lg mb-2">Follow Up Boss</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -394,11 +391,8 @@ export default function LandingPage() {
             </div>
             {/* Lofty */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-[#7C3AED]/10 flex items-center justify-center mx-auto mb-4">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="40" height="40" rx="8" fill="#7C3AED"/>
-                  <text x="20" y="26" textAnchor="middle" fill="white" fontSize="11" fontWeight="800" fontFamily="system-ui, sans-serif">Lofty</text>
-                </svg>
+              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                <img src="/logos/lofty.webp" alt="Lofty" className="w-14 h-14 object-contain" />
               </div>
               <h3 className="font-bold text-lg mb-2">Lofty</h3>
               <p className="text-sm text-muted-foreground mb-4">
