@@ -98,6 +98,7 @@ export default function SettingsPage() {
   const [leafletReady, setLeafletReady] = useState(false)
   const [mapReady, setMapReady] = useState(false)
 
+  const skipFitBoundsRef = useRef(false)
   const [savingTerritory, setSavingTerritory] = useState(false)
 
   const [saving, setSaving] = useState(false)
@@ -469,6 +470,8 @@ export default function SettingsPage() {
         }
         poly.on('click', (e) => {
           L!.DomEvent.stopPropagation(e)
+          // Remove zip without triggering fitBounds zoom-out
+          skipFitBoundsRef.current = true
           setSelectedZips((prev) => prev.filter((z) => z !== zip))
         })
         poly.addTo(map)
@@ -477,11 +480,12 @@ export default function SettingsPage() {
       }
 
       if (cancelled) return
-      if (bounds.length > 0) {
+      if (bounds.length > 0 && !skipFitBoundsRef.current) {
         let combined = bounds[0]
         for (let i = 1; i < bounds.length; i++) combined = combined.extend(bounds[i])
         map.fitBounds(combined, { padding: [40, 40], maxZoom: isCountyMode ? 9 : 12, animate: false })
       }
+      skipFitBoundsRef.current = false
     }
     renderZips()
     return () => { cancelled = true }
