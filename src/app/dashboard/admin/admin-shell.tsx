@@ -18,6 +18,7 @@ import {
   Funnel,
   Tag,
   ClipboardCheck,
+  Bug,
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['scott@agentdashboards.com']
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/dashboard/admin/setup-analytics', icon: Funnel, label: 'Setup Analytics' },
   { href: '/dashboard/admin/specializations', icon: Tag, label: 'Specializations' },
   { href: '/dashboard/admin/expectations', icon: ClipboardCheck, label: 'Expectations' },
+  { href: '/dashboard/admin/bugs', icon: Bug, label: 'Bug Tracker' },
   { href: '/dashboard/admin/nora', icon: Sparkles, label: 'NORA Config' },
   { href: '/dashboard/admin/settings', icon: Settings, label: 'Settings' },
 ]
