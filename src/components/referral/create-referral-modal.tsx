@@ -50,7 +50,7 @@ interface CreateReferralModalProps {
   onCreated?: () => void
 }
 
-const STEPS = ['Client Info', 'Select Agent', 'Terms', 'Review & Send'] as const
+const STEPS = ['Select Agent', 'Client Info', 'Terms', 'Review & Send'] as const
 type Step = 0 | 1 | 2 | 3
 
 function formatNumberWithCommas(value: number): string {
@@ -68,12 +68,14 @@ export default function CreateReferralModal({
   preselectedAgentId,
   onCreated,
 }: CreateReferralModalProps) {
-  const [step, setStep] = useState<Step>(preselectedAgentId ? 0 : 0)
+  // When agent is pre-selected (clicked from map), skip agent selection → go to Client Info
+  const [step, setStep] = useState<Step>(preselectedAgentId ? 1 : 0)
   const [submitted, setSubmitted] = useState(false)
   const { agents, mutateReferrals } = useAppData()
   const demoGuard = useDemoGuard()
   const { user } = useAuth()
 
+  // Step 0 — Select Agent
   // Step 1 — Client Info
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     name: '',
@@ -107,22 +109,21 @@ export default function CreateReferralModal({
   // Derived
   const selectedAgent = useMemo(
     () => agents.find((a) => a.id === selectedAgentId) ?? null,
-    [selectedAgentId]
+    [selectedAgentId, agents]
   )
 
   const filteredAgents = useMemo(() => {
-    if (!searchQuery.trim()) return agents.filter((a) => a.id !== user?.id) // exclude self
+    const available = agents.filter((a) => a.id !== user?.id)
+    if (!searchQuery.trim()) return available
     const q = searchQuery.toLowerCase()
-    return agents
-      .filter((a) => a.id !== user?.id) // exclude self
-      .filter(
-        (a) =>
-          a.name.toLowerCase().includes(q) ||
-          a.area.toLowerCase().includes(q) ||
-          a.brokerage.toLowerCase().includes(q) ||
-          a.tags.some((t) => t.toLowerCase().includes(q))
-      )
-  }, [searchQuery])
+    return available.filter(
+      (a) =>
+        a.name.toLowerCase().includes(q) ||
+        a.area.toLowerCase().includes(q) ||
+        a.brokerage.toLowerCase().includes(q) ||
+        a.tags.some((t) => t.toLowerCase().includes(q))
+    )
+  }, [searchQuery, agents, user?.id])
 
   // Fee calculations
   const commission = terms.estimatedPrice * (terms.commissionRate / 100)
@@ -132,9 +133,9 @@ export default function CreateReferralModal({
   const canAdvance = (s: Step): boolean => {
     switch (s) {
       case 0:
-        return clientInfo.name.trim().length > 0
-      case 1:
         return selectedAgentId !== null
+      case 1:
+        return clientInfo.name.trim().length > 0
       case 2:
         return terms.market.trim().length > 0 && terms.feePercent > 0
       case 3:
@@ -345,7 +346,7 @@ export default function CreateReferralModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {/* Step 1: Client Info */}
-          {step === 0 && (
+          {step === 1 && (
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -449,8 +450,8 @@ export default function CreateReferralModal({
             </div>
           )}
 
-          {/* Step 2: Select Agent */}
-          {step === 1 && (
+          {/* Step 0: Select Agent */}
+          {step === 0 && (
             <div className="space-y-3">
               {/* Search */}
               <div className="relative">
