@@ -1414,7 +1414,7 @@ export default function SettingsPage() {
                   <div>
                     <div className="font-bold text-sm capitalize">{plan.name} Plan</div>
                     <div className="text-xs text-muted-foreground">
-                      {tier === 'starter' ? 'Free forever' : plan.priceLabel}
+                      {plan.priceLabel}{tier !== 'starter' ? '' : '/forever'}
                     </div>
                   </div>
                 </div>

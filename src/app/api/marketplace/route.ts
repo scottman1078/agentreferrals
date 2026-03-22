@@ -103,6 +103,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Also create a pipeline referral entry so it shows in the user's pipeline
+    const { error: refError } = await supabase
+      .from('ar_referrals')
+      .insert({
+        client_name: clientInitials || 'Marketplace Referral',
+        from_agent_id: postingAgentId,
+        to_agent_id: null, // assigned when a bid is awarded
+        market,
+        fee_percent: feePercent || 25,
+        estimated_price: estimatedPrice || null,
+        est_close_date: effectiveDeadline,
+        stage: 'agreement_sent',
+        notes: `Marketplace post: ${description}`,
+      })
+
+    if (refError) {
+      console.error('[Marketplace] Pipeline referral insert failed (non-blocking):', refError.message)
+      // Don't fail the whole request — the marketplace post was created successfully
+    }
+
     return NextResponse.json({ success: true, post: data })
   } catch (error) {
     console.error('[Marketplace] POST error:', error)

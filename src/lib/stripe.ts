@@ -44,7 +44,7 @@ export const PLANS: PlanConfig[] = [
     id: 'starter',
     name: 'Starter',
     price: 0,
-    priceLabel: 'Free forever',
+    priceLabel: '$0',
     description: 'Get started with referral basics',
     features: {
       networkSize: '10',
