@@ -178,6 +178,19 @@ function CrmProviderCard({
     <div className="rounded-lg border border-border bg-background overflow-hidden">
       {/* Header Row */}
       <div className="flex items-center gap-3 p-3">
+        {/* Provider logo */}
+        <div className="shrink-0">
+          {provider.id === 'fub' && (
+            <div className="w-9 h-9 rounded-lg bg-[#0052CC] flex items-center justify-center">
+              <span className="text-[11px] font-extrabold text-white">FUB</span>
+            </div>
+          )}
+          {provider.id === 'lofty' && (
+            <div className="w-9 h-9 rounded-lg bg-[#7C3AED] flex items-center justify-center">
+              <span className="text-[9px] font-extrabold text-white">Lofty</span>
+            </div>
+          )}
+        </div>
         {/* Provider name + status */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

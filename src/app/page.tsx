@@ -376,8 +376,11 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Follow Up Boss */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-extrabold text-blue-600">FUB</span>
+              <div className="w-16 h-16 rounded-2xl bg-[#0052CC]/10 flex items-center justify-center mx-auto mb-4">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="40" height="40" rx="8" fill="#0052CC"/>
+                  <text x="20" y="26" textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui, sans-serif">FUB</text>
+                </svg>
               </div>
               <h3 className="font-bold text-lg mb-2">Follow Up Boss</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -386,15 +389,18 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-2 justify-center">
                 <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Contact Sync</span>
                 <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Auto-fill Referrals</span>
-                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">API Key Setup</span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">OAuth Setup</span>
               </div>
             </div>
             {/* Lofty */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-extrabold text-purple-600">Lofty</span>
+              <div className="w-16 h-16 rounded-2xl bg-[#7C3AED]/10 flex items-center justify-center mx-auto mb-4">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="40" height="40" rx="8" fill="#7C3AED"/>
+                  <text x="20" y="26" textAnchor="middle" fill="white" fontSize="11" fontWeight="800" fontFamily="system-ui, sans-serif">Lofty</text>
+                </svg>
               </div>
-              <h3 className="font-bold text-lg mb-2">Lofty (Chime)</h3>
+              <h3 className="font-bold text-lg mb-2">Lofty</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Connect your Lofty account to pull in leads and contacts. Streamline referrals with your existing client data.
               </p>
