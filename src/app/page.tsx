@@ -376,8 +376,8 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Follow Up Boss */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 overflow-hidden">
-                <img src="/logos/fub.png" alt="Follow Up Boss" className="w-14 h-14 object-contain" />
+              <div className="h-14 flex items-center justify-center mx-auto mb-4">
+                <img src="/logos/fub.png" alt="Follow Up Boss" className="h-12 w-auto object-contain dark:brightness-0 dark:invert" />
               </div>
               <h3 className="font-bold text-lg mb-2">Follow Up Boss</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -391,8 +391,8 @@ export default function LandingPage() {
             </div>
             {/* Lofty */}
             <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 overflow-hidden">
-                <img src="/logos/lofty.webp" alt="Lofty" className="w-14 h-14 object-contain" />
+              <div className="h-14 flex items-center justify-center mx-auto mb-4">
+                <img src="/logos/lofty.webp" alt="Lofty" className="h-12 w-auto object-contain dark:brightness-0 dark:invert" />
               </div>
               <h3 className="font-bold text-lg mb-2">Lofty</h3>
               <p className="text-sm text-muted-foreground mb-4">

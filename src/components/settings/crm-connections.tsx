@@ -180,12 +180,12 @@ function CrmProviderCard({
       {/* Header Row */}
       <div className="flex items-center gap-3 p-3">
         {/* Provider logo */}
-        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
           {provider.id === 'fub' && (
-            <img src="/logos/fub.png" alt="Follow Up Boss" className="w-7 h-7 object-contain" />
+            <img src="/logos/fub.png" alt="Follow Up Boss" className="w-8 h-8 object-contain dark:brightness-0 dark:invert" />
           )}
           {provider.id === 'lofty' && (
-            <img src="/logos/lofty.webp" alt="Lofty" className="w-7 h-7 object-contain" />
+            <img src="/logos/lofty.webp" alt="Lofty" className="w-8 h-8 object-contain dark:brightness-0 dark:invert" />
           )}
         </div>
         {/* Provider name + status */}
