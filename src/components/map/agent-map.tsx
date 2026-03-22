@@ -21,7 +21,7 @@ import type { Agent } from '@/types'
 let L: typeof import('leaflet') | null = null
 
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const DARK_TILES = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
+const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 
 export default function AgentMap() {
   const mapRef = useRef<HTMLDivElement>(null)

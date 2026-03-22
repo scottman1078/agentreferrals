@@ -43,6 +43,7 @@ const PROGRESS_STEPS = [
   { key: 'brokerage', label: 'Brokerage' },
   { key: 'team', label: 'Team' },
   { key: 'experience', label: 'Experience' },
+  { key: 'service_area', label: 'Location' },
   { key: 'specializations', label: 'Specializations' },
   { key: 'avg_price', label: 'Pricing' },
   { key: 'license_number', label: 'License' },
@@ -60,13 +61,14 @@ function getProgressIndex(step: OnboardingStep): number {
     team_name: 1,
     experience: 2,
     referral_volume: 2,
-    specializations: 3,
-    avg_price: 4,
-    referral_fee: 4,
-    name_phone: 4,
-    license_number: 5,
-    photo_upload: 6,
-    phone_verify: 7,
+    service_area: 3,
+    specializations: 4,
+    avg_price: 5,
+    referral_fee: 5,
+    name_phone: 5,
+    license_number: 6,
+    photo_upload: 7,
+    phone_verify: 8,
     phone_code: 7,
     summary: 8,
     complete: 9,
@@ -402,6 +404,26 @@ export default function NoraOnboardingChat({
         const refMap: Record<string, number> = { '0-5': 3, '5-10': 7, '10-20': 15, '20+': 25 }
         updateData({ referralsPerYear: refMap[value] ?? null })
         addUserMessage(value)
+
+        setTimeout(() => {
+          addNoraMessage(
+            "What's the zip code of your primary service area? Don't worry — you'll be able to add more zip codes in the next step.",
+            { kind: 'input', placeholder: 'e.g. 49080', type: 'text' },
+            'service_area'
+          )
+        }, 200)
+        break
+      }
+
+      case 'service_area': {
+        const zip = value.trim().replace(/\D/g, '').slice(0, 5)
+        if (zip.length !== 5) {
+          setZipError('Please enter a valid 5-digit zip code')
+          break
+        }
+        setZipError('')
+        updateData({ primaryArea: zip })
+        addUserMessage(zip)
 
         setTimeout(() => {
           addNoraMessage(
