@@ -23,7 +23,10 @@ import {
   Star,
   DollarSign,
   Lock,
+  Database,
+  Loader2,
 } from 'lucide-react'
+import { useCrmConnections, useCrmContacts, type CrmContact } from '@/hooks/use-crm'
 import type { Agent, PipelineStage } from '@/types'
 
 type RepresentationType = 'Buyer' | 'Seller' | 'Both'
@@ -79,6 +82,13 @@ export default function CreateReferralModal({
   const { user } = useAuth()
   const { tier } = useFeatureGate()
   const { partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
+
+  // CRM import state
+  const hasCrmAccess = tier === 'pro' || tier === 'elite'
+  const { connections: crmConnections, loading: crmLoading } = useCrmConnections()
+  const hasCrmConnection = !crmLoading && crmConnections.some((c) => c.status === 'connected')
+  const [showCrmPicker, setShowCrmPicker] = useState(false)
+  const [crmSearch, setCrmSearch] = useState('')
 
   // Step 0 — Select Agent
   // Step 1 — Client Info
@@ -366,6 +376,43 @@ export default function CreateReferralModal({
           {/* Step 1: Client Info */}
           {step === 1 && (
             <div className="space-y-4">
+              {/* Import from CRM — only for Pro/Elite with a connected CRM */}
+              {hasCrmAccess && hasCrmConnection && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCrmPicker(!showCrmPicker)}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/30 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    Import from CRM
+                  </button>
+
+                  {showCrmPicker && (
+                    <CrmContactPicker
+                      search={crmSearch}
+                      onSearchChange={setCrmSearch}
+                      onSelect={(contact) => {
+                        const name = [contact.first_name, contact.last_name]
+                          .filter(Boolean)
+                          .join(' ')
+                        setClientInfo((p) => ({
+                          ...p,
+                          name: name || p.name,
+                          email: contact.email || p.email,
+                          phone: contact.phone || p.phone,
+                        }))
+                        setShowCrmPicker(false)
+                        setCrmSearch('')
+                      }}
+                      onClose={() => {
+                        setShowCrmPicker(false)
+                        setCrmSearch('')
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                   Client Name *
@@ -963,6 +1010,86 @@ export default function CreateReferralModal({
             )}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// --- CRM Contact Picker (inline dropdown) ---
+
+function CrmContactPicker({
+  search,
+  onSearchChange,
+  onSelect,
+  onClose,
+}: {
+  search: string
+  onSearchChange: (s: string) => void
+  onSelect: (contact: CrmContact) => void
+  onClose: () => void
+}) {
+  const { contacts, loading } = useCrmContacts(undefined, search)
+
+  return (
+    <div className="absolute top-10 left-0 z-50 w-[360px] max-h-[340px] rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+      {/* Search */}
+      <div className="p-2 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full h-8 pl-8 pr-8 rounded-md border border-input bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
+            placeholder="Search CRM contacts..."
+            autoFocus
+          />
+          <button
+            onClick={onClose}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Contact List */}
+      <div className="max-h-[280px] overflow-y-auto">
+        {loading && (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {!loading && contacts.length === 0 && (
+          <div className="text-center py-6 text-xs text-muted-foreground">
+            {search ? 'No contacts match your search' : 'No synced contacts yet. Sync your CRM first.'}
+          </div>
+        )}
+
+        {!loading &&
+          contacts.map((contact) => {
+            const displayName = [contact.first_name, contact.last_name]
+              .filter(Boolean)
+              .join(' ') || 'Unnamed'
+            return (
+              <button
+                key={contact.id}
+                onClick={() => onSelect(contact)}
+                className="w-full text-left px-3 py-2 hover:bg-accent/50 transition-colors border-b border-border last:border-0"
+              >
+                <div className="text-xs font-semibold">{displayName}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {[contact.email, contact.phone].filter(Boolean).join(' \u00B7 ') || 'No contact info'}
+                </div>
+                {contact.lead_status && (
+                  <span className="inline-block mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                    {contact.lead_status}
+                  </span>
+                )}
+              </button>
+            )
+          })}
       </div>
     </div>
   )
