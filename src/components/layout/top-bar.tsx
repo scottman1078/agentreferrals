@@ -106,7 +106,7 @@ export default function TopBar() {
           title="Search for referral partners (Cmd+K)"
         >
           <Search className="w-4 h-4 shrink-0" />
-          <span className="text-sm truncate">Search address or city...</span>
+          <span className="text-sm truncate">Search agents, address, or city...</span>
           <kbd className="ml-auto hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-muted font-mono text-[10px] text-muted-foreground shrink-0">
             <Command className="w-2.5 h-2.5" />K
           </kbd>
@@ -166,6 +166,13 @@ export default function TopBar() {
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors"
                   >
                     Settings
+                  </Link>
+                  <Link
+                    href="/dashboard/settings?tab=integrations"
+                    onClick={() => setShowAvatarMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors"
+                  >
+                    Integrations
                   </Link>
                   {canSwitchTier && (
                     <>

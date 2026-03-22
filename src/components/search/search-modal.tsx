@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, MapPin, Loader2, Star, Clock, Send, MessageSquare, Users, X, Command } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { Search, MapPin, Loader2, Star, Clock, Send, MessageSquare, Users, X, Command, User } from 'lucide-react'
 import { geocodeAddress, type GeoResult } from '@/lib/geocode'
 import { pointInPolygon } from '@/lib/geo-utils'
 import { useAppData } from '@/lib/data-provider'
+import { useBrokerage } from '@/contexts/brokerage-context'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { maskName } from '@/lib/agent-display-name'
@@ -24,11 +25,14 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
   const [phase, setPhase] = useState<ModalPhase>('idle')
   const [suggestions, setSuggestions] = useState<GeoResult[]>([])
   const [matchedAgents, setMatchedAgents] = useState<Agent[]>([])
+  const [agentNameMatches, setAgentNameMatches] = useState<Agent[]>([])
   const [selectedLocation, setSelectedLocation] = useState<GeoResult | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { agents } = useAppData()
+  // Use tier-filtered agents — only show agents the user has access to
+  const { filteredAgents, partnerIds } = useBrokerage()
 
   // Focus input when modal opens
   useEffect(() => {
@@ -37,6 +41,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
       setPhase('idle')
       setSuggestions([])
       setMatchedAgents([])
+      setAgentNameMatches([])
       setSelectedLocation(null)
       setFocusedIndex(-1)
       setTimeout(() => inputRef.current?.focus(), 50)
@@ -53,37 +58,52 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open, onClose])
 
-  // Debounced geocode
-  const debouncedGeocode = useCallback((q: string) => {
+  // Debounced search (geocode + agent name matching)
+  const debouncedSearch = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (q.trim().length < 2) {
       setSuggestions([])
+      setAgentNameMatches([])
       setPhase('idle')
       return
     }
     debounceRef.current = setTimeout(async () => {
       setPhase('loading')
+
+      // Search agents by name (tier-filtered)
+      const qLower = q.trim().toLowerCase()
+      const nameMatches = filteredAgents.filter((agent) =>
+        agent.name.toLowerCase().includes(qLower) ||
+        agent.brokerage.toLowerCase().includes(qLower) ||
+        agent.area.toLowerCase().includes(qLower)
+      ).slice(0, 10)
+      setAgentNameMatches(nameMatches)
+
+      // Also geocode for location results
       const results = await geocodeAddress(q)
       setSuggestions(results)
-      setPhase(results.length > 0 ? 'suggestions' : 'idle')
+      setPhase((results.length > 0 || nameMatches.length > 0) ? 'suggestions' : 'idle')
       setFocusedIndex(-1)
     }, 300)
-  }, [])
+  }, [filteredAgents])
 
   const handleChange = (value: string) => {
     setQuery(value)
     setSelectedLocation(null)
     setMatchedAgents([])
-    debouncedGeocode(value)
+    setAgentNameMatches([])
+    debouncedSearch(value)
   }
 
   const selectSuggestion = useCallback(
     (geo: GeoResult) => {
       setSelectedLocation(geo)
       setSuggestions([])
+      setAgentNameMatches([])
       setPhase('loading')
 
-      const found = agents.filter((agent) =>
+      // Use tier-filtered agents for location search
+      const found = filteredAgents.filter((agent) =>
         pointInPolygon(geo.lat, geo.lng, agent.polygon)
       )
       found.sort((a, b) => (b.rcsScore ?? 0) - (a.rcsScore ?? 0))
@@ -94,7 +114,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
 
       onResultSelect?.(geo.lat, geo.lng, found)
     },
-    [agents, onResultSelect]
+    [filteredAgents, onResultSelect]
   )
 
   // Keyboard nav for suggestions
@@ -131,7 +151,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
             value={query}
             onChange={(e) => handleChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search any address or city to find a referral partner..."
+            placeholder="Search by agent name, address, or city..."
             className="flex-1 h-14 bg-transparent text-base placeholder:text-muted-foreground focus:outline-none"
           />
           {phase === 'loading' && (
@@ -147,7 +167,19 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
 
         {/* Body */}
         <div className="max-h-[60vh] overflow-y-auto">
-          {/* Suggestions */}
+          {/* Agent name matches */}
+          {phase === 'suggestions' && agentNameMatches.length > 0 && (
+            <div>
+              <div className="px-4 py-2 border-b border-border bg-accent/30">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Agents</p>
+              </div>
+              {agentNameMatches.map((agent) => (
+                <ModalAgentCard key={agent.id} agent={agent} isPartner={partnerIds.includes(agent.id)} />
+              ))}
+            </div>
+          )}
+
+          {/* Location suggestions */}
           {phase === 'suggestions' && suggestions.length > 0 && (
             <div>
               <div className="px-4 py-2 border-b border-border bg-accent/30">
@@ -187,7 +219,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
                 </div>
               </div>
               {matchedAgents.map((agent) => (
-                <ModalAgentCard key={agent.id} agent={agent} />
+                <ModalAgentCard key={agent.id} agent={agent} isPartner={partnerIds.includes(agent.id)} />
               ))}
             </div>
           )}
@@ -217,7 +249,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
           {phase === 'idle' && query.length === 0 && (
             <div className="p-6 text-center">
               <p className="text-xs text-muted-foreground">
-                Type an address, city, or zip code to find referral partners in that area
+                Search by agent name, brokerage, address, city, or zip code
               </p>
               <div className="flex items-center justify-center gap-4 mt-4">
                 {['Nashville, TN', 'Kalamazoo, MI', 'Phoenix, AZ'].map((example) => (
@@ -254,7 +286,8 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
   )
 }
 
-function ModalAgentCard({ agent }: { agent: Agent }) {
+function ModalAgentCard({ agent, isPartner = false }: { agent: Agent; isPartner?: boolean }) {
+  const displayName = isPartner ? agent.name : maskName(agent.name)
   const initials = getInitials(agent.name)
   const score = agent.rcsScore ?? 0
   const scoreColor = score >= 90 ? 'text-emerald-500' : score >= 80 ? 'text-amber-500' : 'text-muted-foreground'
@@ -273,7 +306,7 @@ function ModalAgentCard({ agent }: { agent: Agent }) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-bold text-sm">{maskName(agent.name)}</span>
+            <span className="font-bold text-sm">{displayName}</span>
             {score > 0 && (
               <span className={`text-xs font-bold ${scoreColor}`}>
                 Score: {score}

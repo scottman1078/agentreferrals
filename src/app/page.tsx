@@ -108,6 +108,7 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+            <a href="#integrations" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Integrations</a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="#brokerages" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Brokerages</a>
           </div>
@@ -359,6 +360,54 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* INTEGRATIONS */}
+      <section id="integrations" className="py-24 px-6 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal">Integrations</span>
+            <h2 className="font-extrabold text-2xl sm:text-3xl md:text-4xl mt-3">Connect your CRM</h2>
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Import your client list directly from the CRM you already use. Send referrals faster with auto-filled client data.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {/* Follow Up Boss */}
+            <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-extrabold text-blue-600">FUB</span>
+              </div>
+              <h3 className="font-bold text-lg mb-2">Follow Up Boss</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Sync your contacts and leads. When sending a referral, pick a client from your FUB list — no manual entry needed.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Contact Sync</span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Auto-fill Referrals</span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">API Key Setup</span>
+              </div>
+            </div>
+            {/* Lofty */}
+            <div className="p-8 rounded-2xl border border-border bg-card text-center hover:border-primary/20 transition-all">
+              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-extrabold text-purple-600">Lofty</span>
+              </div>
+              <h3 className="font-bold text-lg mb-2">Lofty (Chime)</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Connect your Lofty account to pull in leads and contacts. Streamline referrals with your existing client data.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Lead Sync</span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">Auto-fill Referrals</span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">API Key Setup</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            Available on Pro and Elite plans. More integrations coming soon.
+          </p>
         </div>
       </section>
 

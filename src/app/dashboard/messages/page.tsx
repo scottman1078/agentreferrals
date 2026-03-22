@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
+import { useDemo } from '@/contexts/demo-context'
 import Link from 'next/link'
 import { getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
+import { createClient } from '@/lib/supabase/client'
 import {
   conversations as mockConversations,
   getLastMessage,
@@ -340,7 +342,8 @@ function ConversationItem({
 
 export default function MessagesPage() {
   const demoGuard = useDemoGuard()
-  const { agents } = useAppData()
+  const { agents, isAuthenticated, userId } = useAppData()
+  const { isDemoMode } = useDemo()
   // Read ?agent= param from window.location on mount (avoids useSearchParams Suspense issues)
   const [preselectedAgent, setPreselectedAgent] = useState<string | null>(null)
 
@@ -349,10 +352,77 @@ export default function MessagesPage() {
     setPreselectedAgent(params.get('agent'))
   }, [])
 
-  const [conversationList, setConversationList] = useState<Conversation[]>(mockConversations)
+  const [conversationList, setConversationList] = useState<Conversation[]>(isDemoMode ? mockConversations : [])
   const [activeConvId, setActiveConvId] = useState<string | null>(
-    mockConversations[0]?.agentId || null
+    isDemoMode ? (mockConversations[0]?.agentId || null) : null
   )
+  const [messagesLoaded, setMessagesLoaded] = useState(false)
+
+  // Load real messages from Supabase for authenticated users
+  useEffect(() => {
+    if (isDemoMode || !isAuthenticated || !userId || messagesLoaded) return
+
+    async function loadMessages() {
+      try {
+        const supabase = createClient()
+        const { data: messages, error } = await supabase
+          .from('ar_messages')
+          .select('*')
+          .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+          .order('created_at', { ascending: true })
+
+        if (error || !messages || messages.length === 0) {
+          setMessagesLoaded(true)
+          return
+        }
+
+        // Group messages by the other participant
+        const convMap = new Map<string, Message[]>()
+        for (const msg of messages) {
+          const otherId = msg.from_user_id === userId ? msg.to_user_id : msg.from_user_id
+          if (!convMap.has(otherId)) convMap.set(otherId, [])
+          convMap.get(otherId)!.push({
+            id: msg.id,
+            fromUserId: msg.from_user_id,
+            toUserId: msg.to_user_id,
+            referralId: msg.referral_id || undefined,
+            content: msg.content,
+            read: msg.read ?? true,
+            readAt: msg.read_at || undefined,
+            createdAt: msg.created_at,
+          })
+        }
+
+        // Build conversations, look up agent info
+        const convs: Conversation[] = []
+        for (const [otherId, msgs] of convMap) {
+          const agent = agents.find((a) => a.id === otherId)
+          convs.push({
+            agentId: otherId,
+            agentName: agent?.name || 'Unknown Agent',
+            brokerage: agent?.brokerage || '',
+            color: agent?.color || '#6b7280',
+            messages: msgs,
+          })
+        }
+
+        // Sort by most recent message
+        convs.sort((a, b) => {
+          const aTime = a.messages.length ? new Date(a.messages[a.messages.length - 1].createdAt).getTime() : 0
+          const bTime = b.messages.length ? new Date(b.messages[b.messages.length - 1].createdAt).getTime() : 0
+          return bTime - aTime
+        })
+
+        setConversationList(convs)
+        if (convs.length > 0) setActiveConvId(convs[0].agentId)
+      } catch (err) {
+        console.error('[Messages] Failed to load:', err)
+      }
+      setMessagesLoaded(true)
+    }
+
+    loadMessages()
+  }, [isDemoMode, isAuthenticated, userId, agents, messagesLoaded])
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [newMessage, setNewMessage] = useState('')
@@ -380,6 +450,7 @@ export default function MessagesPage() {
 
   function sendMessageToAgent(agentId: string, content: string) {
     if (demoGuard()) return
+    const senderId = isAuthenticated && userId ? userId : 'jason'
     // Ensure conversation exists
     let convExists = conversationList.find((c) => c.agentId === agentId)
     if (!convExists) {
@@ -398,7 +469,7 @@ export default function MessagesPage() {
 
     const msg: Message = {
       id: `m-nudge-${Date.now()}`,
-      fromUserId: 'jason',
+      fromUserId: senderId,
       toUserId: agentId,
       content,
       read: true,
@@ -414,6 +485,21 @@ export default function MessagesPage() {
     )
     setActiveConvId(agentId)
     setShowMobileChat(true)
+
+    // Persist to Supabase for authenticated users
+    if (isAuthenticated && userId && !isDemoMode) {
+      const supabase = createClient()
+      supabase
+        .from('ar_messages')
+        .insert({
+          from_user_id: userId,
+          to_user_id: agentId,
+          content,
+        })
+        .then(({ error }: { error: unknown }) => {
+          if (error) console.error('[Messages] Failed to save:', error)
+        })
+    }
   }
 
   function handleDismissNudge(nudgeId: string) {
@@ -539,9 +625,11 @@ export default function MessagesPage() {
     if (demoGuard()) return
     if (!newMessage.trim() || !activeConvId) return
 
+    const senderId = isAuthenticated && userId ? userId : 'jason'
+
     const msg: Message = {
       id: `m-new-${Date.now()}`,
-      fromUserId: 'jason',
+      fromUserId: senderId,
       toUserId: activeConvId,
       content: newMessage.trim(),
       read: true,
@@ -556,6 +644,21 @@ export default function MessagesPage() {
       )
     )
     setNewMessage('')
+
+    // Persist to Supabase for authenticated users
+    if (isAuthenticated && userId && !isDemoMode) {
+      const supabase = createClient()
+      supabase
+        .from('ar_messages')
+        .insert({
+          from_user_id: userId,
+          to_user_id: activeConvId,
+          content: msg.content,
+        })
+        .then(({ error }: { error: unknown }) => {
+          if (error) console.error('[Messages] Failed to save:', error)
+        })
+    }
   }
 
   const unreadTotal = getUnreadCount()
