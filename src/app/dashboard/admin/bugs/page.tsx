@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Plus, Trash2, Loader2, RefreshCw, AlertTriangle, Bug, ChevronDown,
   CheckCircle2, Clock, XCircle, ArrowUp, ArrowDown, Minus,
-  ImagePlus, X, Sparkles, ZoomIn,
+  ImagePlus, X, Sparkles, ZoomIn, Search,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -77,6 +77,7 @@ export default function AdminBugsPage() {
   const [bugs, setBugs] = useState<BugRow[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState<string | null>(null)
 
   // Add form
@@ -196,10 +197,14 @@ export default function AdminBugsPage() {
 
   const categoryItems = bugs.filter((b) => b.category !== 'feature')
 
-  const displayItems = filterStatus === 'all' ? categoryItems
-    : filterStatus === 'completed' ? categoryItems.filter((b) => b.verified_status === 'confirmed')
-    : filterStatus === 'not_fixed' ? categoryItems.filter((b) => b.verified_status === 'not_fixed')
-    : categoryItems.filter((b) => b.status === filterStatus)
+  const searchFiltered = searchQuery.trim()
+    ? categoryItems.filter((b) => b.title.toLowerCase().includes(searchQuery.toLowerCase()) || b.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : categoryItems
+
+  const displayItems = filterStatus === 'all' ? searchFiltered
+    : filterStatus === 'completed' ? searchFiltered.filter((b) => b.verified_status === 'confirmed')
+    : filterStatus === 'not_fixed' ? searchFiltered.filter((b) => b.verified_status === 'not_fixed')
+    : searchFiltered.filter((b) => b.status === filterStatus)
 
   const counts = {
     all: categoryItems.length,
@@ -237,7 +242,22 @@ export default function AdminBugsPage() {
         </div>
       )}
 
-      {/* Status filter tabs */}
+      {/* Search + Status filter tabs */}
+      <div className="relative w-full max-w-sm mb-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search bugs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full h-9 pl-9 pr-8 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
       <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border w-fit flex-wrap">
         {[
           { key: 'all', label: 'All' },
