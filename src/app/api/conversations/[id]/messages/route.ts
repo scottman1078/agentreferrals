@@ -57,6 +57,26 @@ export async function POST(
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', id)
 
+    // Slack notification for user messages
+    if ((senderRole || 'user') === 'user') {
+      try {
+        const webhookUrl = process.env.SLACK_WEBHOOK_URL
+        if (webhookUrl && senderId) {
+          const { data: profile } = await supabase
+            .from('ar_profiles')
+            .select('full_name, email')
+            .eq('id', senderId)
+            .single()
+          const name = profile?.full_name || profile?.email || 'User'
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: `💬 ${name}: "${content.substring(0, 200)}"` }),
+          })
+        }
+      } catch { /* Slack is best-effort */ }
+    }
+
     return NextResponse.json({ message })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
