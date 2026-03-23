@@ -43,6 +43,17 @@ const navItems = [
 ]
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
+  const [inboxCount, setInboxCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/admin/conversations')
+      .then((r) => r.json())
+      .then((d) => {
+        const open = (d.conversations || []).filter((c: { status: string }) => c.status === 'open').length
+        setInboxCount(open)
+      })
+      .catch(() => {})
+  }, [])
   const { profile, isLoading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -99,6 +110,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             >
               <item.icon className="w-4 h-4" />
               {item.label}
+              {item.href === '/dashboard/admin/inbox' && inboxCount > 0 && (
+                <span className="ml-auto px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white min-w-[18px] text-center">
+                  {inboxCount}
+                </span>
+              )}
             </Link>
           )
         })}
