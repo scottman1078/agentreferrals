@@ -14,7 +14,6 @@ import { uploadVideo } from '@/lib/supabase/upload-video'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import ExpectationsSelector from '@/components/expectations/expectations-selector'
 import { CrmConnections } from '@/components/settings/crm-connections'
-import { VideoIntroEditor } from '@/components/video/video-intro-editor'
 import { ReferralExpectationsEditor as ReferralExpectationsEditorV2 } from '@/components/settings/referral-expectations-editor'
 
 let L: typeof import('leaflet') | null = null
@@ -722,11 +721,6 @@ export default function SettingsPage() {
       zipsBySelectionRef.current.set(selectionLabel, Array.from(nearbyZips))
       setTerritorySelections((prev) => [...prev, selectionLabel])
 
-      // Track the city/location as a named group
-      const selectionLabel = input.trim()
-      zipsBySelectionRef.current.set(selectionLabel, Array.from(nearbyZips))
-      setTerritorySelections((prev) => [...prev, selectionLabel])
-
       setSelectedZips((prev) => {
         const combined = new Set([...prev, ...nearbyZips])
         return Array.from(combined).slice(0, 100)
@@ -855,9 +849,6 @@ export default function SettingsPage() {
     const radiusLabel = `${miles}mi radius`
     zipsBySelectionRef.current.set(radiusLabel, Array.from(uniqueZips))
     setTerritorySelections([radiusLabel])
-    const radiusLabel = `${miles}mi radius`
-    zipsBySelectionRef.current.set(radiusLabel, Array.from(uniqueZips))
-    setTerritorySelections([radiusLabel])
     setSelectedZips(Array.from(uniqueZips).slice(0, 100))
     setRadiusLoading(false)
   }, [])
@@ -885,7 +876,6 @@ export default function SettingsPage() {
           territory_meta: {
             mode: territoryMode,
             selections: territorySelections,
-            zipGroups: Object.fromEntries(zipsBySelectionRef.current),
           },
         }),
       })
@@ -1125,19 +1115,7 @@ export default function SettingsPage() {
             </div>
 
             {/* ── Video Introduction ── */}
-            <VideoIntroEditor
-              profileId={profile!.id}
-              videoIntroUrl={videoIntroUrl}
-              isAuthenticated={isAuthenticated}
-              demoGuard={demoGuard}
-              onSaved={(url, toast) => {
-                setVideoIntroUrl(url)
-                refreshProfile()
-                setSaveToast(toast)
-                setTimeout(() => setSaveToast(''), 3000)
-              }}
-            />
-            {false && <div className="p-5 rounded-xl border border-border bg-card">
+            <div className="p-5 rounded-xl border border-border bg-card">
               <div className="font-bold text-sm mb-1 pb-3 border-b border-border flex items-center gap-2">
                 <Video className="w-4 h-4 text-primary" />
                 Video Introduction
@@ -1210,7 +1188,7 @@ export default function SettingsPage() {
                 onChange={handleVideoUpload}
                 className="hidden"
               />
-            </div>}
+            </div>
 
             {/* ── Social Media Links ── */}
             <SocialLinksEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
@@ -1328,7 +1306,6 @@ export default function SettingsPage() {
                                         if (ring) zipBoundariesRef.current.set(batch[idx], ring)
                                       })
                                     }
-                                    zipsBySelectionRef.current.set(s.label, data.zips as string[])
                                     setSelectedZips((prev) => {
                                       const combined = new Set([...prev, ...data.zips])
                                       return Array.from(combined).slice(0, 100)
@@ -1422,74 +1399,26 @@ export default function SettingsPage() {
 
               {zipError && <p className="text-sm text-destructive mb-3">{zipError}</p>}
 
-              {/* Zip count badge + removable group chips + clear all */}
+              {/* Zip count badge + clear */}
               <div className="flex items-center justify-between mb-2">
                 {selectedZips.length > 0 ? (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {territorySelections.length > 0 ? (
-                      <>
-                        {territorySelections.map((label) => {
-                          const groupZips = zipsBySelectionRef.current.get(label)
-                          const count = groupZips ? groupZips.filter(z => selectedZips.includes(z)).length : 0
-                          return (
-                            <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                              <MapPin className="w-3.5 h-3.5 text-primary" />
-                              <span className="text-sm font-semibold text-primary">{label}</span>
-                              {count > 0 && <span className="text-xs text-primary/60">({count} zips)</span>}
-                              <button
-                                onClick={() => {
-                                  skipFitBoundsRef.current = true
-                                  if (mapInstance.current) {
-                                    savedViewRef.current = {
-                                      center: { lat: mapInstance.current.getCenter().lat, lng: mapInstance.current.getCenter().lng },
-                                      zoom: mapInstance.current.getZoom(),
-                                    }
-                                  }
-                                  const removeSet = new Set(groupZips || [])
-                                  zipsBySelectionRef.current.delete(label)
-                                  setTerritorySelections((prev) => prev.filter((s) => s !== label))
-                                  setSelectedZips((prev) => prev.filter((z) => !removeSet.has(z)))
-                                }}
-                                className="ml-1 text-primary/50 hover:text-destructive transition-colors"
-                                title={`Remove ${label}`}
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )
-                        })}
-                        {(() => {
-                          const groupedZips = new Set<string>()
-                          for (const gzips of zipsBySelectionRef.current.values()) {
-                            gzips.forEach(z => groupedZips.add(z))
-                          }
-                          const ungrouped = selectedZips.filter(z => !groupedZips.has(z))
-                          if (ungrouped.length > 0) {
-                            return (
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                                <MapPin className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-sm font-semibold text-primary">
-                                  +{ungrouped.length} individual zip{ungrouped.length !== 1 ? 's' : ''}
-                                </span>
-                              </div>
-                            )
-                          }
-                          return null
-                        })()}
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                        <MapPin className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-sm font-semibold text-primary">
-                          {selectedZips.length} zip code{selectedZips.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                      <MapPin className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-sm font-semibold text-primary">
+                        {territorySelections.length > 0
+                          ? territorySelections.join(', ')
+                          : `${selectedZips.length} zip code${selectedZips.length !== 1 ? 's' : ''}`
+                        }
+                      </span>
+                      {territorySelections.length > 0 && (
+                        <span className="text-xs text-primary/60">({selectedZips.length} zips)</span>
+                      )}
+                    </div>
                     <button
                       onClick={() => {
                         setSelectedZips([])
                         setTerritorySelections([])
-                        zipsBySelectionRef.current.clear()
                         radiusCenterRef.current = null
                         if (mapInstance.current) {
                           zipLayersRef.current.forEach((l) => {

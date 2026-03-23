@@ -492,17 +492,26 @@ export default function MessagesPage() {
 
     // Persist to Supabase for authenticated users
     if (isAuthenticated && userId && !isDemoMode) {
-      const supabase = createClient()
-      supabase
-        .from('ar_messages')
-        .insert({
-          from_user_id: userId,
-          to_user_id: agentId,
-          content,
-        })
-        .then(({ error }: { error: unknown }) => {
-          if (error) console.error('[Messages] Failed to save:', error)
-        })
+      try {
+        const supabase = createClient()
+        if (supabase) {
+          supabase
+            .from('ar_messages')
+            .insert({
+              from_user_id: userId,
+              to_user_id: agentId,
+              content,
+            })
+            .then(({ error }: { error: unknown }) => {
+              if (error) console.error('[Messages] Failed to save:', error)
+            })
+            .catch((err: unknown) => {
+              console.error('[Messages] Network error saving message:', err)
+            })
+        }
+      } catch (err) {
+        console.error('[Messages] Error persisting message:', err)
+      }
     }
   }
 
@@ -649,19 +658,28 @@ export default function MessagesPage() {
     )
     setNewMessage('')
 
-    // Persist to Supabase for authenticated users
-    if (isAuthenticated && userId && !isDemoMode) {
-      const supabase = createClient()
-      supabase
-        .from('ar_messages')
-        .insert({
-          from_user_id: userId,
-          to_user_id: activeConvId,
-          content: msg.content,
-        })
-        .then(({ error }: { error: unknown }) => {
-          if (error) console.error('[Messages] Failed to save:', error)
-        })
+    // Persist to Supabase for authenticated users (skip group conversations)
+    if (isAuthenticated && userId && !isDemoMode && !activeConvId.startsWith('group-')) {
+      try {
+        const supabase = createClient()
+        if (supabase) {
+          supabase
+            .from('ar_messages')
+            .insert({
+              from_user_id: userId,
+              to_user_id: activeConvId,
+              content: msg.content,
+            })
+            .then(({ error }: { error: unknown }) => {
+              if (error) console.error('[Messages] Failed to save:', error)
+            })
+            .catch((err: unknown) => {
+              console.error('[Messages] Network error saving message:', err)
+            })
+        }
+      } catch (err) {
+        console.error('[Messages] Error persisting message:', err)
+      }
     }
   }
 
