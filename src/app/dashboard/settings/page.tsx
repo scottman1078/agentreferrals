@@ -722,11 +722,6 @@ export default function SettingsPage() {
       zipsBySelectionRef.current.set(selectionLabel, Array.from(nearbyZips))
       setTerritorySelections((prev) => [...prev, selectionLabel])
 
-      // Track the city/location as a named group
-      const selectionLabel = input.trim()
-      zipsBySelectionRef.current.set(selectionLabel, Array.from(nearbyZips))
-      setTerritorySelections((prev) => [...prev, selectionLabel])
-
       setSelectedZips((prev) => {
         const combined = new Set([...prev, ...nearbyZips])
         return Array.from(combined).slice(0, 100)
@@ -852,9 +847,6 @@ export default function SettingsPage() {
       })
     }
 
-    const radiusLabel = `${miles}mi radius`
-    zipsBySelectionRef.current.set(radiusLabel, Array.from(uniqueZips))
-    setTerritorySelections([radiusLabel])
     const radiusLabel = `${miles}mi radius`
     zipsBySelectionRef.current.set(radiusLabel, Array.from(uniqueZips))
     setTerritorySelections([radiusLabel])
@@ -1137,11 +1129,8 @@ export default function SettingsPage() {
                 setTimeout(() => setSaveToast(''), 3000)
               }}
             />
-            {false && <div className="p-5 rounded-xl border border-border bg-card">
-              <div className="font-bold text-sm mb-1 pb-3 border-b border-border flex items-center gap-2">
-                <Video className="w-4 h-4 text-primary" />
-                Video Introduction
-              </div>
+            {/* old video section removed — now uses VideoIntroEditor */}
+            {/* Old video section content removed — now rendered by VideoIntroEditor component above.
               <p className="text-xs text-muted-foreground mb-4 mt-3">
                 Record a 60-second intro to help referral partners get to know you.
               </p>
@@ -1210,7 +1199,7 @@ export default function SettingsPage() {
                 onChange={handleVideoUpload}
                 className="hidden"
               />
-            </div>}
+            end of old video section */}
 
             {/* ── Social Media Links ── */}
             <SocialLinksEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />

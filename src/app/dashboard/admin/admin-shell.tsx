@@ -21,6 +21,7 @@ import {
   Bug,
   Lightbulb,
   DollarSign,
+  MessageSquare,
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['scott@agentdashboards.com']
@@ -33,6 +34,7 @@ const navItems = [
   { href: '/dashboard/admin/setup-analytics', icon: Funnel, label: 'Setup Analytics' },
   { href: '/dashboard/admin/specializations', icon: Tag, label: 'Specializations' },
   { href: '/dashboard/admin/expectations', icon: ClipboardCheck, label: 'Expectations' },
+  { href: '/dashboard/admin/inbox', icon: MessageSquare, label: 'Inbox' },
   { href: '/dashboard/admin/bugs', icon: Bug, label: 'Bug Tracker' },
   { href: '/dashboard/admin/features', icon: Lightbulb, label: 'Feature Requests' },
   { href: '/dashboard/admin/pricing', icon: DollarSign, label: 'Pricing' },
