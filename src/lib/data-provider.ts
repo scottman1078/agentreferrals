@@ -86,7 +86,9 @@ function mapArInviteToInvite(arInvite: ArInvite): Invite {
     brokerage: arInvite.brokerage || '',
     market: arInvite.market || '',
     status: arInvite.status,
-    sentDate: new Date(arInvite.sent_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    sentDate: arInvite.sent_date
+      ? new Date(arInvite.sent_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'Unknown',
     method: arInvite.method,
     referralCode: arInvite.referral_code || undefined,
   }
