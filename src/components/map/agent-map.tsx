@@ -346,9 +346,9 @@ export default function AgentMap() {
         const labelShadow = isDark
           ? '0 1px 3px rgba(0,0,0,0.8)'
           : '0 1px 2px rgba(255,255,255,0.9)'
-        const labelColor = isDark ? '#93c5fd' : '#3b82f6'
-        const borderColor = isDark ? '#60a5fa' : '#3b82f6'
-        const shadowColor = isDark ? 'rgba(96,165,250,0.35)' : 'rgba(59,130,246,0.4)'
+        const labelColor = isDark ? '#94a3b8' : '#3b82f6'
+        const borderColor = isDark ? '#94a3b8' : '#3b82f6'
+        const shadowColor = isDark ? 'rgba(148,163,184,0.3)' : 'rgba(59,130,246,0.4)'
 
         const markerHtml = avatarUrl
           ? `<div style="width:44px;height:44px;border-radius:50%;border:3px solid ${borderColor};box-shadow:0 2px 8px ${shadowColor};overflow:hidden;background:${isDark ? '#1e293b' : '#fff'};">
