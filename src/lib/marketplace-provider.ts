@@ -92,8 +92,8 @@ export function useMarketplace(): MarketplaceData {
       }
     }
 
-    // Fall back to mock — use demo user 'jason' for mock data
-    const mockUserId = userId || 'jason'
+    // Fall back to mock — always use 'jason' for mock data (mock posts use that ID)
+    const mockUserId = 'jason'
     setOpenPosts(mockGetOpenPosts())
     setMyPosts(mockGetPostsByAgent(mockUserId))
     setMyBids(mockGetBidsByAgent(mockUserId))

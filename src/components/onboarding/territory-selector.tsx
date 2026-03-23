@@ -57,6 +57,9 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
   // Cache of zip code → boundary polygon coordinates [lat, lng][]
   const zipBoundariesRef = useRef<Map<string, LatLng[]>>(new Map())
 
+  // Track which zip codes were added by each county (FIPS → zip[])
+  const zipsByCountyRef = useRef<Map<string, string[]>>(new Map())
+
   // Always-current value ref to avoid stale closures in effects
   const valueRef = useRef(value)
   valueRef.current = value
@@ -449,18 +452,25 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         }
       }
 
+      const countyZips = new Set<string>()
       const uniqueZips = new Set<string>(cv.selectedZips)
       const batchSize = 5
       for (let i = 0; i < Math.min(samplePoints.length, 80); i += batchSize) {
         const batch = samplePoints.slice(i, i + batchSize)
         const results = await Promise.all(batch.map(([lat, lng]) => getZipAtPoint(lat, lng)))
         for (const zip of results) {
-          if (zip) uniqueZips.add(zip)
+          if (zip) {
+            countyZips.add(zip)
+            uniqueZips.add(zip)
+          }
         }
         if (i + batchSize < samplePoints.length) {
           await new Promise((r) => setTimeout(r, 150))
         }
       }
+
+      // Track which zips belong to this county for individual removal
+      zipsByCountyRef.current.set(fips, Array.from(countyZips))
 
       // Fetch boundaries for new zips
       const allZips = Array.from(uniqueZips)
@@ -482,12 +492,31 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
         polygon: zipPolygons.length > 0 ? zipPolygons : polygonRings,
       })
     } else {
-      // Deselecting — just remove the county, keep other zips
+      // Deselecting — remove the county AND its associated zip codes
+      const countyZips = zipsByCountyRef.current.get(fips) || []
+      zipsByCountyRef.current.delete(fips)
+
+      // Build set of zips that belong to OTHER still-selected counties (avoid removing shared zips)
+      const otherCountyZips = new Set<string>()
+      for (const otherFips of newCounties) {
+        const otherZips = zipsByCountyRef.current.get(otherFips)
+        if (otherZips) otherZips.forEach(z => otherCountyZips.add(z))
+      }
+      const zipsToRemove = new Set(countyZips.filter(z => !otherCountyZips.has(z)))
+
+      const newZips = cv.selectedZips.filter(z => !zipsToRemove.has(z))
+      const zipPolygons: LatLng[][] = []
+      for (const z of newZips) {
+        const r = zipBoundariesRef.current.get(z)
+        if (r) zipPolygons.push(r)
+      }
+
       onChange({
         ...cv,
         mode: 'county',
         selectedCounties: newCounties,
-        polygon: polygonRings,
+        selectedZips: newZips,
+        polygon: zipPolygons.length > 0 ? zipPolygons : polygonRings,
       })
     }
   }, [allCounties, onChange])

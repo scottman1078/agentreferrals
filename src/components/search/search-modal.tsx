@@ -42,7 +42,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { agents } = useAppData()
   // Use tier-filtered agents — only show agents the user has access to
-  const { filteredAgents, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
   const { hasFeature, requiredTier } = useFeatureGate()
 
   // Focus input when modal opens
@@ -82,9 +82,9 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
     debounceRef.current = setTimeout(async () => {
       setPhase('loading')
 
-      // Search agents by name (tier-filtered)
+      // Search agents by name — search ALL agents, not just the scope-filtered subset
       const qLower = q.trim().toLowerCase()
-      const nameMatches = filteredAgents.filter((agent) =>
+      const nameMatches = agents.filter((agent) =>
         agent.name.toLowerCase().includes(qLower) ||
         agent.brokerage.toLowerCase().includes(qLower) ||
         agent.area.toLowerCase().includes(qLower)
@@ -97,7 +97,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
       setPhase((results.length > 0 || nameMatches.length > 0) ? 'suggestions' : 'idle')
       setFocusedIndex(-1)
     }, 300)
-  }, [filteredAgents])
+  }, [agents])
 
   const handleChange = (value: string) => {
     setQuery(value)
