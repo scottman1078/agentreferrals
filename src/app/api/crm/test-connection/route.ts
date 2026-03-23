@@ -53,51 +53,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (provider === 'lofty') {
-      // Lofty uses OAuth — test using stored tokens
-      const admin = createAdminClient()
-      const { data: connection, error: connError } = await admin
-        .from('ar_crm_connections')
-        .select('*')
-        .eq('agent_id', user.id)
-        .eq('provider', 'lofty')
-        .single()
+      // Lofty uses API key with 'token' prefix per their docs
+      const res = await fetch('https://api.lofty.com/v1.0/org', {
+        headers: {
+          'Authorization': `token ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      })
 
-      if (connError || !connection) {
+      if (!res.ok) {
         return NextResponse.json({
           valid: false,
-          error: 'Lofty is not connected. Use the Connect button to authorize via OAuth.',
+          error: 'Invalid Lofty API key',
         })
       }
 
-      try {
-        const accessToken = await getLoftyAccessToken(connection, admin)
-
-        const res = await fetch('https://api.lofty.com/v1.0/org', {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!res.ok) {
-          return NextResponse.json({
-            valid: false,
-            error: `Lofty API returned ${res.status}. Token may be invalid — try reconnecting.`,
-          })
-        }
-
-        const data = await res.json()
-        return NextResponse.json({
-          valid: true,
-          provider: 'lofty',
-          account: { orgName: data.name, orgId: data.id },
-        })
-      } catch (tokenErr) {
-        return NextResponse.json({
-          valid: false,
-          error: (tokenErr as Error).message,
-        })
-      }
+      const data = await res.json()
+      return NextResponse.json({
+        valid: true,
+        provider: 'lofty',
+        account: { orgName: data.name, orgId: data.id },
+      })
     }
 
     return NextResponse.json({ valid: false, error: 'Unknown provider' })

@@ -37,8 +37,9 @@ const PROVIDERS: ProviderConfig[] = [
     id: 'lofty',
     name: 'Lofty',
     description: 'Sync contacts from your Lofty CRM',
-    authType: 'oauth',
-    helpText: 'You\'ll be redirected to Lofty to authorize access.',
+    authType: 'apikey',
+    placeholder: 'Enter your Lofty API key...',
+    helpText: 'Find your API key in Lofty under Settings → Integrations → API.',
   },
 ]
 

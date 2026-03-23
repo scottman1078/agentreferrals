@@ -400,7 +400,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
             userId: profile?.id,
             subject: content.slice(0, 80),
             message: content,
-            channel: 'nora-chat',
+            channel: 'chat',
           }),
         })
         const data = await res.json()

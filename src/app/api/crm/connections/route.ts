@@ -53,11 +53,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid provider. Must be "fub" or "lofty".' }, { status: 400 })
     }
 
-    // OAuth providers are connected via their OAuth callback routes
-    const oauthProviders = ['fub', 'lofty']
-    if (oauthProviders.includes(provider)) {
+    // FUB uses OAuth only — connected via its OAuth callback route
+    if (provider === 'fub') {
       return NextResponse.json(
-        { error: `${provider} uses OAuth. Use the Connect button to authorize via the provider.` },
+        { error: 'Follow Up Boss uses OAuth. Use the Connect button to authorize.' },
         { status: 400 }
       )
     }

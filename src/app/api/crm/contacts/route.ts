@@ -98,9 +98,10 @@ export async function POST(request: NextRequest) {
         }
         contacts = await fetchFubContacts(connection.api_key)
       } else if (provider === 'lofty') {
-        // Get a valid access token (auto-refreshes if expired)
-        const accessToken = await getLoftyAccessToken(connection, admin)
-        contacts = await fetchLoftyContacts(accessToken)
+        if (!connection.api_key) {
+          return NextResponse.json({ error: 'No Lofty API key configured' }, { status: 400 })
+        }
+        contacts = await fetchLoftyContacts(connection.api_key)
       }
     } catch (syncErr) {
       console.error(`[CRM Sync] ${provider}:`, syncErr)
@@ -229,7 +230,7 @@ async function fetchFubContacts(apiKey: string): Promise<CrmContact[]> {
   return contacts
 }
 
-async function fetchLoftyContacts(accessToken: string): Promise<CrmContact[]> {
+async function fetchLoftyContacts(apiKey: string): Promise<CrmContact[]> {
   const contacts: CrmContact[] = []
   let page = 1
   const limit = 100
@@ -240,7 +241,7 @@ async function fetchLoftyContacts(accessToken: string): Promise<CrmContact[]> {
       `https://api.lofty.com/v1.0/contacts?page=${page}&per_page=${limit}`,
       {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `token ${apiKey}`,
           'Content-Type': 'application/json',
         },
       }
