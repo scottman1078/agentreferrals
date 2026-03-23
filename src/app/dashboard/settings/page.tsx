@@ -165,10 +165,27 @@ export default function SettingsPage() {
         if (meta.selections && Array.isArray(meta.selections)) {
           setTerritorySelections(meta.selections)
         }
-        if (meta.zipGroups && typeof meta.zipGroups === 'object') {
+        if (meta.zipGroups && typeof meta.zipGroups === 'object' && Object.keys(meta.zipGroups).length > 0) {
           for (const [label, zips] of Object.entries(meta.zipGroups)) {
             if (Array.isArray(zips)) {
               zipsBySelectionRef.current.set(label, zips)
+            }
+          }
+        } else if (meta.selections && meta.selections.length > 0 && profile.territory_zips && Array.isArray(profile.territory_zips)) {
+          // Fallback: zipGroups missing (legacy save) — assign all zips to the selection(s)
+          // so that removing a selection chip will also remove its associated zips
+          const allZips = profile.territory_zips as string[]
+          if (meta.selections.length === 1) {
+            // Single selection: all zips belong to it
+            zipsBySelectionRef.current.set(meta.selections[0], allZips)
+          } else {
+            // Multiple selections without grouping: evenly distribute zips as best guess
+            const chunkSize = Math.ceil(allZips.length / meta.selections.length)
+            for (let i = 0; i < meta.selections.length; i++) {
+              const chunk = allZips.slice(i * chunkSize, (i + 1) * chunkSize)
+              if (chunk.length > 0) {
+                zipsBySelectionRef.current.set(meta.selections[i], chunk)
+              }
             }
           }
         }
@@ -1465,7 +1482,9 @@ export default function SettingsPage() {
                                       zoom: mapInstance.current.getZoom(),
                                     }
                                   }
-                                  const removeSet = new Set(groupZips || [])
+                                  // Read fresh from ref at click time (not stale closure from render)
+                                  const freshGroupZips = zipsBySelectionRef.current.get(label)
+                                  const removeSet = new Set(freshGroupZips || [])
                                   zipsBySelectionRef.current.delete(label)
                                   setTerritorySelections((prev) => prev.filter((s) => s !== label))
                                   setSelectedZips((prev) => prev.filter((z) => !removeSet.has(z)))
