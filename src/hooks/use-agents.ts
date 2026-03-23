@@ -10,6 +10,8 @@ interface UseAgentsOptions {
   search?: string
   /** When true, show demo agents. When false, exclude them. */
   includeDemo?: boolean
+  /** When true, skip the Supabase fetch entirely (e.g. demo mode uses mock data) */
+  skip?: boolean
 }
 
 interface UseAgentsReturn {
@@ -24,14 +26,20 @@ export function useAgents({
   scope = 'my-brokerage',
   search,
   includeDemo = false,
+  skip = false,
 }: UseAgentsOptions = {}): UseAgentsReturn {
   const [data, setData] = useState<ArProfile[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!skip)
   const [error, setError] = useState<string | null>(null)
   const hasFetched = useRef(false)
   const lastIncludeDemo = useRef(includeDemo)
 
   const fetchData = useCallback(async () => {
+    if (skip) {
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -70,14 +78,15 @@ export function useAgents({
     setIsLoading(false)
     hasFetched.current = true
     lastIncludeDemo.current = includeDemo
-  }, [brokerageId, scope, search, includeDemo])
+  }, [brokerageId, scope, search, includeDemo, skip])
 
   useEffect(() => {
+    if (skip) return
     // Only re-fetch if includeDemo actually changed or first fetch
     if (!hasFetched.current || lastIncludeDemo.current !== includeDemo) {
       fetchData()
     }
-  }, [fetchData, includeDemo])
+  }, [fetchData, includeDemo, skip])
 
   return { data, isLoading, error, mutate: fetchData }
 }

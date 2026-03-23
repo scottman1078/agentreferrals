@@ -161,7 +161,7 @@ export function useAppData(): AppData {
     isAuthLoading = false
   }
 
-  // Supabase hooks — always fetch, but filter by demo flag
+  // Supabase hooks — skip entirely in demo mode (mock data used instead)
   const brokerageId = profile?.brokerage_id || undefined
   const {
     data: supaAgents,
@@ -170,6 +170,7 @@ export function useAppData(): AppData {
     brokerageId: brokerageId,
     scope: 'all-network',
     includeDemo: isDemoMode,
+    skip: isDemoMode, // Demo mode uses mock agents with matching mock IDs
   })
 
   const {
@@ -210,11 +211,11 @@ export function useAppData(): AppData {
   // In demo mode, override isAuthenticated so auth state doesn't interfere
   const effectiveIsAuthenticated = isDemoMode ? false : isAuthenticated
 
-  // Demo agent resolution:
-  // - While agents are still loading in demo mode, use mock agents immediately
-  //   (prevents flash of stale real agents during the includeDemo transition)
-  // - Once loaded, use Supabase demo agents if available, otherwise mock fallback
-  const demoAgents = (agentsLoading || mappedAgents.length === 0) ? mockAgents : mappedAgents
+  // Demo mode: always use mock data with mock IDs so that mock partnerships,
+  // referrals, and other cross-references resolve correctly.
+  // Previously this tried to use Supabase demo agents (is_demo=true rows) but
+  // their UUID IDs don't match mock partnership/referral agent IDs, causing
+  // empty filtered results in my-network scope.
 
   return {
     isAuthenticated: effectiveIsAuthenticated,
@@ -222,8 +223,8 @@ export function useAppData(): AppData {
     profile: isDemoMode ? null : profile,
     userId: isDemoMode ? undefined : userId,
 
-    // Agents: in demo mode use resolved demo agents; otherwise Supabase data
-    agents: isDemoMode ? demoAgents : mappedAgents,
+    // Agents: in demo mode always use mockAgents (IDs match mock partnerships)
+    agents: isDemoMode ? mockAgents : mappedAgents,
 
     // Referrals/invites: real data for authenticated, mock for demo
     referrals: isDemoMode ? mockReferrals : mappedReferrals,
@@ -245,7 +246,7 @@ export function useAppData(): AppData {
     getAgentReviews: isDemoMode ? getAgentReviews : emptyReviews,
     getAgentReviewStats: isDemoMode ? getAgentReviewStats : emptyReviewStats,
 
-    agentsLoading,
+    agentsLoading: isDemoMode ? false : agentsLoading,
     referralsLoading: isDemoMode ? false : referralsLoading,
     invitesLoading: isDemoMode ? false : invitesLoading,
 

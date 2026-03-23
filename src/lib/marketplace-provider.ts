@@ -143,6 +143,17 @@ export function useMarketplace(): MarketplaceData {
   }, [userId, fetchData])
 
   const updatePost = useCallback(async (postId: string, fields: Record<string, unknown>) => {
+    // In mock mode, apply edits locally (mock data isn't in Supabase)
+    if (source === 'mock') {
+      setMyPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, ...fields, clientNeeds: (fields.clientNeeds as string[]) || p.clientNeeds } : p))
+      )
+      setOpenPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, ...fields, clientNeeds: (fields.clientNeeds as string[]) || p.clientNeeds } : p))
+      )
+      return { success: true }
+    }
+
     try {
       const res = await fetch('/api/marketplace', {
         method: 'PATCH',
@@ -163,7 +174,7 @@ export function useMarketplace(): MarketplaceData {
       console.error('[Marketplace] PATCH network error:', err)
       return { success: false, error: 'Network error — please try again' }
     }
-  }, [fetchData])
+  }, [source, fetchData])
 
   const submitBidAction = useCallback(async (bid: { postId: string; pitch: string; videoUrl?: string; videoDuration?: number; highlights?: string[] }) => {
     try {

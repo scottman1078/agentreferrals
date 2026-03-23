@@ -582,10 +582,30 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
     const newCounties = value.selectedCounties.filter((f) => f !== fips)
     const polygonRings = buildPolygonFromCounties(newCounties, allCounties)
 
+    // Remove zip codes that were added by this county
+    const countyZips = zipsByCountyRef.current.get(fips) || []
+    zipsByCountyRef.current.delete(fips)
+
+    // Build set of zips that belong to OTHER still-selected counties (avoid removing shared zips)
+    const otherCountyZips = new Set<string>()
+    for (const otherFips of newCounties) {
+      const otherZips = zipsByCountyRef.current.get(otherFips)
+      if (otherZips) otherZips.forEach(z => otherCountyZips.add(z))
+    }
+    const zipsToRemove = new Set(countyZips.filter(z => !otherCountyZips.has(z)))
+
+    const newZips = value.selectedZips.filter(z => !zipsToRemove.has(z))
+    const zipPolygons: LatLng[][] = []
+    for (const z of newZips) {
+      const r = zipBoundariesRef.current.get(z)
+      if (r) zipPolygons.push(r)
+    }
+
     onChange({
       ...value,
       selectedCounties: newCounties,
-      polygon: polygonRings,
+      selectedZips: newZips,
+      polygon: zipPolygons.length > 0 ? zipPolygons : polygonRings,
     })
   }, [value, allCounties, onChange])
 
@@ -970,6 +990,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
             </div>
             <button
               onClick={() => {
+                zipsByCountyRef.current.clear()
                 onChange({
                   ...valueRef.current,
                   selectedZips: [],

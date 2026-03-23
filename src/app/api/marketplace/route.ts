@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
         market,
         fee_percent: feePercent || 25,
         estimated_price: estimatedPrice || null,
-        est_close_date: effectiveDeadline,
-        stage: 'agreement_sent',
+        estimated_close_date: effectiveDeadline,
+        stage: 'Agreement Sent',
         notes: `Marketplace post: ${description}`,
       })
 

@@ -1004,7 +1004,6 @@ function EditPostForm({
   post: ReferralPost
   onClose: () => void
 }) {
-  const demoGuard = useDemoGuard()
   const { updatePost } = useMarketplace()
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -1184,7 +1183,6 @@ function EditPostForm({
           </button>
           <button
             onClick={async () => {
-              if (demoGuard()) return
               if (!form.market.trim() || !form.description.trim()) return
               setSubmitting(true)
               setSubmitError(null)

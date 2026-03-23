@@ -826,8 +826,9 @@ export default function NoraOnboardingChat({
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>
 
-    // Only set territory_zips if the user actually provided zip codes in primaryArea.
-    // Otherwise, leave them unset so the Service Area step handles it properly.
+    // Set territory_zips from primaryArea.
+    // If the user typed zip codes directly, parse them.
+    // If they typed a city/state, geocode it to find the zip at that location.
     const parsedZips = data.primaryArea
       .split(',')
       .map((s: string) => s.trim())
@@ -836,6 +837,42 @@ export default function NoraOnboardingChat({
     if (parsedZips.length > 0) {
       upsertPayload.polygon = []
       upsertPayload.territory_zips = parsedZips
+    } else {
+      // City/state name provided — geocode to lat/lng, then reverse-geocode to zip
+      try {
+        const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(data.primaryArea)}&limit=1`)
+        if (geoRes.ok) {
+          const geoData = await geoRes.json()
+          if (geoData.results && geoData.results.length > 0) {
+            const { lat, lng } = geoData.results[0]
+            // Use Census TIGERweb to find the ZCTA at this point
+            const tigerParams = new URLSearchParams({
+              geometry: `${lng},${lat}`,
+              geometryType: 'esriGeometryPoint',
+              spatialRel: 'esriSpatialRelIntersects',
+              outFields: 'ZCTA5',
+              f: 'json',
+              inSR: '4326',
+            })
+            const tigerRes = await fetch(
+              `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2021/MapServer/0/query?${tigerParams}`
+            )
+            if (tigerRes.ok) {
+              const tigerData = await tigerRes.json()
+              if (tigerData.features && tigerData.features.length > 0) {
+                const zip = tigerData.features[0].attributes.ZCTA5
+                if (zip && /^\d{5}$/.test(zip)) {
+                  upsertPayload.polygon = []
+                  upsertPayload.territory_zips = [zip]
+                }
+              }
+            }
+          }
+        }
+      } catch (geoErr) {
+        console.error('[NORA] Geocode fallback failed (non-blocking):', geoErr)
+        // Don't block onboarding — territory_zips will be set in Service Area step
+      }
     }
 
     const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())
