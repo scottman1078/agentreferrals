@@ -342,15 +342,23 @@ export default function AgentMap() {
         const avatarUrl = profile?.avatar_url
         const initials = (profile?.full_name || 'ME').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
+        const isDark = resolvedTheme === 'dark'
+        const labelShadow = isDark
+          ? '0 1px 3px rgba(0,0,0,0.8)'
+          : '0 1px 2px rgba(255,255,255,0.9)'
+        const labelColor = isDark ? '#93c5fd' : '#3b82f6'
+        const borderColor = isDark ? '#60a5fa' : '#3b82f6'
+        const shadowColor = isDark ? 'rgba(96,165,250,0.35)' : 'rgba(59,130,246,0.4)'
+
         const markerHtml = avatarUrl
-          ? `<div style="width:44px;height:44px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);overflow:hidden;background:#fff;">
+          ? `<div style="width:44px;height:44px;border-radius:50%;border:3px solid ${borderColor};box-shadow:0 2px 8px ${shadowColor};overflow:hidden;background:${isDark ? '#1e293b' : '#fff'};">
               <img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" />
             </div>
-            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.9);">My Territory</div>`
-          : `<div style="width:44px;height:44px;border-radius:50%;border:3px solid #3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.4);background:#3b82f6;display:flex;align-items:center;justify-content:center;">
+            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:${labelColor};text-shadow:${labelShadow};">My Territory</div>`
+          : `<div style="width:44px;height:44px;border-radius:50%;border:3px solid ${borderColor};box-shadow:0 2px 8px ${shadowColor};background:${borderColor};display:flex;align-items:center;justify-content:center;">
               <span style="color:#fff;font-weight:800;font-size:13px;">${initials}</span>
             </div>
-            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:#3b82f6;text-shadow:0 1px 2px rgba(255,255,255,0.9);">My Territory</div>`
+            <div style="text-align:center;margin-top:2px;font-size:9px;font-weight:800;color:${labelColor};text-shadow:${labelShadow};">My Territory</div>`
 
         const icon = L!.divIcon({
           html: markerHtml,
@@ -371,7 +379,7 @@ export default function AgentMap() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.primary_area, profile?.territory_zips, profile?.avatar_url, leafletLoaded, showMyZips])
+  }, [profile?.primary_area, profile?.territory_zips, profile?.avatar_url, leafletLoaded, showMyZips, resolvedTheme])
 
   // Show territory zip polygons only when zoomed in (same threshold as other agents)
   const TERRITORY_ZOOM_THRESHOLD = POLYGON_ZOOM_THRESHOLD

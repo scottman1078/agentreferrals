@@ -936,7 +936,7 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
           <div className="flex items-center justify-between">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {activeTab === 'county' && value.selectedCounties.length > 0
-                ? `${value.selectedCounties.map(f => getCountyLabel(f)).join(', ')} — ${value.selectedZips.length} zip codes`
+                ? `Selected Counties — ${value.selectedZips.length} zip codes`
                 : `Selected Zip Codes (${value.selectedZips.length})`}
             </div>
             <button
@@ -953,6 +953,26 @@ export default function TerritorySelector({ value, onChange, initialCenter }: Pr
               Clear All
             </button>
           </div>
+          {/* Individual county chips with remove button */}
+          {activeTab === 'county' && value.selectedCounties.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-1.5">
+              {value.selectedCounties.map((fips) => (
+                <span
+                  key={fips}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                >
+                  {getCountyLabel(fips)} County
+                  <button
+                    onClick={() => removeCounty(fips)}
+                    className="hover:bg-amber-500/20 rounded-full p-0.5 transition-colors"
+                    title={`Remove ${getCountyLabel(fips)} County`}
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto">
             {value.selectedZips.map((zip) => (
               <span

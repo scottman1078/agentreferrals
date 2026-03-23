@@ -186,7 +186,9 @@ body {
   filter: contrast(1.1) brightness(0.95);
 }
 /* Hide default leaflet marker shadows for our custom markers */
-.agent-marker {
+.agent-marker,
+.my-territory-marker,
+.search-pin {
   background: none !important;
   border: none !important;
 }

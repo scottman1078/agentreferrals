@@ -14,6 +14,7 @@ import { uploadVideo } from '@/lib/supabase/upload-video'
 import { getZipBoundary, getCentroid, getZipAtPoint, ZCTA_WMS_URL, ZCTA_WMS_LAYERS, ZCTA_WMS_LABELS } from '@/lib/zip-boundaries'
 import ExpectationsSelector from '@/components/expectations/expectations-selector'
 import { CrmConnections } from '@/components/settings/crm-connections'
+import { ReferralExpectationsEditor as ReferralExpectationsEditorV2 } from '@/components/settings/referral-expectations-editor'
 
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -1120,7 +1121,7 @@ export default function SettingsPage() {
             <SocialLinksEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
 
             {/* ── Referral Expectations ── */}
-            <ReferralExpectationsEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
+            <ReferralExpectationsEditorV2 profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
 
             {/* Sign out moved to avatar dropdown in top bar */}
           </div>
@@ -1478,7 +1479,7 @@ export default function SettingsPage() {
 
             {/* ── Communication Preferences ── */}
             <div className="mt-6">
-              <ReferralExpectationsEditor profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
+              <ReferralExpectationsEditorV2 profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
             </div>
           </>
         )}

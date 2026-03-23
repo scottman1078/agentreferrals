@@ -86,12 +86,24 @@ export function AgentVideoIntroFromDB({
       <h2 className="text-lg font-bold mb-3">Meet {agentName.split(' ')[0]}</h2>
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="rounded-lg overflow-hidden bg-black">
-          <video
-            src={videoUrl}
-            controls
-            className="w-full max-h-[420px]"
-            preload="metadata"
-          />
+          {videoUrl.includes('youtube.com/embed/') ? (
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                src={videoUrl}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={`Meet ${agentName.split(' ')[0]}`}
+              />
+            </div>
+          ) : (
+            <video
+              src={videoUrl}
+              controls
+              className="w-full max-h-[420px]"
+              preload="metadata"
+            />
+          )}
         </div>
       </div>
     </section>
