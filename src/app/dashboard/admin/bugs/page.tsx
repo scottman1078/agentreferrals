@@ -93,6 +93,36 @@ export default function AdminBugsPage() {
 
   // Delete
   const [confirmDelete, setConfirmDelete] = useState<BugRow | null>(null)
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+
+  async function analyzeBug(bug: BugRow) {
+    setAnalyzingId(bug.id)
+    try {
+      const res = await fetch('/api/admin/bugs/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bugId: bug.id,
+          title: bug.title,
+          description: bug.description,
+          page_url: bug.page_url,
+          screenshot_url: bug.screenshot_url,
+          severity: bug.severity,
+          category: bug.category,
+        }),
+      })
+      const data = await res.json()
+      if (data.bug) {
+        setBugs((prev) => prev.map((b) => (b.id === bug.id ? data.bug : b)))
+        showToast('Analysis complete')
+      } else {
+        showToast(data.error || 'Analysis failed')
+      }
+    } catch {
+      showToast('Network error during analysis')
+    }
+    setAnalyzingId(null)
+  }
 
   const { profile } = useAuth()
   const currentUserEmail = profile?.email || 'Admin'
@@ -202,7 +232,7 @@ export default function AdminBugsPage() {
       </div>
 
       {toast && (
-        <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+        <div className="fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl bg-card border border-border shadow-2xl text-sm font-medium max-w-sm animate-in fade-in slide-in-from-bottom-4">
           {toast}
         </div>
       )}
@@ -330,6 +360,19 @@ export default function AdminBugsPage() {
                         <span className="font-mono text-primary">{bug.page_url}</span>
                       </div>
                     )}
+
+                    {/* Analyze button */}
+                    <button
+                      onClick={() => analyzeBug(bug)}
+                      disabled={analyzingId === bug.id}
+                      className="flex items-center gap-1.5 h-7 px-3 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors disabled:opacity-50"
+                    >
+                      {analyzingId === bug.id ? (
+                        <><Loader2 className="w-3 h-3 animate-spin" /> Analyzing...</>
+                      ) : (
+                        <><Sparkles className="w-3 h-3" /> {bug.ai_analysis ? 'Re-analyze' : 'Analyze with AI'}</>
+                      )}
+                    </button>
 
                     {bug.ai_analysis && (
                       <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
