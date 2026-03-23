@@ -840,14 +840,13 @@ export default function NoraOnboardingChat({
     } else {
       // City/state name provided — geocode to lat/lng, then reverse-geocode to zip
       try {
-        const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(data.primaryArea)}&limit=1`)
+        const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(data.primaryArea)}`)
         if (geoRes.ok) {
           const geoData = await geoRes.json()
-          if (geoData.results && geoData.results.length > 0) {
-            const { lat, lng } = geoData.results[0]
+          if (geoData.lat && geoData.lng) {
             // Use Census TIGERweb to find the ZCTA at this point
             const tigerParams = new URLSearchParams({
-              geometry: `${lng},${lat}`,
+              geometry: `${geoData.lng},${geoData.lat}`,
               geometryType: 'esriGeometryPoint',
               spatialRel: 'esriSpatialRelIntersects',
               outFields: 'ZCTA5',
