@@ -467,7 +467,19 @@ export default function SettingsPage() {
     })
     zipLayersRef.current = []
 
-    if (selectedZips.length === 0) return
+    if (selectedZips.length === 0) {
+      // Still need to restore view if we just removed all zips via group removal
+      if (skipFitBoundsRef.current && savedViewRef.current) {
+        map.setView(
+          [savedViewRef.current.center.lat, savedViewRef.current.center.lng],
+          savedViewRef.current.zoom,
+          { animate: false }
+        )
+        savedViewRef.current = null
+      }
+      skipFitBoundsRef.current = false
+      return
+    }
 
     const isCountyMode = territoryMode === 'county'
 
@@ -583,8 +595,8 @@ export default function SettingsPage() {
   }, [])
 
   // ── Territory: Add zip / resolve city/county ──
-  const handleAddZip = useCallback(async () => {
-    const input = zipInput.trim()
+  const handleAddZip = useCallback(async (overrideInput?: string) => {
+    const input = (overrideInput ?? zipInput).trim()
     if (!input) return
     if (selectedZips.length >= 100) {
       setZipError('Maximum 100 zip codes')
@@ -805,6 +817,7 @@ export default function SettingsPage() {
 
     setSelectedZips([])
     setTerritorySelections([])
+    zipsBySelectionRef.current.clear()
 
     if (radiusCircleRef.current) mapInstance.current.removeLayer(radiusCircleRef.current)
     const radiusMeters = miles * 1609.34
@@ -1332,8 +1345,8 @@ export default function SettingsPage() {
                                 }
                                 setZipLoading(false)
                               } else {
-                                setZipInput(s.label)
-                                setTimeout(() => handleAddZip(), 50)
+                                setZipInput('')
+                                handleAddZip(s.label)
                               }
                             }}
                             className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center gap-2 border-b border-border last:border-b-0"
@@ -1347,7 +1360,7 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <button
-                    onClick={handleAddZip}
+                    onClick={() => handleAddZip()}
                     disabled={zipLoading || !zipInput.trim()}
                     className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
                   >
@@ -1371,7 +1384,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <button
-                    onClick={handleAddZip}
+                    onClick={() => handleAddZip()}
                     disabled={zipLoading || !zipInput.trim()}
                     className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 disabled:opacity-40"
                   >

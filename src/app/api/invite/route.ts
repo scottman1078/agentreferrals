@@ -13,6 +13,25 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient()
 
+    // Ensure inviter has an ar_profiles row (FK constraint on invited_by)
+    const { data: existingProfile } = await supabase
+      .from('ar_profiles')
+      .select('id')
+      .eq('id', inviterId)
+      .single()
+
+    if (!existingProfile) {
+      // Auto-create a minimal profile so the invite can be stored
+      // The inviter's real email comes from their auth session; use a placeholder here
+      const code = 'AR-' + inviterId.replace(/-/g, '').substring(0, 8).toUpperCase()
+      await supabase.from('ar_profiles').upsert({
+        id: inviterId,
+        email: '',
+        full_name: inviterName || 'Agent',
+        referral_code: code,
+      }, { onConflict: 'id' })
+    }
+
     // Insert invite record
     const { data: invite, error: dbError } = await supabase
       .from('ar_invites')

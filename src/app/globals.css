@@ -188,9 +188,25 @@ body {
 /* Hide default leaflet marker shadows for our custom markers */
 .agent-marker,
 .my-territory-marker,
-.search-pin {
+.search-pin,
+.agent-cluster {
   background: none !important;
   border: none !important;
+  outline: none !important;
+  -webkit-text-stroke: 0 !important;
+}
+/* Remove Leaflet's default focus outlines on all interactive map elements */
+.leaflet-interactive:focus,
+.leaflet-marker-icon:focus,
+.leaflet-div-icon:focus,
+.leaflet-container *:focus {
+  outline: none !important;
+}
+/* Dark mode: prevent blue stroke / outline on name text across the dashboard */
+.dark .agent-marker *,
+.dark .my-territory-marker *,
+.dark .agent-cluster * {
+  -webkit-text-stroke: 0 !important;
 }
 .leaflet-tooltip {
   background: hsl(var(--card)) !important;
