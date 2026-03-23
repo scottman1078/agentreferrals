@@ -115,7 +115,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, profile, pathname, isDemoMode, isAdminUser])
 
-  if (isLoading) {
+  if (isLoading && !isDemoMode) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center gap-3">

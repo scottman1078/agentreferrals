@@ -22,4 +22,4 @@ export const invites: Invite[] = [
 ]
 
 export const REFERRAL_CODE = 'JOBRIEN-REF-2025'
-export const REFERRAL_LINK = 'https://agentreferrals.ai/join?ref=JOBRIEN-REF-2025'
+export const REFERRAL_LINK = 'https://agentreferrals.ai/invite/JOBRIEN-REF-2025'

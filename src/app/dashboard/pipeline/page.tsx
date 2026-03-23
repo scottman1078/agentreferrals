@@ -149,7 +149,12 @@ function PipelinePage() {
 
   const stageReferrals = (stage: PipelineStage) => referralList.filter((r) => r.stage === stage)
   const totalValue = referralList.reduce((s, r) => s + r.estimatedPrice, 0)
-  const totalFees = referralList.reduce((s, r) => s + r.estimatedPrice * (r.feePercent / 100), 0)
+  // Referral fee = feePercent of the agent's commission (default 3% commission rate)
+  const DEFAULT_COMMISSION_RATE = 3
+  const totalFees = referralList.reduce(
+    (s, r) => s + r.estimatedPrice * (DEFAULT_COMMISSION_RATE / 100) * (r.feePercent / 100),
+    0
+  )
 
   function handleDrop(stage: PipelineStage) {
     if (demoGuard()) return
@@ -261,7 +266,7 @@ function PipelinePage() {
                     <div className="text-xs text-muted-foreground mb-1.5">{ref.market}</div>
                     <div className="text-[11px] text-muted-foreground">{ref.fromAgent} → {ref.toAgent}</div>
                     <div className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">
-                      {ref.feePercent}% · {formatCurrency(ref.estimatedPrice)}
+                      {formatCurrency(ref.estimatedPrice)} · {ref.feePercent}% fee
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setAgreementReferral(ref) }}

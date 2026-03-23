@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
-import { X, Send, MessageSquare, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban } from 'lucide-react'
+import { X, Send, MessageSquare, Star, Clock, GripHorizontal, User, ArrowRight, CalendarClock, ArrowLeftRight, Handshake, UserPlus, Users, MoreHorizontal, Flag, Ban, UserMinus, EyeOff, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { useAppData } from '@/lib/data-provider'
 import { useAuth } from '@/contexts/auth-context'
 import { useBrokerage } from '@/contexts/brokerage-context'
-import { getConnectionPath, getPartnerAgentIds, existingRequests } from '@/data/partnerships'
+import { getConnectionPath, getPartnerAgentIds, existingRequests, isPartnerHidden } from '@/data/partnerships'
 import AgentNotes from '@/components/agent-notes'
 import { getCommScore } from '@/data/communication-score'
 import { addBlock, isBlocked } from '@/data/report-block'
@@ -60,10 +60,13 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
   const router = useRouter()
   const demoGuard = useDemoGuard()
   const { profile } = useAuth()
+  const { handleRemovePartner, handleHidePartner, handleUnhidePartner, checkPartnerHidden } = useBrokerage()
   const [showMenu, setShowMenu] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [blocked, setBlocked] = useState(() => isBlocked(profile?.id ?? 'jason', agent.id))
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
+  const [isHidden, setIsHidden] = useState(() => checkPartnerHidden(agent.id))
 
   function handleReport(reason: ReportReason, description: string) {
     if (demoGuard()) return
@@ -85,6 +88,26 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
     addBlock(profile?.id ?? 'jason', agent.id)
     setBlocked(true)
     setShowBlockConfirm(false)
+    setShowMenu(false)
+  }
+
+  function handleRemove() {
+    if (demoGuard()) return
+    handleRemovePartner(agent.id)
+    setShowRemoveConfirm(false)
+    setShowMenu(false)
+    onClose()
+  }
+
+  function handleHideToggle() {
+    if (demoGuard()) return
+    if (isHidden) {
+      handleUnhidePartner(agent.id)
+      setIsHidden(false)
+    } else {
+      handleHidePartner(agent.id)
+      setIsHidden(true)
+    }
     setShowMenu(false)
   }
   const { getAgentReviewStats } = useAppData()
@@ -177,7 +200,22 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
                 {showMenu && (
-                  <div className="absolute top-8 right-0 w-40 rounded-lg border border-border bg-card shadow-xl py-1 z-10">
+                  <div className="absolute top-8 right-0 w-48 rounded-lg border border-border bg-card shadow-xl py-1 z-10">
+                    {isDirectPartner && (
+                      <>
+                        <button onClick={handleHideToggle} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent">
+                          {isHidden ? (
+                            <><Eye className="w-3.5 h-3.5" /> Unhide Agent</>
+                          ) : (
+                            <><EyeOff className="w-3.5 h-3.5" /> Hide Agent</>
+                          )}
+                        </button>
+                        <button onClick={() => { setShowMenu(false); setShowRemoveConfirm(true) }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:bg-accent">
+                          <UserMinus className="w-3.5 h-3.5" /> Remove from Network
+                        </button>
+                        <div className="my-1 border-t border-border" />
+                      </>
+                    )}
                     <button onClick={() => { setShowMenu(false); setShowReportModal(true) }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-destructive hover:bg-accent">
                       <Flag className="w-3.5 h-3.5" /> Report
                     </button>
@@ -309,6 +347,40 @@ export default function AgentPeekCard({ agent, onClose, onSendReferral, onMessag
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity"
               >
                 Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove from Network confirmation dialog */}
+      {showRemoveConfirm && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowRemoveConfirm(false)
+          }}
+        >
+          <div className="w-full max-w-[360px] rounded-2xl border border-border bg-card shadow-2xl p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-3">
+              <UserMinus className="w-6 h-6 text-orange-500" />
+            </div>
+            <h3 className="font-bold text-base mb-1">Remove {displayName} from your network?</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              This will end your referral partnership. You can always re-connect later by sending a new partnership request.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setShowRemoveConfirm(false)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold border border-border hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemove}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:opacity-90 transition-opacity"
+              >
+                Remove
               </button>
             </div>
           </div>

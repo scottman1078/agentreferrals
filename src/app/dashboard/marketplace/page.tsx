@@ -42,6 +42,7 @@ import {
   Upload,
   Handshake,
   Timer,
+  Pencil,
 } from 'lucide-react'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
 import { useFeatureGate } from '@/hooks/use-feature-gate'
@@ -52,6 +53,7 @@ export default function MarketplacePage() {
   const [tab, setTab] = useState<Tab>('browse')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const getDisplayName = useAgentDisplayName()
 
   const marketplace = useMarketplace()
@@ -151,15 +153,24 @@ export default function MarketplacePage() {
             />
           ) : (
             myPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                isExpanded={expandedPostId === post.id}
-                onToggle={() =>
-                  setExpandedPostId(expandedPostId === post.id ? null : post.id)
-                }
-                showBids
-              />
+              <div key={post.id}>
+                <PostCard
+                  post={post}
+                  isExpanded={expandedPostId === post.id}
+                  onToggle={() =>
+                    setExpandedPostId(expandedPostId === post.id ? null : post.id)
+                  }
+                  showBids
+                  showEditButton={post.status === 'open'}
+                  onEdit={() => setEditingPostId(post.id)}
+                />
+                {editingPostId === post.id && (
+                  <EditPostForm
+                    post={post}
+                    onClose={() => setEditingPostId(null)}
+                  />
+                )}
+              </div>
             ))
           )}
         </div>
@@ -193,13 +204,16 @@ function PostCard({
   onToggle,
   showBidButton,
   showBids,
+  showEditButton,
+  onEdit,
 }: {
   post: ReferralPost
   isExpanded: boolean
   onToggle: () => void
-
   showBidButton?: boolean
   showBids?: boolean
+  showEditButton?: boolean
+  onEdit?: () => void
 }) {
   const getDisplayName = useAgentDisplayName()
   const bids = getBidsForPost(post.id)
@@ -320,7 +334,19 @@ function PostCard({
             </div>
           </div>
 
-          <div className="shrink-0">
+          <div className="shrink-0 flex items-center gap-1">
+            {showEditButton && onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit()
+                }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Edit post"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
             {isExpanded ? (
               <ChevronUp className="w-4 h-4 text-muted-foreground" />
             ) : (
@@ -961,6 +987,233 @@ function PostReferralButton() {
             {submitting ? 'Posting...' : 'Post Opportunity'}
           </button>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════
+// EDIT POST FORM (for editing your own posts)
+// ══════════════════════════════════════
+
+function EditPostForm({
+  post,
+  onClose,
+}: {
+  post: ReferralPost
+  onClose: () => void
+}) {
+  const demoGuard = useDemoGuard()
+  const { updatePost } = useMarketplace()
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [form, setForm] = useState({
+    market: post.market,
+    neighborhood: post.neighborhood || '',
+    representation: post.representation as 'Buyer' | 'Seller' | 'Both',
+    budgetRange: post.budgetRange,
+    timeline: post.timeline || '',
+    decisionDeadline: post.decisionDeadline?.split('T')[0] || '',
+    description: post.description,
+    clientNeeds: post.clientNeeds.join(', '),
+    feePercent: post.feePercent,
+  })
+
+  if (saved) {
+    return (
+      <div className="mt-2 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+            <Check className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Post Updated!</p>
+            <p className="text-xs text-muted-foreground">
+              Your changes have been saved.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-auto text-xs font-semibold text-primary hover:underline"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-2 rounded-xl border border-primary/20 bg-card shadow-lg overflow-hidden">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border">
+        <h3 className="font-bold text-sm flex items-center gap-2">
+          <Pencil className="w-4 h-4 text-primary" />
+          Edit Post
+        </h3>
+        <button
+          onClick={onClose}
+          className="w-7 h-7 rounded-lg flex items-center justify-center border border-border text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div className="px-5 py-4 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Market *</label>
+            <input
+              value={form.market}
+              onChange={(e) => setForm((p) => ({ ...p, market: e.target.value }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="e.g. Nashville, TN"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Neighborhood</label>
+            <input
+              value={form.neighborhood}
+              onChange={(e) => setForm((p) => ({ ...p, neighborhood: e.target.value }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="e.g. Brentwood / Franklin"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Representation</label>
+          <div className="flex gap-2">
+            {(['Buyer', 'Seller', 'Both'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setForm((p) => ({ ...p, representation: type }))}
+                className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition-all ${
+                  form.representation === type
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:bg-accent'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Budget Range</label>
+            <input
+              value={form.budgetRange}
+              onChange={(e) => setForm((p) => ({ ...p, budgetRange: e.target.value }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="$400k - $600k"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Timeline</label>
+            <input
+              value={form.timeline}
+              onChange={(e) => setForm((p) => ({ ...p, timeline: e.target.value }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="90 days"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Decision Deadline</label>
+            <input
+              type="date"
+              value={form.decisionDeadline}
+              onChange={(e) => setForm((p) => ({ ...p, decisionDeadline: e.target.value }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Referral Fee %</label>
+            <input
+              type="number"
+              value={form.feePercent}
+              onChange={(e) => setForm((p) => ({ ...p, feePercent: parseInt(e.target.value) || 25 }))}
+              className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+            Description *
+          </label>
+          <textarea
+            rows={4}
+            value={form.description}
+            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+            placeholder="Tell agents about your client and what kind of agent you're looking for..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+            Client needs (comma separated)
+          </label>
+          <input
+            value={form.clientNeeds}
+            onChange={(e) => setForm((p) => ({ ...p, clientNeeds: e.target.value }))}
+            className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            placeholder="Pre-approved, Family of 4, Good schools, 4+ bed"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 px-5 py-4 border-t border-border">
+        {submitError && (
+          <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+            {submitError}
+          </div>
+        )}
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="h-9 px-4 rounded-lg border border-border text-sm font-semibold hover:bg-accent transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              if (demoGuard()) return
+              if (!form.market.trim() || !form.description.trim()) return
+              setSubmitting(true)
+              setSubmitError(null)
+              const result = await updatePost(post.id, {
+                market: form.market.trim(),
+                neighborhood: form.neighborhood.trim() || null,
+                representation: form.representation,
+                budgetRange: form.budgetRange.trim(),
+                timeline: form.timeline.trim(),
+                decisionDeadline: form.decisionDeadline || undefined,
+                description: form.description.trim(),
+                clientNeeds: form.clientNeeds.trim()
+                  ? form.clientNeeds.split(',').map((s: string) => s.trim()).filter(Boolean)
+                  : [],
+                feePercent: form.feePercent,
+              })
+              setSubmitting(false)
+              if (result.success) {
+                setSaved(true)
+              } else {
+                setSubmitError(result.error || 'Failed to update post')
+              }
+            }}
+            disabled={!form.market.trim() || !form.description.trim() || submitting}
+            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Check className="w-3.5 h-3.5" />
+            {submitting ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
     </div>

@@ -172,6 +172,15 @@ body {
 .leaflet-container {
   font-family: var(--font-dm-sans), system-ui, sans-serif !important;
 }
+/* Remove visible grid lines between map tiles */
+.leaflet-tile {
+  outline: none !important;
+  border: none !important;
+}
+.leaflet-tile-pane {
+  /* Eliminate sub-pixel gaps between tiles */
+  image-rendering: auto;
+}
 /* Reduce grid line visibility on dark Carto tiles */
 .dark .leaflet-tile-pane {
   filter: contrast(1.1) brightness(0.95);

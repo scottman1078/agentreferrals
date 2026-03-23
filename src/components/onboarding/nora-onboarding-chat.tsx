@@ -822,17 +822,20 @@ export default function NoraOnboardingChat({
       phone_verified: phoneVerified,
       phone_verified_at: phoneVerified ? new Date().toISOString() : null,
       tags: data.specializations,
-      polygon: [],
-      territory_zips: data.primaryArea
-        .split(',')
-        .map((s) => s.trim())
-        .filter((s) => /^\d{5}$/.test(s)),
       status: 'active',
       updated_at: new Date().toISOString(),
-    }
+    } as Record<string, unknown>
 
-    if (upsertPayload.territory_zips.length === 0) {
-      upsertPayload.territory_zips = null as unknown as string[]
+    // Only set territory_zips if the user actually provided zip codes in primaryArea.
+    // Otherwise, leave them unset so the Service Area step handles it properly.
+    const parsedZips = data.primaryArea
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => /^\d{5}$/.test(s))
+
+    if (parsedZips.length > 0) {
+      upsertPayload.polygon = []
+      upsertPayload.territory_zips = parsedZips
     }
 
     const areaParts = data.primaryArea.split(',').map((s: string) => s.trim())

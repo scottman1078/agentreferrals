@@ -60,7 +60,7 @@ const STEPS = ['Select Agent', 'Client Info', 'Terms', 'Review & Send'] as const
 type Step = 0 | 1 | 2 | 3
 
 function formatNumberWithCommas(value: number): string {
-  if (!value) return ''
+  if (value === null || value === undefined || isNaN(value)) return ''
   return value.toLocaleString('en-US')
 }
 
@@ -128,9 +128,18 @@ export default function CreateReferralModal({
   )
 
   // Tier-based agent gating: restrict who the user can send referrals to
+  // For authenticated users with no partnerships yet, show all available agents
+  // so they can still send referrals while building their network.
   const tierFilteredAgents = useMemo(() => {
     const available = agents.filter((a) => a.id !== user?.id)
     if (tier === 'elite') return available
+
+    const hasAnyPartners = partnerIds.length > 0 || oneDegreeIds.length > 0 || twoDegreeIds.length > 0
+
+    // If no partnerships exist yet (common for new authenticated users),
+    // show all available agents rather than an empty list
+    if (!hasAnyPartners) return available
+
     if (tier === 'growth' || tier === 'pro') {
       const allowedIds = new Set([...partnerIds, ...oneDegreeIds, ...twoDegreeIds])
       return available.filter((a) => allowedIds.has(a.id))
@@ -146,10 +155,10 @@ export default function CreateReferralModal({
     const q = searchQuery.toLowerCase()
     return tierFilteredAgents.filter(
       (a) =>
-        a.name.toLowerCase().includes(q) ||
-        a.area.toLowerCase().includes(q) ||
-        a.brokerage.toLowerCase().includes(q) ||
-        a.tags.some((t) => t.toLowerCase().includes(q))
+        (a.name || '').toLowerCase().includes(q) ||
+        (a.area || '').toLowerCase().includes(q) ||
+        (a.brokerage || '').toLowerCase().includes(q) ||
+        (a.tags || []).some((t) => t.toLowerCase().includes(q))
     )
   }, [searchQuery, tierFilteredAgents])
 

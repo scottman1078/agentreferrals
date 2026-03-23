@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send invite email
-    const referralLink = `https://agentreferrals.ai?ref=${referralCode || 'INVITE'}`
+    const referralLink = `https://agentreferrals.ai/invite/${referralCode || 'INVITE'}`
     const emailResult = await sendInviteEmail({
       toEmail: inviteeEmail,
       toName: inviteeName || inviteeEmail.split('@')[0],

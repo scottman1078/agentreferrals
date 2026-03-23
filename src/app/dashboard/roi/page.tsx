@@ -43,7 +43,9 @@ function ROIPage() {
   const chartRef = useRef<HTMLCanvasElement>(null)
 
   const closedRefs = referrals.filter((r) => r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending')
-  const totalFees = closedRefs.reduce((s, r) => s + r.estimatedPrice * (r.feePercent / 100), 0)
+  // Referral fee = feePercent of the agent's commission (default 3% commission rate)
+  const DEFAULT_COMMISSION_RATE = 3
+  const totalFees = closedRefs.reduce((s, r) => s + r.estimatedPrice * (DEFAULT_COMMISSION_RATE / 100) * (r.feePercent / 100), 0)
   const totalVolume = referrals.reduce((s, r) => s + r.estimatedPrice, 0)
   const conversionRate = Math.round((closedRefs.length / referrals.length) * 100)
 
@@ -65,7 +67,7 @@ function ROIPage() {
   closedRefs.forEach((r) => {
     ;[r.fromAgent, r.toAgent].forEach((name) => {
       if (!agentCounts[name]) agentCounts[name] = { closed: 0, fees: 0 }
-      agentCounts[name].closed++; agentCounts[name].fees += r.estimatedPrice * (r.feePercent / 100) / 2
+      agentCounts[name].closed++; agentCounts[name].fees += r.estimatedPrice * (DEFAULT_COMMISSION_RATE / 100) * (r.feePercent / 100) / 2
     })
   })
   const topAgents = Object.entries(agentCounts).sort((a, b) => b[1].fees - a[1].fees).slice(0, 5)

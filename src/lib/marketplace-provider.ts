@@ -30,6 +30,7 @@ interface MarketplaceData {
   // Actions
   fetchBidsForPost: (postId: string) => Promise<ReferralBid[]>
   createPost: (post: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  updatePost: (postId: string, fields: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
   submitBid: (bid: { postId: string; pitch: string; videoUrl?: string; videoDuration?: number; highlights?: string[] }) => Promise<{ success: boolean; error?: string }>
   awardBid: (postId: string, bidId: string) => Promise<{ success: boolean; error?: string }>
   refetch: () => void
@@ -141,6 +142,29 @@ export function useMarketplace(): MarketplaceData {
     }
   }, [userId, fetchData])
 
+  const updatePost = useCallback(async (postId: string, fields: Record<string, unknown>) => {
+    try {
+      const res = await fetch('/api/marketplace', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, ...fields }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('[Marketplace] PATCH update failed:', data)
+        return { success: false, error: data.error || `Server error (${res.status})` }
+      }
+      if (data.success) {
+        await fetchData()
+        return { success: true }
+      }
+      return { success: false, error: data.error || 'Unknown error' }
+    } catch (err) {
+      console.error('[Marketplace] PATCH network error:', err)
+      return { success: false, error: 'Network error — please try again' }
+    }
+  }, [fetchData])
+
   const submitBidAction = useCallback(async (bid: { postId: string; pitch: string; videoUrl?: string; videoDuration?: number; highlights?: string[] }) => {
     try {
       const res = await fetch('/api/marketplace/bids', {
@@ -185,6 +209,7 @@ export function useMarketplace(): MarketplaceData {
     source,
     fetchBidsForPost,
     createPost,
+    updatePost,
     submitBid: submitBidAction,
     awardBid: awardBidAction,
     refetch: fetchData,

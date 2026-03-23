@@ -260,7 +260,7 @@ export default function AgentMap() {
     tileLayerRef.current.setUrl(isDark ? DARK_TILES : LIGHT_TILES)
   }, [resolvedTheme, mounted])
 
-  // Filter agents by tag AND brokerage scope — always refit bounds
+  // Re-fit bounds only when user explicitly changes tag, scope, or the agent list changes
   useEffect(() => {
     if (!mapInstance.current || !L) return
     setScopeLoading(true)
@@ -271,7 +271,15 @@ export default function AgentMap() {
     const timer = setTimeout(() => setScopeLoading(false), 300)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTag, filteredAgents, scope, countyLoadCount, zipLoadCount])
+  }, [activeTag, filteredAgents, scope])
+
+  // Re-render markers/polygons when boundary data loads, but do NOT refit bounds
+  useEffect(() => {
+    if (!mapInstance.current || !L) return
+    const filtered = activeTag === 'all' ? filteredAgents : filteredAgents.filter((a) => a.tags.includes(activeTag))
+    renderAgents(filtered, mapInstance.current, false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countyLoadCount, zipLoadCount])
 
   // Toggle void zones
   useEffect(() => {
@@ -656,8 +664,37 @@ export default function AgentMap() {
     setMyZips((prev) => prev.filter((z) => z !== zip))
   }, [])
 
-  // Auto-save is removed — user clicks Save button explicitly
-  // (was causing infinite loop: save → refreshProfile → setMyZips → save)
+  // Save zips to DB when user clicks Save
+  const handleSaveMyZips = useCallback(async () => {
+    if (!profile?.id) return
+    setZipSaving(true)
+    try {
+      const polygonRings: [number, number][][] = []
+      for (const zip of myZips) {
+        const ring = zipBoundaryCache.current.get(zip)
+        if (ring) polygonRings.push(ring)
+      }
+
+      const res = await fetch('/api/territory/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: profile.id,
+          polygon: polygonRings,
+          territory_zips: myZips,
+        }),
+      })
+
+      if (res.ok) {
+        await refreshProfile()
+        setZipSaveToast(true)
+        setTimeout(() => setZipSaveToast(false), 3000)
+      }
+    } catch {
+      // silently fail — toast won't show
+    }
+    setZipSaving(false)
+  }, [profile?.id, myZips, refreshProfile])
 
   const renderAgents = useCallback((agentList: Agent[], map: L.Map, fitBounds = false) => {
     if (!L) return
@@ -1107,6 +1144,24 @@ export default function AgentMap() {
                   ? 'No agents in this area yet'
                   : `${zipAgentCount.count} agent${zipAgentCount.count !== 1 ? 's' : ''} in this area`}
               </div>
+            )}
+
+            {/* Save button */}
+            {myZips.length > 0 && (
+              <button
+                onClick={handleSaveMyZips}
+                disabled={zipSaving}
+                className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {zipSaving ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Zip Codes'
+                )}
+              </button>
             )}
           </div>
         </div>

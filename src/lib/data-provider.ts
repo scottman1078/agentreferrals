@@ -237,7 +237,7 @@ export function useAppData(): AppData {
 
     referralCode: profile?.referral_code || (isDemoMode ? mockReferralCode : ''),
     referralLink: profile?.referral_code
-      ? `https://agentreferrals.ai/join?ref=${profile.referral_code}`
+      ? `https://agentreferrals.ai/invite/${profile.referral_code}`
       : (isDemoMode ? mockReferralLink : ''),
 
     getAgentReviews: isDemoMode ? getAgentReviews : emptyReviews,

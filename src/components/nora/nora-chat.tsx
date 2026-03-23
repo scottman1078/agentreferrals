@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
+import { useDemo } from '@/contexts/demo-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useAppData } from '@/lib/data-provider'
 import { TAG_COLORS } from '@/lib/constants'
@@ -20,13 +21,14 @@ import { getVerifiedCount, getPendingCount } from '@/data/verified-referrals'
 import type { Agent, NoraMessage } from '@/types'
 
 // ── Pattern-matching fallback (used when no API key) ──────────────────
-function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = []) {
-  const activeNudges = getActiveNudges(nudges)
+function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = [], demoMode = false) {
+  // Only use mock nudge/marketplace/comm data in demo mode
+  const activeNudges = demoMode ? getActiveNudges(nudges) : []
   const inactivePartnerNudges = activeNudges.filter((n) => n.type === 'inactive_partner')
 
-  const openPosts = getOpenPosts()
-  const commNudges = getCommNudges('jason')
-  const allActiveNudges = getActiveNudges(nudges)
+  const openPosts = demoMode ? getOpenPosts() : []
+  const commNudges = demoMode ? getCommNudges('jason') : []
+  const allActiveNudges = demoMode ? getActiveNudges(nudges) : []
   const myAreaPosts = openPosts.filter((p) => p.market.toLowerCase().includes('michigan') || p.market.toLowerCase().includes('grand rapids') || p.market.toLowerCase().includes('plainwell'))
 
   return [
@@ -54,10 +56,10 @@ function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: strin
 
     // ── Comm score command ──
     { patterns: ['my score', 'comm score', 'communication score', 'my reputation', 'my stats'], response: (() => {
-      const cs = getCommScore('jason')
-      if (!cs) return "I couldn't find your communication score."
+      const cs = demoMode ? getCommScore('jason') : null
+      if (!cs) return "Your communication score isn't available yet. Keep communicating with your referral partners and it will build over time!"
       const trend = cs.trend === 'up' ? '📈 trending up' : cs.trend === 'down' ? '📉 trending down' : '➡️ stable'
-      return `📡 Your Reputation Dashboard:\n\n• Comm Score: ${cs.overall}/100 (${cs.label}) — ${trend}\n• Pipeline Activity: ${cs.pipelineActivity}\n• Message Frequency: ${cs.messageFrequency}\n• Response Time: ${cs.responseTime}\n• Check-In Consistency: ${cs.checkInConsistency}\n• Verified Referrals: ${getVerifiedCount('jason')}\n• Endorsements: ${getEndorsementCount('jason')}\n\n${cs.trend === 'down' ? '⚠️ Your score is dropping. Send updates on stale referrals to recover. Want me to draft them?' : 'Keep up the good work!'}`
+      return `📡 Your Reputation Dashboard:\n\n• Comm Score: ${cs.overall}/100 (${cs.label}) — ${trend}\n• Pipeline Activity: ${cs.pipelineActivity}\n• Message Frequency: ${cs.messageFrequency}\n• Response Time: ${cs.responseTime}\n• Check-In Consistency: ${cs.checkInConsistency}\n• Verified Referrals: ${demoMode ? getVerifiedCount('jason') : 0}\n• Endorsements: ${demoMode ? getEndorsementCount('jason') : 0}\n\n${cs.trend === 'down' ? '⚠️ Your score is dropping. Send updates on stale referrals to recover. Want me to draft them?' : 'Keep up the good work!'}`
     })(), matchLogic: undefined },
 
     // ── Post a referral command ──
@@ -67,7 +69,7 @@ function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: strin
     { patterns: ['remind', 'check in with partners', 'follow up'], response: inactivePartnerNudges.length > 0 ? `You have ${inactivePartnerNudges.length} partner${inactivePartnerNudges.length > 1 ? 's' : ''} you haven't contacted recently:\n\n${inactivePartnerNudges.map((n) => `\u2022 ${n.agentName} — ${n.daysInactive} days inactive`).join('\n')}\n\nWant me to draft check-in messages for any of them?` : "All your partners are up to date! No inactive connections right now.", matchLogic: undefined },
     { patterns: ['draft a message to ashley', 'message ashley', 'write to ashley'], response: "Here's a personalized check-in for Ashley Monroe:\n\n\"Hey Ashley, just checking in! The Nashville market looks hot right now. Have any clients considering Michigan? I'd love to help. Also congrats on the Martinez closing!\"\n\nWant me to adjust the tone or focus?", matchLogic: () => agentList.filter((a) => a.name.toLowerCase().includes('ashley')) },
     { patterns: ['who should i reach out to', 'who to contact', 'who to message', 'reach out'], response: allActiveNudges.length > 0 ? `Based on your activity, I'd prioritize these partners:\n\n${allActiveNudges.slice(0, 5).map((n, i) => `${i + 1}. ${n.agentName} — ${n.title}`).join('\n')}\n\nWant me to draft messages for any of them?` : "You're all caught up! All your partners have been contacted recently.", matchLogic: undefined },
-    // Original patterns
+    // Original patterns — these use agentList from useAppData() which is already correctly sourced
     { patterns: ['nashville', 'tennessee', 'tn'], response: "I found agents covering Nashville. Ashley Monroe at Real Broker is your top match — 95 RCS, Relocation & Luxury specialist, responds in < 30 min.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('nashville')) },
     { patterns: ['chicago', 'illinois', 'il'], response: "Marcus Reid at Compass Chicago — 94 RCS, 88 deals/year, Luxury + Investment + Relocation. Responds within 30 minutes.", matchLogic: () => agentList.filter((a) => a.area.toLowerCase().includes('chicago')) },
     { patterns: ['luxury', 'high end', 'million'], response: "Top luxury specialists across your network:", matchLogic: () => agentList.filter((a) => a.tags.includes('Luxury')).sort((a, b) => (b.rcsScore || 0) - (a.rcsScore || 0)).slice(0, 5) },
@@ -81,9 +83,9 @@ function buildNoraResponses(agentList: Agent[], referralList: { fromAgent: strin
   ]
 }
 
-function findResponse(query: string, agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = []): { text: string; agents: Agent[] } {
+function findResponse(query: string, agentList: Agent[], referralList: { fromAgent: string; toAgent: string; clientName: string; market: string; stage: string; feePercent: number; estimatedPrice: number }[] = [], demoMode = false): { text: string; agents: Agent[] } {
   const lower = query.toLowerCase()
-  const responses = buildNoraResponses(agentList, referralList)
+  const responses = buildNoraResponses(agentList, referralList, demoMode)
   for (const r of responses) {
     if (r.patterns.some((p) => lower.includes(p))) {
       return { text: r.response, agents: r.matchLogic ? r.matchLogic() : [] }
@@ -101,6 +103,7 @@ interface NoraChatProps {
 
 export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const demoGuard = useDemoGuard()
+  const { isDemoMode } = useDemo()
   const { agents, getAgentReviewStats, referrals: appReferrals } = useAppData()
   const { profile } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
@@ -109,22 +112,23 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
-  // Pull all data for the briefing
-  const openMarketplacePosts = getOpenPosts()
-  const myBids = getBidsByAgent('jason')
-  const commScore = getCommScore('jason')
-  const endorsementCount = getEndorsementCount('jason')
-  const verifiedCount = getVerifiedCount('jason')
-  const pendingVerifications = getPendingCount('jason')
+  // Pull mock data ONLY in demo mode; live users get empty/zero defaults
+  // (live users get real data from the API route which queries Supabase)
+  const openMarketplacePosts = isDemoMode ? getOpenPosts() : []
+  const myBids = isDemoMode ? getBidsByAgent('jason') : []
+  const commScore = isDemoMode ? getCommScore('jason') : null
+  const endorsementCount = isDemoMode ? getEndorsementCount('jason') : 0
+  const verifiedCount = isDemoMode ? getVerifiedCount('jason') : 0
+  const pendingVerifications = isDemoMode ? getPendingCount('jason') : 0
   const activeReferrals = appReferrals.filter((r) =>
     r.stage !== 'Fee Received'
   )
   const closedReferrals = appReferrals.filter((r) =>
     r.stage === 'Fee Received' || r.stage === 'Closed - Fee Pending'
   )
-  const allCommNudges = getCommNudges('jason')
+  const allCommNudges = isDemoMode ? getCommNudges('jason') : []
   const urgentNudges = allCommNudges.filter((n) => n.priority === 'high')
-  const activeNudgeList = getActiveNudges(nudges)
+  const activeNudgeList = isDemoMode ? getActiveNudges(nudges) : []
   const inactivePartners = activeNudgeList.filter((n) => n.type === 'inactive_partner')
   const congratsNudges = allCommNudges.filter((n) => n.type === 'congratulate')
   const marketplaceInMyArea = openMarketplacePosts.filter((p) =>
@@ -282,7 +286,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
               matchedAgents,
             }])
           } else {
-            const result = findResponse(briefingMsg.content, agents, appReferrals)
+            const result = findResponse(briefingMsg.content, agents, appReferrals, isDemoMode)
             setMessages((prev) => [...prev, {
               id: `n-briefing-${Date.now()}`,
               role: 'assistant',
@@ -302,7 +306,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
         })
         .finally(() => setIsLoading(false))
     }
-  }, [isOpen, agents, profile])
+  }, [isOpen, agents, profile, isDemoMode, appReferrals])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
@@ -332,7 +336,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
 
       if (data.fallback) {
         // No API key configured — use pattern matching
-        const result = findResponse(userMsg.content, agents, appReferrals)
+        const result = findResponse(userMsg.content, agents, appReferrals, isDemoMode)
         setMessages((p) => [...p, {
           id: `n-${Date.now()}`,
           role: 'assistant',
@@ -358,7 +362,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
       }
     } catch {
       // API error — fall back to pattern matching
-      const result = findResponse(userMsg.content, agents, appReferrals)
+      const result = findResponse(userMsg.content, agents, appReferrals, isDemoMode)
       setMessages((p) => [...p, {
         id: `n-${Date.now()}`,
         role: 'assistant',

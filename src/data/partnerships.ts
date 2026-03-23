@@ -673,11 +673,65 @@ export const existingRequests: PartnershipRequest[] = [
   },
 ]
 
-// Helper: get partner agent IDs for a given agent
+// ══════════════════════════════════════
+// REMOVED & HIDDEN partnership tracking (in-memory mock, resets on reload)
+// ══════════════════════════════════════
+
+/** IDs of partnerships that have been fully removed (disconnected) */
+const removedPartnershipIds = new Set<string>()
+
+/** Map of agentId → Set of partner agent IDs they have hidden */
+const hiddenPartners = new Map<string, Set<string>>()
+
+/** Remove a partnership entirely (both sides lose the connection) */
+export function removePartnership(userId: string, partnerAgentId: string): boolean {
+  const partnership = existingRequests.find(
+    (r) =>
+      r.status === 'active' &&
+      ((r.requestingAgentId === userId && r.receivingAgentId === partnerAgentId) ||
+        (r.receivingAgentId === userId && r.requestingAgentId === partnerAgentId))
+  )
+  if (!partnership) return false
+  removedPartnershipIds.add(partnership.id)
+  return true
+}
+
+/** Hide a partner from the current user's view without removing the partnership */
+export function hidePartner(userId: string, partnerAgentId: string): void {
+  if (!hiddenPartners.has(userId)) hiddenPartners.set(userId, new Set())
+  hiddenPartners.get(userId)!.add(partnerAgentId)
+}
+
+/** Unhide a previously hidden partner */
+export function unhidePartner(userId: string, partnerAgentId: string): void {
+  hiddenPartners.get(userId)?.delete(partnerAgentId)
+}
+
+/** Check if a partner is hidden by this user */
+export function isPartnerHidden(userId: string, partnerAgentId: string): boolean {
+  return hiddenPartners.get(userId)?.has(partnerAgentId) ?? false
+}
+
+/** Get all hidden partner IDs for a user */
+export function getHiddenPartnerIds(userId: string): string[] {
+  return Array.from(hiddenPartners.get(userId) ?? [])
+}
+
+// Helper: get partner agent IDs for a given agent (excludes removed partnerships)
 export function getPartnerAgentIds(agentId: string): string[] {
   return existingRequests
-    .filter((r) => r.status === 'active' && (r.requestingAgentId === agentId || r.receivingAgentId === agentId))
+    .filter((r) =>
+      r.status === 'active' &&
+      !removedPartnershipIds.has(r.id) &&
+      (r.requestingAgentId === agentId || r.receivingAgentId === agentId)
+    )
     .map((r) => r.requestingAgentId === agentId ? r.receivingAgentId : r.requestingAgentId)
+}
+
+/** Get visible partner IDs (excludes removed AND hidden) */
+export function getVisiblePartnerIds(agentId: string): string[] {
+  const hidden = hiddenPartners.get(agentId) ?? new Set()
+  return getPartnerAgentIds(agentId).filter((id) => !hidden.has(id))
 }
 
 // 1-degree: partners of my partners (excluding me and my direct partners)

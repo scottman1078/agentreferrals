@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const TOTAL_FOUNDING_SPOTS = 1000
+const DEFAULT_FOUNDING_SPOTS = 1000
 
 // GET /api/spots — returns founding member spots remaining
 // Counts real paid subscribers (subscription_tier != 'free' and != null)
@@ -8,6 +8,17 @@ export async function GET() {
   try {
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = createAdminClient()
+
+    // Read configurable total from ar_settings (falls back to default)
+    let totalSpots = DEFAULT_FOUNDING_SPOTS
+    const { data: settingRow } = await supabase
+      .from('ar_settings')
+      .select('value')
+      .eq('key', 'total_founding_spots')
+      .single()
+    if (typeof settingRow?.value?.value === 'number') {
+      totalSpots = settingRow.value.value
+    }
 
     // Count real users (non-demo) as claimed spots
     const { count, error } = await supabase
@@ -18,17 +29,17 @@ export async function GET() {
     if (error) throw error
 
     const claimed = count ?? 0
-    const remaining = Math.max(0, TOTAL_FOUNDING_SPOTS - claimed)
+    const remaining = Math.max(0, totalSpots - claimed)
     return NextResponse.json({
-      total: TOTAL_FOUNDING_SPOTS,
+      total: totalSpots,
       claimed,
       remaining,
     })
   } catch {
     return NextResponse.json({
-      total: TOTAL_FOUNDING_SPOTS,
+      total: DEFAULT_FOUNDING_SPOTS,
       claimed: 0,
-      remaining: TOTAL_FOUNDING_SPOTS,
+      remaining: DEFAULT_FOUNDING_SPOTS,
     })
   }
 }

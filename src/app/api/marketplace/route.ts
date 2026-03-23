@@ -130,20 +130,49 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ── PATCH — update post status (award, cancel, expire) ──
+// ── PATCH — update post (status change OR field edits) ──
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { postId, status, awardedBidId } = body
+    const { postId, status, awardedBidId, ...editableFields } = body
 
-    if (!postId || !status) {
-      return NextResponse.json({ error: 'Missing postId or status' }, { status: 400 })
+    if (!postId) {
+      return NextResponse.json({ error: 'Missing postId' }, { status: 400 })
     }
 
     const supabase = createAdminClient()
 
-    const updateData: Record<string, unknown> = { status }
+    const updateData: Record<string, unknown> = {}
+
+    // Status change fields
+    if (status) updateData.status = status
     if (awardedBidId) updateData.awarded_bid_id = awardedBidId
+
+    // Editable post fields — map camelCase to snake_case
+    const fieldMap: Record<string, string> = {
+      market: 'market',
+      neighborhood: 'neighborhood',
+      representation: 'representation',
+      budgetRange: 'budget_range',
+      estimatedPrice: 'estimated_price',
+      timeline: 'timeline',
+      feePercent: 'fee_percent',
+      commissionRate: 'commission_rate',
+      description: 'description',
+      clientNeeds: 'client_needs',
+      decisionDeadline: 'decision_deadline',
+      clientInitials: 'client_initials',
+    }
+
+    for (const [camel, snake] of Object.entries(fieldMap)) {
+      if (editableFields[camel] !== undefined) {
+        updateData[snake] = editableFields[camel]
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+    }
 
     const { data, error } = await supabase
       .from('ar_marketplace_posts')

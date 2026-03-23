@@ -392,7 +392,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData) {
   const firstName = data.toName.split(' ')[0] || 'there'
   const onboardingUrl = 'https://agentreferrals.ai/onboarding'
   const dashboardUrl = 'https://agentreferrals.ai/dashboard'
-  const referralLink = `https://agentreferrals.ai?ref=${data.referralCode}`
+  const referralLink = `https://agentreferrals.ai/invite/${data.referralCode}`
 
   const htmlBody = `
 <!DOCTYPE html>

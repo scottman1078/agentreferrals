@@ -126,6 +126,15 @@ export async function submitBid(bid: { postId: string; agentId: string; pitch: s
   return res.json()
 }
 
+export async function updateMarketplacePost(postId: string, fields: Record<string, unknown>) {
+  const res = await fetch('/api/marketplace', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postId, ...fields }),
+  })
+  return res.json()
+}
+
 export async function awardBid(postId: string, bidId: string) {
   const res = await fetch('/api/marketplace', {
     method: 'PATCH',

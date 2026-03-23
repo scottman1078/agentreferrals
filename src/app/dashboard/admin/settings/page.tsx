@@ -43,7 +43,10 @@ function Toggle({
 }
 
 export default function AdminSettingsPage() {
-  const [foundingSpots, setFoundingSpots] = useState(5000)
+  const [foundingSpots, setFoundingSpots] = useState(1000)
+  const [foundingSpotsOriginal, setFoundingSpotsOriginal] = useState(1000)
+  const [foundingSpotsSaving, setFoundingSpotsSaving] = useState(false)
+  const [foundingSpotsFeedback, setFoundingSpotsFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [bugReportEnabled, setBugReportEnabled] = useState(true)
   const [waitlistMode, setWaitlistMode] = useState(true)
   const [inviteOnly, setInviteOnly] = useState(true)
@@ -59,10 +62,10 @@ export default function AdminSettingsPage() {
   const [affFeedback, setAffFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
-    fetchAffiliateSettings()
+    fetchAllSettings()
   }, [])
 
-  async function fetchAffiliateSettings() {
+  async function fetchAllSettings() {
     setAffLoading(true)
     try {
       const res = await fetch('/api/admin/settings')
@@ -75,12 +78,40 @@ export default function AdminSettingsPage() {
       }
       setAffValues(vals)
       setAffOriginal(vals)
+      // Load founding spots
+      if (typeof settings.total_founding_spots?.value === 'number') {
+        setFoundingSpots(settings.total_founding_spots.value)
+        setFoundingSpotsOriginal(settings.total_founding_spots.value)
+      }
       // Load bug report toggle
       if (settings.bug_report_enabled?.value === false) setBugReportEnabled(false)
     } catch {
-      setAffFeedback({ type: 'error', message: 'Failed to load affiliate settings' })
+      setAffFeedback({ type: 'error', message: 'Failed to load settings' })
     }
     setAffLoading(false)
+  }
+
+  const foundingSpotsChanged = foundingSpots !== foundingSpotsOriginal
+
+  async function handleFoundingSpotsSave() {
+    setFoundingSpotsSaving(true)
+    setFoundingSpotsFeedback(null)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'total_founding_spots', value: foundingSpots }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to save')
+      setFoundingSpotsOriginal(foundingSpots)
+      setFoundingSpotsFeedback({ type: 'success', message: 'Founding spots saved' })
+      setTimeout(() => setFoundingSpotsFeedback(null), 4000)
+    } catch (err) {
+      setFoundingSpotsFeedback({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save' })
+      setTimeout(() => setFoundingSpotsFeedback(null), 4000)
+    }
+    setFoundingSpotsSaving(false)
   }
 
   function handleAffChange(key: string, raw: string) {
@@ -203,13 +234,31 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => showToast('Settings saved')}
-          className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          <Save className="w-4 h-4" />
-          Save Settings
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleFoundingSpotsSave}
+            disabled={!foundingSpotsChanged || foundingSpotsSaving}
+            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {foundingSpotsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {foundingSpotsSaving ? 'Saving...' : 'Save Settings'}
+          </button>
+
+          {foundingSpotsFeedback && (
+            <div className={`flex items-center gap-1.5 text-xs font-medium ${
+              foundingSpotsFeedback.type === 'success'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-red-600 dark:text-red-400'
+            }`}>
+              {foundingSpotsFeedback.type === 'success' ? (
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5" />
+              )}
+              {foundingSpotsFeedback.message}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Affiliate Program */}
