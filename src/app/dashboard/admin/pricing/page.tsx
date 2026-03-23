@@ -160,7 +160,7 @@ export default function AdminPricingPage() {
         setTiers((prev) =>
           prev.map((t) => (t.id === editingTierId ? { ...data.tier, features: existing?.features ?? {} } : t))
         )
-        showToast(`Saved "${data.tier.name}"`)
+        showToast(`Saved "${data.tier.name}" — refresh the landing page to see changes`)
         setEditingTierId(null)
         setTierDraft({})
         invalidatePricing()
