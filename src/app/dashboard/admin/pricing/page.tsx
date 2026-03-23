@@ -154,21 +154,23 @@ export default function AdminPricingPage() {
         body: JSON.stringify({ id: editingTierId, ...tierDraft }),
       })
       const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || `Save failed (${res.status})`)
+        setTierSaving(false)
+        return
+      }
       if (data.tier) {
-        // Merge features back onto the returned tier
-        const existing = tiers.find((t) => t.id === editingTierId)
-        setTiers((prev) =>
-          prev.map((t) => (t.id === editingTierId ? { ...data.tier, features: existing?.features ?? {} } : t))
-        )
-        showToast(`Saved "${data.tier.name}" — refresh the landing page to see changes`)
+        showToast(`Saved "${data.tier.name}"`)
         setEditingTierId(null)
         setTierDraft({})
         invalidatePricing()
+        // Re-fetch all data to ensure UI is in sync with DB
+        await loadData()
       } else {
-        showToast(data.error || 'Failed to save tier')
+        showToast('Unexpected response — please refresh')
       }
-    } catch {
-      showToast('Failed to save tier')
+    } catch (err) {
+      showToast('Network error — please try again')
     }
     setTierSaving(false)
   }
