@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
-import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search, Video, Trash2, Pencil } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search, Video, Trash2, Pencil, X } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -86,6 +86,8 @@ export default function SettingsPage() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const zipBoundariesRef = useRef<Map<string, [number, number][]>>(new Map())
+  // Track which zips belong to which territory selection (county/city/radius label)
+  const zipsBySelectionRef = useRef<Map<string, string[]>>(new Map())
 
   // Radius state
   const [radiusMiles, setRadiusMiles] = useState(25)
@@ -102,6 +104,8 @@ export default function SettingsPage() {
   const [mapReady, setMapReady] = useState(false)
 
   const skipFitBoundsRef = useRef(false)
+  // Saved map view to restore after zip removal (prevents zoom-out)
+  const savedViewRef = useRef<{ center: { lat: number; lng: number }; zoom: number } | null>(null)
   const [savingTerritory, setSavingTerritory] = useState(false)
 
   const [saving, setSaving] = useState(false)
@@ -148,6 +152,23 @@ export default function SettingsPage() {
       // Load existing territory zips
       if (profile.territory_zips && Array.isArray(profile.territory_zips)) {
         setSelectedZips(profile.territory_zips as string[])
+      }
+      // Restore territory meta (mode, selections, zip groupings)
+      if (profile.territory_meta && typeof profile.territory_meta === 'object') {
+        const meta = profile.territory_meta as { mode?: string; selections?: string[]; zipGroups?: Record<string, string[]> }
+        if (meta.mode && ['city', 'county', 'zip', 'radius'].includes(meta.mode)) {
+          setTerritoryMode(meta.mode as 'city' | 'county' | 'zip' | 'radius')
+        }
+        if (meta.selections && Array.isArray(meta.selections)) {
+          setTerritorySelections(meta.selections)
+        }
+        if (meta.zipGroups && typeof meta.zipGroups === 'object') {
+          for (const [label, zips] of Object.entries(meta.zipGroups)) {
+            if (Array.isArray(zips)) {
+              zipsBySelectionRef.current.set(label, zips)
+            }
+          }
+        }
       }
     } else if (!isAuthenticated) {
       setFullName("Jason Smith")
@@ -466,16 +487,47 @@ export default function SettingsPage() {
           fillColor: '#f59e0b',
           fillOpacity: isCountyMode ? 0.15 : 0.25,
         })
-        if (isCountyMode) {
+        // Determine tooltip: grouped zips show on hover only, individual zips show permanently
+        let belongsToGroup = false
+        for (const [, groupZips] of zipsBySelectionRef.current.entries()) {
+          if (groupZips.includes(zip)) { belongsToGroup = true; break }
+        }
+        if (belongsToGroup || isCountyMode) {
           poly.bindTooltip(`${zip} \u2715`, { permanent: false, direction: 'center', className: 'zip-label' })
         } else {
           poly.bindTooltip(`${zip} \u2715`, { permanent: true, direction: 'center', className: 'zip-label' })
         }
         poly.on('click', (e) => {
           L!.DomEvent.stopPropagation(e)
-          // Remove zip without triggering fitBounds zoom-out
+          // Prevent map zoom-out: save current view and skip fitBounds
           skipFitBoundsRef.current = true
-          setSelectedZips((prev) => prev.filter((z) => z !== zip))
+          if (mapInstance.current) {
+            savedViewRef.current = {
+              center: { lat: mapInstance.current.getCenter().lat, lng: mapInstance.current.getCenter().lng },
+              zoom: mapInstance.current.getZoom(),
+            }
+          }
+          // Find which group this zip belongs to and remove the whole group
+          let zipsToRemove: Set<string> | null = null
+          let groupLabel: string | null = null
+          for (const [label, groupZips] of zipsBySelectionRef.current.entries()) {
+            if (groupZips.includes(zip)) {
+              zipsToRemove = new Set(groupZips)
+              groupLabel = label
+              break
+            }
+          }
+          if (zipsToRemove && groupLabel) {
+            // Remove entire group (county/city/radius)
+            const removeSet = zipsToRemove
+            const removeLabel = groupLabel
+            zipsBySelectionRef.current.delete(removeLabel)
+            setTerritorySelections((prev) => prev.filter((s) => s !== removeLabel))
+            setSelectedZips((prev) => prev.filter((z) => !removeSet.has(z)))
+          } else {
+            // Individual zip (added one-by-one) — remove just this zip
+            setSelectedZips((prev) => prev.filter((z) => z !== zip))
+          }
         })
         poly.addTo(map)
         zipLayersRef.current.push(poly)
@@ -483,7 +535,17 @@ export default function SettingsPage() {
       }
 
       if (cancelled) return
-      if (bounds.length > 0 && !skipFitBoundsRef.current) {
+      if (skipFitBoundsRef.current) {
+        // Restore the exact view the user had before removing zip(s)
+        if (savedViewRef.current) {
+          map.setView(
+            [savedViewRef.current.center.lat, savedViewRef.current.center.lng],
+            savedViewRef.current.zoom,
+            { animate: false }
+          )
+          savedViewRef.current = null
+        }
+      } else if (bounds.length > 0) {
         let combined = bounds[0]
         for (let i = 1; i < bounds.length; i++) combined = combined.extend(bounds[i])
         map.fitBounds(combined, { padding: [40, 40], maxZoom: isCountyMode ? 9 : 12, animate: false })
@@ -587,6 +649,7 @@ export default function SettingsPage() {
           const res = await fetch(`/api/geocode/county-zips?county=${encodeURIComponent(countyName)}&state=${encodeURIComponent(stateCode)}`)
           const data = await res.json()
           if (data.zips?.length > 0) {
+            const selectionLabel = `${countyName} County, ${stateCode}`
             const newZips = data.zips.filter((z: string) => !zipBoundariesRef.current.has(z))
             for (let i = 0; i < newZips.length; i += 10) {
               const batch = newZips.slice(i, i + 10)
@@ -595,6 +658,8 @@ export default function SettingsPage() {
                 if (ring) zipBoundariesRef.current.set(batch[idx], ring)
               })
             }
+            zipsBySelectionRef.current.set(selectionLabel, data.zips as string[])
+            setTerritorySelections((prev) => [...prev, selectionLabel])
             setSelectedZips((prev) => {
               const combined = new Set([...prev, ...data.zips])
               return Array.from(combined).slice(0, 100)
@@ -650,6 +715,11 @@ export default function SettingsPage() {
           if (ring) zipBoundariesRef.current.set(batch[idx], ring)
         })
       }
+
+      // Track the city/location as a named group
+      const selectionLabel = input.trim()
+      zipsBySelectionRef.current.set(selectionLabel, Array.from(nearbyZips))
+      setTerritorySelections((prev) => [...prev, selectionLabel])
 
       setSelectedZips((prev) => {
         const combined = new Set([...prev, ...nearbyZips])
@@ -776,6 +846,9 @@ export default function SettingsPage() {
       })
     }
 
+    const radiusLabel = `${miles}mi radius`
+    zipsBySelectionRef.current.set(radiusLabel, Array.from(uniqueZips))
+    setTerritorySelections([radiusLabel])
     setSelectedZips(Array.from(uniqueZips).slice(0, 100))
     setRadiusLoading(false)
   }, [])

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (provider === 'lofty') {
       const res = await fetch('https://api.lofty.com/v1.0/org', {
         headers: {
-          Authorization: `token ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       })
 

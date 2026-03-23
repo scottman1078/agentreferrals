@@ -238,7 +238,7 @@ async function fetchLoftyContacts(apiKey: string): Promise<CrmContact[]> {
       `https://api.lofty.com/v1.0/contacts?page=${page}&per_page=${limit}`,
       {
         headers: {
-          Authorization: `token ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       }
     )
