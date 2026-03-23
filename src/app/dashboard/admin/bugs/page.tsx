@@ -340,7 +340,10 @@ export default function AdminBugsPage() {
         <div className="space-y-2">
           {displayItems.map((bug) => {
             const sev = SEVERITY_CONFIG[bug.severity]
-            const stat = STATUS_CONFIG[bug.status]
+            const isVerified = bug.verified_status === 'confirmed'
+            const stat = isVerified
+              ? { label: 'Verified', color: 'bg-blue-500/20 text-blue-600 border-blue-500/30', icon: CheckCircle2 }
+              : STATUS_CONFIG[bug.status]
             const isExpanded = expandedId === bug.id
 
             return (
