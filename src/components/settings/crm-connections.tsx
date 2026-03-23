@@ -14,7 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
-import { buildOAuthAuthorizeUrl, getCallbackUrl, FUB_CONFIG } from '@/lib/integration-utils'
+import { buildOAuthAuthorizeUrl, getCallbackUrl, FUB_CONFIG, buildLoftyAuthorizeUrl, LOFTY_CONFIG } from '@/lib/integration-utils'
 
 interface ProviderConfig {
   id: 'fub' | 'lofty'
@@ -37,9 +37,8 @@ const PROVIDERS: ProviderConfig[] = [
     id: 'lofty',
     name: 'Lofty',
     description: 'Sync contacts from your Lofty CRM',
-    authType: 'apikey',
-    placeholder: 'Enter your Lofty API key...',
-    helpText: 'Find your API key in Lofty under Settings → API.',
+    authType: 'oauth',
+    helpText: 'You\'ll be redirected to Lofty to authorize access.',
   },
 ]
 
@@ -260,7 +259,7 @@ function CrmProviderCard({
       {expanded && !isConnected && (
         <div className="border-t border-border p-3 bg-muted/30 space-y-3">
           {provider.authType === 'oauth' ? (
-            /* OAuth flow for FUB */
+            /* OAuth flow for FUB and Lofty */
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">{provider.helpText}</p>
               {error && (
@@ -269,17 +268,24 @@ function CrmProviderCard({
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    const authUrl = buildOAuthAuthorizeUrl({
-                      authorizeUrl: FUB_CONFIG.authorizeUrl,
-                      clientId: FUB_CONFIG.clientId,
-                      redirectUri: getCallbackUrl('fub'),
-                    })
-                    window.location.href = authUrl
+                    if (provider.id === 'fub') {
+                      const authUrl = buildOAuthAuthorizeUrl({
+                        authorizeUrl: FUB_CONFIG.authorizeUrl,
+                        clientId: FUB_CONFIG.clientId,
+                        redirectUri: getCallbackUrl('fub'),
+                      })
+                      window.location.href = authUrl
+                    } else if (provider.id === 'lofty') {
+                      const authUrl = buildLoftyAuthorizeUrl(LOFTY_CONFIG.clientId)
+                      window.location.href = authUrl
+                    }
                   }}
-                  className="h-9 px-4 rounded-md bg-[#0052CC] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                  className={`h-9 px-4 rounded-md text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 ${
+                    provider.id === 'fub' ? 'bg-[#0052CC]' : 'bg-[#6366F1]'
+                  }`}
                 >
                   <Link2 className="w-3.5 h-3.5" />
-                  Connect with Follow Up Boss
+                  Connect with {provider.name}
                 </button>
                 <button
                   onClick={() => { setExpanded(false); setError(null) }}
@@ -290,7 +296,7 @@ function CrmProviderCard({
               </div>
             </div>
           ) : (
-            /* API Key flow for Lofty */
+            /* API Key flow (generic fallback) */
             <>
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">

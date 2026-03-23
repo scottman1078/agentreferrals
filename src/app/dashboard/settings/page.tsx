@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDemoGuard } from '@/hooks/use-demo-guard'
 import Link from 'next/link'
 import BackToDashboard from '@/components/layout/back-to-dashboard'
-import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search, Video, Trash2, Pencil, X } from 'lucide-react'
+import { CreditCard, ArrowRight, Loader2, Check, User, Bell, FileText, MapPin, Settings as SettingsIcon, Camera, Info, Search, Video, Trash2, Pencil, X, Eye } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -16,6 +16,7 @@ import ExpectationsSelector from '@/components/expectations/expectations-selecto
 import { CrmConnections } from '@/components/settings/crm-connections'
 import { VideoIntroEditor } from '@/components/video/video-intro-editor'
 import { ReferralExpectationsEditor as ReferralExpectationsEditorV2 } from '@/components/settings/referral-expectations-editor'
+import { ProfilePreviewModal } from '@/components/settings/profile-preview-modal'
 
 let L: typeof import('leaflet') | null = null
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
   const [billingToast, setBillingToast] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   // Auto-select tab from URL parameter + handle billing callbacks
   useEffect(() => {
@@ -949,8 +951,15 @@ export default function SettingsPage() {
         {activeTab === 'profile' && (
           <div className="space-y-4">
             <div className="p-5 rounded-xl border border-border bg-card">
-              <div className="font-bold text-sm mb-5 pb-3 border-b border-border">
-                Your Profile
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-border">
+                <div className="font-bold text-sm">Your Profile</div>
+                <button
+                  onClick={() => setPreviewOpen(true)}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview Profile
+                </button>
               </div>
 
               {/* Avatar upload */}
@@ -1221,6 +1230,15 @@ export default function SettingsPage() {
             <ReferralExpectationsEditorV2 profile={profile} isAuthenticated={isAuthenticated} refreshProfile={refreshProfile} demoGuard={demoGuard} />
 
             {/* Sign out moved to avatar dropdown in top bar */}
+
+            {/* Profile Preview Modal */}
+            {profile && (
+              <ProfilePreviewModal
+                profile={profile}
+                open={previewOpen}
+                onClose={() => setPreviewOpen(false)}
+              />
+            )}
           </div>
         )}
 

@@ -163,7 +163,7 @@ async function validateCrmKey(
     if (provider === 'lofty') {
       const res = await fetch('https://api.lofty.com/v1.0/org', {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `token ${apiKey}`,
         },
       })
       if (!res.ok) {

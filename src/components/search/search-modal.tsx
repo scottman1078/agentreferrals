@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Search, MapPin, Loader2, Star, Clock, Send, MessageSquare, Users, X, Command, User } from 'lucide-react'
+import { Search, MapPin, Loader2, Star, Clock, Send, MessageSquare, Users, X, Command, User, Lock, Sparkles, ChevronRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { geocodeAddress, type GeoResult } from '@/lib/geocode'
 import { pointInPolygon } from '@/lib/geo-utils'
 import { useAppData } from '@/lib/data-provider'
 import { useBrokerage } from '@/contexts/brokerage-context'
+import { useFeatureGate } from '@/hooks/use-feature-gate'
 import { TAG_COLORS } from '@/lib/constants'
 import { formatCurrency, getInitials } from '@/lib/utils'
 import { maskName } from '@/lib/agent-display-name'
@@ -20,11 +22,19 @@ interface SearchModalProps {
 
 type ModalPhase = 'idle' | 'loading' | 'suggestions' | 'results' | 'no-results'
 
+/** Agents grouped by relationship tier for the discovery grid */
+interface TieredAgents {
+  partners: Agent[]
+  oneDegree: Agent[]
+  twoDegree: Agent[]
+}
+
 export default function SearchModal({ open, onClose, onResultSelect }: SearchModalProps) {
   const [query, setQuery] = useState('')
   const [phase, setPhase] = useState<ModalPhase>('idle')
   const [suggestions, setSuggestions] = useState<GeoResult[]>([])
   const [matchedAgents, setMatchedAgents] = useState<Agent[]>([])
+  const [tieredAgents, setTieredAgents] = useState<TieredAgents>({ partners: [], oneDegree: [], twoDegree: [] })
   const [agentNameMatches, setAgentNameMatches] = useState<Agent[]>([])
   const [selectedLocation, setSelectedLocation] = useState<GeoResult | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -32,7 +42,8 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { agents } = useAppData()
   // Use tier-filtered agents — only show agents the user has access to
-  const { filteredAgents, partnerIds } = useBrokerage()
+  const { filteredAgents, partnerIds, oneDegreeIds, twoDegreeIds } = useBrokerage()
+  const { hasFeature, requiredTier } = useFeatureGate()
 
   // Focus input when modal opens
   useEffect(() => {
@@ -41,6 +52,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
       setPhase('idle')
       setSuggestions([])
       setMatchedAgents([])
+      setTieredAgents({ partners: [], oneDegree: [], twoDegree: [] })
       setAgentNameMatches([])
       setSelectedLocation(null)
       setFocusedIndex(-1)
@@ -91,6 +103,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
     setQuery(value)
     setSelectedLocation(null)
     setMatchedAgents([])
+    setTieredAgents({ partners: [], oneDegree: [], twoDegree: [] })
     setAgentNameMatches([])
     debouncedSearch(value)
   }
@@ -102,19 +115,46 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
       setAgentNameMatches([])
       setPhase('loading')
 
-      // Use tier-filtered agents for location search
-      const found = filteredAgents.filter((agent) =>
+      // Search ALL agents for this location, then categorize by tier
+      const allInArea = agents.filter((agent) =>
         pointInPolygon(geo.lat, geo.lng, agent.polygon)
       )
-      found.sort((a, b) => (b.rcsScore ?? 0) - (a.rcsScore ?? 0))
+      allInArea.sort((a, b) => (b.rcsScore ?? 0) - (a.rcsScore ?? 0))
 
-      setMatchedAgents(found)
-      setPhase(found.length > 0 ? 'results' : 'no-results')
+      // Categorize into tiers
+      const partners: Agent[] = []
+      const oneDegree: Agent[] = []
+      const twoDegree: Agent[] = []
+
+      for (const agent of allInArea) {
+        if (partnerIds.includes(agent.id)) {
+          partners.push(agent)
+        } else if (oneDegreeIds.includes(agent.id)) {
+          oneDegree.push(agent)
+        } else if (twoDegreeIds.includes(agent.id)) {
+          twoDegree.push(agent)
+        } else {
+          // Agents not in any degree go to 2nd degree bucket
+          twoDegree.push(agent)
+        }
+      }
+
+      setTieredAgents({ partners, oneDegree, twoDegree })
+      setMatchedAgents(allInArea)
+
+      const hasAny = partners.length > 0 || oneDegree.length > 0 || twoDegree.length > 0
+      setPhase(hasAny ? 'results' : 'no-results')
       setQuery(geo.display_name.split(',').slice(0, 2).join(','))
 
-      onResultSelect?.(geo.lat, geo.lng, found)
+      // Pass accessible agents to map callback
+      const accessibleAgents = [
+        ...partners,
+        ...(hasFeature('networkDegree1') ? oneDegree : []),
+        ...(hasFeature('networkDegree2') ? twoDegree : []),
+      ]
+      onResultSelect?.(geo.lat, geo.lng, accessibleAgents)
     },
-    [filteredAgents, onResultSelect]
+    [agents, partnerIds, oneDegreeIds, twoDegreeIds, hasFeature, onResultSelect]
   )
 
   // Keyboard nav for suggestions
@@ -135,13 +175,15 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
 
   if (!open) return null
 
+  const totalFound = matchedAgents.length
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[12vh]">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+      {/* Modal — wider for grid layout */}
+      <div className="relative w-full max-w-3xl mx-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 border-b border-border">
           <Search className="w-5 h-5 text-muted-foreground shrink-0" />
@@ -166,7 +208,7 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
         </div>
 
         {/* Body */}
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[65vh] overflow-y-auto">
           {/* Agent name matches */}
           {phase === 'suggestions' && agentNameMatches.length > 0 && (
             <div>
@@ -202,13 +244,14 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
             </div>
           )}
 
-          {/* Results */}
-          {phase === 'results' && matchedAgents.length > 0 && (
+          {/* Results — Agent Discovery Grid */}
+          {phase === 'results' && totalFound > 0 && (
             <div>
+              {/* Header */}
               <div className="px-4 py-2.5 border-b border-border bg-accent/30">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {matchedAgents.length} referral partner{matchedAgents.length !== 1 ? 's' : ''} found
+                    {totalFound} agent{totalFound !== 1 ? 's' : ''} found
                   </p>
                   {selectedLocation && (
                     <p className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -218,9 +261,38 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
                   )}
                 </div>
               </div>
-              {matchedAgents.map((agent) => (
-                <ModalAgentCard key={agent.id} agent={agent} isPartner={partnerIds.includes(agent.id)} />
-              ))}
+
+              {/* Row 1: Direct Partners (always accessible) */}
+              <AgentTierRow
+                label="Your Partners"
+                sublabel="Direct connections in this area"
+                agents={tieredAgents.partners}
+                locked={false}
+                partnerIds={partnerIds}
+                emptyMessage="No direct partners in this area"
+              />
+
+              {/* Row 2: 1st-Degree Connections */}
+              <AgentTierRow
+                label="1st-Degree Network"
+                sublabel="Your partners' partners"
+                agents={tieredAgents.oneDegree}
+                locked={!hasFeature('networkDegree1')}
+                requiredTierName={requiredTier('networkDegree1') ?? undefined}
+                partnerIds={partnerIds}
+                emptyMessage="No 1st-degree connections in this area"
+              />
+
+              {/* Row 3: 2nd-Degree Connections */}
+              <AgentTierRow
+                label="2nd-Degree Network"
+                sublabel="Extended network agents"
+                agents={tieredAgents.twoDegree}
+                locked={!hasFeature('networkDegree2')}
+                requiredTierName={requiredTier('networkDegree2') ?? undefined}
+                partnerIds={partnerIds}
+                emptyMessage="No 2nd-degree connections in this area"
+              />
             </div>
           )}
 
@@ -285,6 +357,161 @@ export default function SearchModal({ open, onClose, onResultSelect }: SearchMod
     </div>
   )
 }
+
+/* ─── Agent Tier Row (horizontally scrollable) ─── */
+
+interface AgentTierRowProps {
+  label: string
+  sublabel: string
+  agents: Agent[]
+  locked: boolean
+  requiredTierName?: string
+  partnerIds: string[]
+  emptyMessage: string
+}
+
+function AgentTierRow({ label, sublabel, agents, locked, requiredTierName, partnerIds, emptyMessage }: AgentTierRowProps) {
+  const router = useRouter()
+
+  return (
+    <div className="border-b border-border last:border-0">
+      {/* Row header */}
+      <div className="px-4 pt-3 pb-1.5 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-bold text-foreground">{label}</p>
+            {locked && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
+                <Lock className="w-2.5 h-2.5" />
+                {requiredTierName ? `${requiredTierName} plan` : 'Upgrade'}
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">{sublabel}</p>
+        </div>
+        {agents.length > 3 && !locked && (
+          <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+            Scroll for more <ChevronRight className="w-3 h-3" />
+          </span>
+        )}
+      </div>
+
+      {/* Agent cards or locked/empty state */}
+      {agents.length === 0 ? (
+        <div className="px-4 pb-3">
+          <p className="text-[11px] text-muted-foreground italic">{emptyMessage}</p>
+        </div>
+      ) : locked ? (
+        /* Blurred row with upgrade CTA */
+        <div className="relative px-4 pb-3">
+          {/* Blurred preview of agent cards */}
+          <div className="flex gap-3 overflow-hidden select-none pointer-events-none" style={{ filter: 'blur(6px)' }}>
+            {agents.slice(0, 3).map((agent) => (
+              <GridAgentCard key={agent.id} agent={agent} isPartner={false} masked />
+            ))}
+          </div>
+          {/* Overlay CTA */}
+          <div className="absolute inset-0 flex items-center justify-center bg-card/60 rounded-lg">
+            <button
+              onClick={() => router.push('/dashboard/billing')}
+              className="flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-all shadow-lg"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Upgrade to {requiredTierName ?? 'unlock'} to view {agents.length} agent{agents.length !== 1 ? 's' : ''}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Scrollable agent grid */
+        <div className="px-4 pb-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-border">
+            {agents.map((agent) => (
+              <GridAgentCard key={agent.id} agent={agent} isPartner={partnerIds.includes(agent.id)} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Grid Agent Card (compact card for horizontal scroll) ─── */
+
+function GridAgentCard({ agent, isPartner = false, masked = false }: { agent: Agent; isPartner?: boolean; masked?: boolean }) {
+  const displayName = masked ? '------- -------' : isPartner ? agent.name : maskName(agent.name)
+  const initials = getInitials(agent.name)
+  const score = agent.rcsScore ?? 0
+  const scoreColor = score >= 90 ? 'text-emerald-500' : score >= 80 ? 'text-amber-500' : 'text-muted-foreground'
+
+  return (
+    <div className="flex-shrink-0 w-52 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors p-3">
+      {/* Top: avatar + name */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0"
+          style={{ background: agent.color }}
+        >
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-xs truncate">{displayName}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{agent.brokerage}</p>
+        </div>
+      </div>
+
+      {/* Score + area */}
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-[10px] text-muted-foreground truncate flex-1">{agent.area}</p>
+        {score > 0 && (
+          <span className={`text-[10px] font-bold ${scoreColor} shrink-0 ml-1`}>
+            {score}
+          </span>
+        )}
+      </div>
+
+      {/* Stats row */}
+      <div className="flex items-center gap-2 mb-2">
+        {agent.responseTime && (
+          <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <Clock className="w-2.5 h-2.5" />
+            {agent.responseTime}
+          </span>
+        )}
+        <span className="text-[9px] text-muted-foreground">
+          {agent.dealsPerYear} deals/yr
+        </span>
+      </div>
+
+      {/* Tags (max 2) */}
+      <div className="flex flex-wrap gap-1 mb-2.5">
+        {agent.tags.slice(0, 2).map((tag) => (
+          <span
+            key={tag}
+            className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold text-white"
+            style={{ background: TAG_COLORS[tag] || '#6b7280' }}
+          >
+            {tag}
+          </span>
+        ))}
+        {agent.tags.length > 2 && (
+          <span className="px-1 py-0.5 text-[8px] text-muted-foreground">
+            +{agent.tags.length - 2}
+          </span>
+        )}
+      </div>
+
+      {/* Action */}
+      {!masked && (
+        <button className="flex items-center justify-center gap-1.5 w-full h-7 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold hover:opacity-90 transition-opacity">
+          <Send className="w-3 h-3" />
+          Send Referral
+        </button>
+      )}
+    </div>
+  )
+}
+
+/* ─── Full-width Agent Card (for name search results) ─── */
 
 function ModalAgentCard({ agent, isPartner = false }: { agent: Agent; isPartner?: boolean }) {
   const displayName = isPartner ? agent.name : maskName(agent.name)

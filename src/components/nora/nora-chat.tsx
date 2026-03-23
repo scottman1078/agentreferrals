@@ -321,7 +321,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   // Check for existing open conversation on mount
   useEffect(() => {
     if (!profile?.id) return
-    fetch('/api/conversations')
+    fetch('/api/conversations?userId=' + profile?.id)
       .then((res) => res.json())
       .then((data) => {
         if (data.conversations && data.conversations.length > 0) {

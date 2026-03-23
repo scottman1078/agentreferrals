@@ -1,119 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createServerSupabase } from '@/lib/supabase/server'
 
-// GET /api/conversations — list user's conversations (or all for admin)
-export async function GET() {
+// GET /api/conversations?userId=xxx — list user's conversations
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const userId = request.nextUrl.searchParams.get('userId')
+    if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
-    const admin = createAdminClient()
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     // Check if admin
-    const { data: profile } = await admin
+    const { data: profile } = await supabase
       .from('ar_profiles')
       .select('is_admin')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
-    let query = admin
+    let query = supabase
       .from('ar_conversations')
       .select('*')
       .order('last_message_at', { ascending: false })
 
     if (!profile?.is_admin) {
-      query = query.eq('user_id', user.id)
+      query = query.eq('user_id', userId)
     }
 
     const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    if (error) {
-      console.error('[Conversations] GET error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ conversations: data })
-  } catch (error) {
-    console.error('[Conversations] GET error:', error)
+    return NextResponse.json({ conversations: data ?? [] })
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// POST /api/conversations — create a new conversation { subject, message }
+// POST /api/conversations — create a new conversation
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await request.json()
+    const { userId, subject, message, channel } = body
 
-    const { subject, message, channel } = await request.json()
-    if (!subject || !message) {
-      return NextResponse.json({ error: 'subject and message are required' }, { status: 400 })
+    if (!userId || !message) {
+      return NextResponse.json({ error: 'userId and message required' }, { status: 400 })
     }
 
-    const admin = createAdminClient()
-
-    // Get user profile for Slack notification
-    const { data: profile } = await admin
-      .from('ar_profiles')
-      .select('full_name, email')
-      .eq('id', user.id)
-      .single()
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     // Create conversation
-    const { data: convo, error: convoError } = await admin
+    const { data: conversation, error: convError } = await supabase
       .from('ar_conversations')
       .insert({
-        user_id: user.id,
-        subject,
+        user_id: userId,
+        subject: subject || message.substring(0, 100),
         channel: channel || 'chat',
         status: 'open',
       })
       .select()
       .single()
 
-    if (convoError) {
-      console.error('[Conversations] POST convo error:', convoError)
-      return NextResponse.json({ error: convoError.message }, { status: 500 })
+    if (convError || !conversation) {
+      return NextResponse.json({ error: convError?.message || 'Failed to create' }, { status: 500 })
     }
 
     // Create first message
-    const { error: msgError } = await admin
+    const { error: msgError } = await supabase
       .from('ar_chat_messages')
       .insert({
-        conversation_id: convo.id,
-        sender_id: user.id,
+        conversation_id: conversation.id,
+        sender_id: userId,
         sender_role: 'user',
         content: message,
       })
 
     if (msgError) {
-      console.error('[Conversations] POST msg error:', msgError)
       return NextResponse.json({ error: msgError.message }, { status: 500 })
     }
 
-    // Fire Slack notification (non-blocking)
-    const userName = profile?.full_name || profile?.email || 'Unknown user'
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000'
-      fetch(`${baseUrl}/api/admin/slack-notify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: `New support message from ${userName}: "${subject}"`,
-        }),
-      }).catch(() => {}) // ignore Slack errors
-    } catch {
-      // ignore
-    }
+    // Update last_message_at
+    await supabase
+      .from('ar_conversations')
+      .update({ last_message_at: new Date().toISOString() })
+      .eq('id', conversation.id)
 
-    return NextResponse.json({ success: true, conversation: convo })
-  } catch (error) {
-    console.error('[Conversations] POST error:', error)
+    // Slack notification
+    try {
+      const { data: profile } = await supabase
+        .from('ar_profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .single()
+
+      const webhookUrl = process.env.SLACK_WEBHOOK_URL
+      if (webhookUrl) {
+        const name = profile?.full_name || profile?.email || 'Unknown'
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: `🔔 New support message from ${name}: "${message.substring(0, 200)}"`,
+          }),
+        })
+      }
+    } catch { /* Slack is best-effort */ }
+
+    return NextResponse.json({ conversation })
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
