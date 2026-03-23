@@ -159,7 +159,7 @@ export default function AdminInboxPage() {
         body: JSON.stringify({ content: replyText, senderRole: 'admin' }),
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.message) {
         setReplyText('')
         loadMessages(selectedId)
         // Also trigger Slack notify
