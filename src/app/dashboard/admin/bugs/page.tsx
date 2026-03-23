@@ -4,9 +4,31 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Plus, Trash2, Loader2, RefreshCw, AlertTriangle, Bug, ChevronDown,
   CheckCircle2, Clock, XCircle, ArrowUp, ArrowDown, Minus,
-  ImagePlus, X, Sparkles,
+  ImagePlus, X, Sparkles, ZoomIn,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+
+function ScreenshotLightbox({ src, alt }: { src: string; alt: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="relative group cursor-zoom-in">
+        <img src={src} alt={alt} className="max-h-48 rounded-lg border border-border" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg">
+          <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+        </div>
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          onClick={() => setOpen(false)}
+        >
+          <img src={src} alt={alt} className="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl" />
+        </div>
+      )}
+    </>
+  )
+}
 
 interface BugRow {
   id: string
@@ -327,7 +349,7 @@ export default function AdminBugsPage() {
                     {bug.screenshot_url && (
                       <div>
                         <p className="text-[10px] font-semibold text-muted-foreground mb-1">Screenshot</p>
-                        <img src={bug.screenshot_url} alt="Screenshot" className="max-h-48 rounded-lg border border-border" />
+                        <ScreenshotLightbox src={bug.screenshot_url} alt="Bug screenshot" />
                       </div>
                     )}
 
@@ -347,7 +369,9 @@ export default function AdminBugsPage() {
                         </p>
                         {bug.verification_notes && <p className="text-xs text-muted-foreground mt-1">{bug.verification_notes}</p>}
                         {bug.verification_screenshot_url && (
-                          <img src={bug.verification_screenshot_url} alt="Verification" className="max-h-36 rounded-lg border border-border mt-2" />
+                          <div className="mt-2">
+                            <ScreenshotLightbox src={bug.verification_screenshot_url} alt="Verification screenshot" />
+                          </div>
                         )}
                       </div>
                     )}
