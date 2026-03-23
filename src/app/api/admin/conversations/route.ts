@@ -1,46 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createServerSupabase } from '@/lib/supabase/server'
-
-// Helper to verify admin
-async function verifyAdmin() {
-  const supabase = await createServerSupabase()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const admin = createAdminClient()
-  const { data: profile } = await admin
-    .from('ar_profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) return null
-  return { user, admin }
-}
 
 // GET /api/admin/conversations — list all conversations with user info
 export async function GET() {
   try {
-    const auth = await verifyAdmin()
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const admin = createAdminClient()
 
-    const { admin } = auth
-
-    // Get all conversations
     const { data: conversations, error } = await admin
       .from('ar_conversations')
       .select('*')
       .order('last_message_at', { ascending: false })
 
-    if (error) {
-      console.error('[Admin Conversations] GET error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Get user profiles for all conversations
-    const userIds = [...new Set((conversations || []).map(c => c.user_id).filter(Boolean))]
-    const assignedIds = [...new Set((conversations || []).map(c => c.assigned_to).filter(Boolean))]
+    // Get user profiles
+    const userIds = [...new Set((conversations || []).map((c: { user_id: string }) => c.user_id).filter(Boolean))]
+    const assignedIds = [...new Set((conversations || []).map((c: { assigned_to: string | null }) => c.assigned_to).filter(Boolean))]
     const allIds = [...new Set([...userIds, ...assignedIds])]
 
     let profiles: Record<string, { full_name: string; email: string; subscription_tier: string; created_at: string }> = {}
@@ -52,16 +27,15 @@ export async function GET() {
 
       if (profileData) {
         profiles = Object.fromEntries(
-          profileData.map(p => [p.id, { full_name: p.full_name, email: p.email, subscription_tier: p.subscription_tier, created_at: p.created_at }])
+          profileData.map((p: { id: string; full_name: string; email: string; subscription_tier: string; created_at: string }) => [p.id, { full_name: p.full_name, email: p.email, subscription_tier: p.subscription_tier, created_at: p.created_at }])
         )
       }
     }
 
     // Get last message preview for each conversation
-    const convoIds = (conversations || []).map(c => c.id)
-    let lastMessages: Record<string, { content: string; sender_role: string }> = {}
+    const convoIds = (conversations || []).map((c: { id: string }) => c.id)
+    const lastMessages: Record<string, { content: string; sender_role: string }> = {}
     if (convoIds.length > 0) {
-      // Get the latest message per conversation
       const { data: msgs } = await admin
         .from('ar_chat_messages')
         .select('conversation_id, content, sender_role, created_at')
@@ -69,7 +43,6 @@ export async function GET() {
         .order('created_at', { ascending: false })
 
       if (msgs) {
-        // Group by conversation and take first (latest) per group
         for (const msg of msgs) {
           if (!lastMessages[msg.conversation_id]) {
             lastMessages[msg.conversation_id] = { content: msg.content, sender_role: msg.sender_role }
@@ -78,38 +51,34 @@ export async function GET() {
       }
     }
 
-    // Get admin list for assignment dropdown
+    // Admin list for assignment
     const { data: admins } = await admin
       .from('ar_profiles')
       .select('id, full_name, email')
       .eq('is_admin', true)
 
-    const enriched = (conversations || []).map(c => ({
+    const enriched = (conversations || []).map((c: Record<string, unknown>) => ({
       ...c,
-      user: profiles[c.user_id] || null,
-      assigned_user: c.assigned_to ? profiles[c.assigned_to] || null : null,
-      last_message: lastMessages[c.id] || null,
+      user: profiles[c.user_id as string] || null,
+      assigned_user: c.assigned_to ? profiles[c.assigned_to as string] || null : null,
+      last_message: lastMessages[c.id as string] || null,
     }))
 
     return NextResponse.json({ conversations: enriched, admins: admins || [] })
-  } catch (error) {
-    console.error('[Admin Conversations] GET error:', error)
+  } catch (err) {
+    console.error('[Admin Conversations] GET error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// PATCH /api/admin/conversations — update conversation { id, status, assigned_to, priority }
+// PATCH /api/admin/conversations — update conversation
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await verifyAdmin()
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const admin = createAdminClient()
 
-    const { admin } = auth
     const { id, status, assigned_to, priority } = await request.json()
-
-    if (!id) {
-      return NextResponse.json({ error: 'id is required' }, { status: 400 })
-    }
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
     if (status !== undefined) {
@@ -126,14 +95,10 @@ export async function PATCH(request: NextRequest) {
       .select()
       .single()
 
-    if (error) {
-      console.error('[Admin Conversations] PATCH error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ success: true, conversation: data })
-  } catch (error) {
-    console.error('[Admin Conversations] PATCH error:', error)
+  } catch (err) {
+    console.error('[Admin Conversations] PATCH error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
