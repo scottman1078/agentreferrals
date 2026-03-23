@@ -145,32 +145,36 @@ export default function AdminPricingPage() {
   }
 
   async function saveTier() {
-    if (!editingTierId) return
+    if (!editingTierId) {
+      showToast('Error: no tier selected')
+      return
+    }
     setTierSaving(true)
+    const payload = { id: editingTierId, ...tierDraft }
     try {
       const res = await fetch('/api/admin/tiers', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingTierId, ...tierDraft }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        showToast(data.error || `Save failed (${res.status})`)
+        showToast(`Save failed: ${data.error || res.status}`)
         setTierSaving(false)
         return
       }
       if (data.tier) {
-        showToast(`Saved "${data.tier.name}"`)
         setEditingTierId(null)
         setTierDraft({})
         invalidatePricing()
         // Re-fetch all data to ensure UI is in sync with DB
         await loadData()
+        showToast(`Saved "${data.tier.name}" successfully`)
       } else {
-        showToast('Unexpected response — please refresh')
+        showToast('Unexpected response — please refresh the page')
       }
     } catch (err) {
-      showToast('Network error — please try again')
+      showToast(`Network error: ${(err as Error).message}`)
     }
     setTierSaving(false)
   }
@@ -332,7 +336,7 @@ export default function AdminPricingPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+        <div className="fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl bg-card border border-border shadow-2xl text-sm font-medium max-w-sm animate-in fade-in slide-in-from-bottom-4">
           {toast}
         </div>
       )}
