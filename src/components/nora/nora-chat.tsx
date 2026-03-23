@@ -397,6 +397,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            userId: profile?.id,
             subject: content.slice(0, 80),
             message: content,
             channel: 'nora-chat',
@@ -427,7 +428,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
         await fetch(`/api/conversations/${conversationId}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, senderId: profile?.id, senderRole: 'user' }),
         })
       }
     } catch {

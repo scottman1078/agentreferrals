@@ -32,6 +32,7 @@ export async function GET() {
 }
 
 // POST /api/crm/connections — connect a CRM { provider, apiKey }
+// OAuth providers (fub, lofty) are connected via their callback routes, not this endpoint.
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -44,12 +45,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { provider, apiKey } = body
 
-    if (!provider || !apiKey) {
-      return NextResponse.json({ error: 'provider and apiKey are required' }, { status: 400 })
+    if (!provider) {
+      return NextResponse.json({ error: 'provider is required' }, { status: 400 })
     }
 
     if (!['fub', 'lofty'].includes(provider)) {
       return NextResponse.json({ error: 'Invalid provider. Must be "fub" or "lofty".' }, { status: 400 })
+    }
+
+    // OAuth providers are connected via their OAuth callback routes
+    const oauthProviders = ['fub', 'lofty']
+    if (oauthProviders.includes(provider)) {
+      return NextResponse.json(
+        { error: `${provider} uses OAuth. Use the Connect button to authorize via the provider.` },
+        { status: 400 }
+      )
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({ error: 'apiKey is required for this provider' }, { status: 400 })
     }
 
     // Validate the API key against the CRM
@@ -161,19 +175,8 @@ async function validateCrmKey(
     }
 
     if (provider === 'lofty') {
-      const res = await fetch('https://api.lofty.com/v1.0/org', {
-        headers: {
-          Authorization: `token ${apiKey}`,
-        },
-      })
-      if (!res.ok) {
-        return { valid: false, error: 'Invalid Lofty API key' }
-      }
-      const data = await res.json()
-      return {
-        valid: true,
-        metadata: { orgName: data.name, orgId: data.id },
-      }
+      // Lofty uses OAuth — connections are created via the OAuth callback route
+      return { valid: false, error: 'Lofty uses OAuth. Use the Connect button to authorize.' }
     }
 
     return { valid: false, error: 'Unknown provider' }

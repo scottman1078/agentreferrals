@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { getLoftyAccessToken } from '@/lib/integration-utils'
 
 // GET /api/crm/contacts — list user's synced contacts (paginated, searchable)
 export async function GET(request: NextRequest) {
@@ -88,17 +89,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'CRM not connected' }, { status: 404 })
     }
 
-    if (!connection.api_key) {
-      return NextResponse.json({ error: 'No API key configured' }, { status: 400 })
-    }
-
     // Fetch contacts from the CRM
     let contacts: CrmContact[] = []
     try {
       if (provider === 'fub') {
+        if (!connection.api_key) {
+          return NextResponse.json({ error: 'No FUB API key configured' }, { status: 400 })
+        }
         contacts = await fetchFubContacts(connection.api_key)
       } else if (provider === 'lofty') {
-        contacts = await fetchLoftyContacts(connection.api_key)
+        // Get a valid access token (auto-refreshes if expired)
+        const accessToken = await getLoftyAccessToken(connection, admin)
+        contacts = await fetchLoftyContacts(accessToken)
       }
     } catch (syncErr) {
       console.error(`[CRM Sync] ${provider}:`, syncErr)
@@ -227,7 +229,7 @@ async function fetchFubContacts(apiKey: string): Promise<CrmContact[]> {
   return contacts
 }
 
-async function fetchLoftyContacts(apiKey: string): Promise<CrmContact[]> {
+async function fetchLoftyContacts(accessToken: string): Promise<CrmContact[]> {
   const contacts: CrmContact[] = []
   let page = 1
   const limit = 100
@@ -238,7 +240,8 @@ async function fetchLoftyContacts(apiKey: string): Promise<CrmContact[]> {
       `https://api.lofty.com/v1.0/contacts?page=${page}&per_page=${limit}`,
       {
         headers: {
-          Authorization: `token ${apiKey}`,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
       }
     )
