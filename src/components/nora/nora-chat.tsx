@@ -9,7 +9,7 @@ import { TAG_COLORS } from '@/lib/constants'
 import { getInitials } from '@/lib/utils'
 import { maskName } from '@/lib/agent-display-name'
 import Link from 'next/link'
-import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, Sparkles, Star, Loader2, MessageSquare, Maximize2, Minimize2, Headphones, ArrowLeft } from 'lucide-react'
 import CreateReferralModal from '@/components/referral/create-referral-modal'
 import { nudges, getActiveNudges } from '@/data/nudges'
 import { getCommNudges } from '@/data/comm-nudges'
@@ -312,9 +312,143 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
   const [referralAgentId, setReferralAgentId] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  // ── Support mode state ──
+  const [supportMode, setSupportMode] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [supportMessages, setSupportMessages] = useState<NoraMessage[]>([])
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Check for existing open conversation on mount
+  useEffect(() => {
+    if (!profile?.id) return
+    fetch('/api/conversations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.conversations && data.conversations.length > 0) {
+          const openConvo = data.conversations.find((c: { status: string }) => c.status === 'open')
+          if (openConvo) {
+            setConversationId(openConvo.id)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [profile?.id])
+
+  // Poll for new messages when in support mode
+  useEffect(() => {
+    if (supportMode && conversationId) {
+      const fetchMessages = () => {
+        fetch(`/api/conversations/${conversationId}/messages`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.messages) {
+              const mapped: NoraMessage[] = data.messages.map((m: { id: string; sender_role: string; content: string; created_at: string }) => ({
+                id: m.id,
+                role: m.sender_role === 'user' ? 'user' as const : 'assistant' as const,
+                content: m.content,
+                timestamp: new Date(m.created_at),
+              }))
+              setSupportMessages(mapped)
+            }
+          })
+          .catch(() => {})
+      }
+      fetchMessages()
+      pollIntervalRef.current = setInterval(fetchMessages, 5000)
+      return () => {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+      }
+    } else {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [supportMode, conversationId])
+
+  function enterSupportMode() {
+    setSupportMode(true)
+    // If we already have a conversation, messages will load via polling
+    if (!conversationId) {
+      setSupportMessages([{
+        id: 'support-welcome',
+        role: 'assistant',
+        content: "You're now connected with support. Type your message and a team member will respond shortly.",
+        timestamp: new Date(),
+      }])
+    }
+  }
+
+  function exitSupportMode() {
+    setSupportMode(false)
+  }
+
+  async function handleSupportSend() {
+    if (demoGuard()) return
+    if (!input.trim() || isLoading) return
+    const content = input.trim()
+    setInput('')
+    setIsLoading(true)
+
+    try {
+      if (!conversationId) {
+        // Create a new conversation with first message
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject: content.slice(0, 80),
+            message: content,
+            channel: 'nora-chat',
+          }),
+        })
+        const data = await res.json()
+        if (data.conversation) {
+          setConversationId(data.conversation.id)
+          setSupportMessages([{
+            id: `u-${Date.now()}`,
+            role: 'user',
+            content,
+            timestamp: new Date(),
+          }])
+        } else {
+          throw new Error('Failed to create conversation')
+        }
+      } else {
+        // Send message to existing conversation
+        const optimisticMsg: NoraMessage = {
+          id: `u-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        }
+        setSupportMessages((p) => [...p, optimisticMsg])
+
+        await fetch(`/api/conversations/${conversationId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        })
+      }
+    } catch {
+      setSupportMessages((p) => [...p, {
+        id: `err-${Date.now()}`,
+        role: 'assistant',
+        content: 'Failed to send message. Please try again.',
+        timestamp: new Date(),
+      }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, supportMessages])
 
   async function handleSend() {
+    if (supportMode) {
+      await handleSupportSend()
+      return
+    }
     if (demoGuard()) return
     if (!input.trim() || isLoading) return
     const userMsg: NoraMessage = { id: `u-${Date.now()}`, role: 'user', content: input.trim(), timestamp: new Date() }
@@ -393,17 +527,39 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
         }`}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold text-sm">NORA</div>
-              <div className="text-[10px] text-muted-foreground">AI Referral Assistant</div>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-semibold text-emerald-500">Online</span>
-            </div>
+            {supportMode ? (
+              <>
+                <button
+                  onClick={exitSupportMode}
+                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+                  title="Back to NORA"
+                >
+                  <ArrowLeft className="w-4 h-4 text-foreground" />
+                </button>
+                <div className="flex-1">
+                  <div className="font-bold text-sm">Support Chat</div>
+                  <div className="text-[10px] text-muted-foreground">Chatting with the AgentReferrals team</div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10">
+                  <Headphones className="w-3 h-3 text-blue-500" />
+                  <span className="text-[10px] font-semibold text-blue-500">Support</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm">NORA</div>
+                  <div className="text-[10px] text-muted-foreground">AI Referral Assistant</div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-semibold text-emerald-500">Online</span>
+                </div>
+              </>
+            )}
             <button
               onClick={() => setIsFullScreen(!isFullScreen)}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -415,79 +571,109 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-[13px] leading-relaxed whitespace-pre-line ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-sm'
-                      : 'bg-secondary text-foreground rounded-bl-sm'
-                  }`}>
-                    {msg.content}
-                  </div>
-                </div>
-                {msg.matchedAgents && msg.matchedAgents.length > 0 && (
-                  <div className="mt-2 space-y-1.5">
-                    {msg.matchedAgents.map((agent) => (
-                      <div key={agent.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-background">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0" style={{ background: agent.color }}>
-                          {getInitials(agent.name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold">{maskName(agent.name)}</span>
-                            {agent.rcsScore && (
-                              <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${agent.rcsScore >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
-                                {agent.rcsScore}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground truncate">{agent.brokerage}</div>
-                          {(() => { const stats = getAgentReviewStats(agent.id); return stats ? (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                              <span className="text-[9px] font-bold">{stats.avgRating}</span>
-                              <span className="text-[9px] text-muted-foreground">({stats.count})</span>
-                            </div>
-                          ) : null })()}
-                          <div className="flex gap-0.5 mt-1">
-                            {agent.tags.slice(0, 2).map((t) => (
-                              <span key={t} className="px-1 py-0.5 rounded text-[8px] font-semibold text-white" style={{ background: TAG_COLORS[t] }}>{t}</span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                          <div className="text-[10px] font-bold text-emerald-500">{agent.closedReferrals} closed</div>
-                          <div className="text-[9px] text-muted-foreground">{agent.responseTime}</div>
-                          <Link
-                            href={`/dashboard/messages?agent=${agent.id}`}
-                            className="flex items-center gap-0.5 text-[9px] font-semibold text-primary hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MessageSquare className="w-2.5 h-2.5" />
-                            Message
-                          </Link>
-                        </div>
+            {supportMode ? (
+              <>
+                {supportMessages.map((msg) => (
+                  <div key={msg.id}>
+                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-[13px] leading-relaxed whitespace-pre-line ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-blue-500/10 text-foreground rounded-bl-sm border border-blue-500/20'
+                      }`}>
+                        {msg.content}
                       </div>
-                    ))}
-                    <button
-                      onClick={() => {
-                        const topAgent = msg.matchedAgents?.[0]
-                        if (topAgent) setReferralAgentId(topAgent.id)
-                      }}
-                      className="w-full py-2 rounded-lg text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    >
-                      Start Referral with Top Match
-                    </button>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                ))}
+              </>
+            ) : (
+              <>
+                {messages.map((msg) => (
+                  <div key={msg.id}>
+                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-[13px] leading-relaxed whitespace-pre-line ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-secondary text-foreground rounded-bl-sm'
+                      }`}>
+                        {msg.content}
+                      </div>
+                    </div>
+                    {msg.matchedAgents && msg.matchedAgents.length > 0 && (
+                      <div className="mt-2 space-y-1.5">
+                        {msg.matchedAgents.map((agent) => (
+                          <div key={agent.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-background">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0" style={{ background: agent.color }}>
+                              {getInitials(agent.name)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold">{maskName(agent.name)}</span>
+                                {agent.rcsScore && (
+                                  <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${agent.rcsScore >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
+                                    {agent.rcsScore}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground truncate">{agent.brokerage}</div>
+                              {(() => { const stats = getAgentReviewStats(agent.id); return stats ? (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                  <span className="text-[9px] font-bold">{stats.avgRating}</span>
+                                  <span className="text-[9px] text-muted-foreground">({stats.count})</span>
+                                </div>
+                              ) : null })()}
+                              <div className="flex gap-0.5 mt-1">
+                                {agent.tags.slice(0, 2).map((t) => (
+                                  <span key={t} className="px-1 py-0.5 rounded text-[8px] font-semibold text-white" style={{ background: TAG_COLORS[t] }}>{t}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                              <div className="text-[10px] font-bold text-emerald-500">{agent.closedReferrals} closed</div>
+                              <div className="text-[9px] text-muted-foreground">{agent.responseTime}</div>
+                              <Link
+                                href={`/dashboard/messages?agent=${agent.id}`}
+                                className="flex items-center gap-0.5 text-[9px] font-semibold text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MessageSquare className="w-2.5 h-2.5" />
+                                Message
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => {
+                            const topAgent = msg.matchedAgents?.[0]
+                            if (topAgent) setReferralAgentId(topAgent.id)
+                          }}
+                          className="w-full py-2 rounded-lg text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          Start Referral with Top Match
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {/* Talk to Support button — shown inline after messages */}
+                <div className="flex justify-center py-1">
+                  <button
+                    onClick={enterSupportMode}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                  >
+                    <Headphones className="w-3 h-3" />
+                    Talk to Support
+                  </button>
+                </div>
+              </>
+            )}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl rounded-bl-sm bg-secondary text-foreground">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                  <span className="text-[13px] text-muted-foreground">NORA is thinking...</span>
+                  <span className="text-[13px] text-muted-foreground">{supportMode ? 'Sending...' : 'NORA is thinking...'}</span>
                 </div>
               </div>
             )}
@@ -501,7 +687,7 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-                placeholder="Ask NORA to find an agent..."
+                placeholder={supportMode ? 'Type a message to support...' : 'Ask NORA to find an agent...'}
                 className="flex-1 h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 disabled={isLoading}
               />
@@ -513,6 +699,14 @@ export default function NoraChat({ nudgeCount = 0 }: NoraChatProps) {
                 <Send className="w-4 h-4" />
               </button>
             </div>
+            {!supportMode && (
+              <button
+                onClick={enterSupportMode}
+                className="w-full mt-1.5 text-[10px] text-muted-foreground hover:text-blue-500 transition-colors"
+              >
+                Need human help? Talk to support
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -273,17 +273,21 @@ function ConversationItem({
   conversation,
   isActive,
   onClick,
+  currentUserId,
 }: {
   conversation: Conversation
   isActive: boolean
   onClick: () => void
+  currentUserId: string
 }) {
-  const lastMsg = getLastMessage(conversation)
+  const lastMsg = conversation.messages.length > 0 ? getLastMessage(conversation) : null
   const unreadCount = conversation.messages.filter(
-    (m) => !m.read && m.toUserId === 'jason'
+    (m) => !m.read && m.toUserId === currentUserId
   ).length
-  const isOwn = lastMsg.fromUserId === 'jason'
-  const preview = isOwn ? `You: ${lastMsg.content}` : lastMsg.content
+  const isOwn = lastMsg ? lastMsg.fromUserId === currentUserId : false
+  const preview = lastMsg
+    ? isOwn ? `You: ${lastMsg.content}` : lastMsg.content
+    : 'No messages yet'
 
   return (
     <button
@@ -325,7 +329,7 @@ function ConversationItem({
             {conversation.agentName}
           </span>
           <span className="text-[10px] text-muted-foreground shrink-0">
-            {formatTimeAgo(lastMsg.createdAt)}
+            {lastMsg ? formatTimeAgo(lastMsg.createdAt) : ''}
           </span>
         </div>
         <div
@@ -761,6 +765,7 @@ export default function MessagesPage() {
             key={conv.agentId}
             conversation={conv}
             isActive={activeConvId === conv.agentId}
+            currentUserId={isAuthenticated && userId ? userId : 'jason'}
             onClick={() => {
               setActiveConvId(conv.agentId)
               setShowMobileChat(true)
@@ -843,7 +848,7 @@ export default function MessagesPage() {
                 <MessageBubble
                   key={msg.id}
                   message={msg}
-                  isOwn={msg.fromUserId === 'jason'}
+                  isOwn={msg.fromUserId === (isAuthenticated && userId ? userId : 'jason')}
                 />
               ))}
             </div>

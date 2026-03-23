@@ -106,18 +106,34 @@ export default function AuthCallback() {
       try {
         const { data: arProfile } = await product
           .from('ar_profiles')
-          .select('id, primary_area')
+          .select('id, primary_area, setup_completed_at')
           .eq('id', session.user.id)
           .single()
 
-        if (arProfile && arProfile.primary_area) {
-          // Existing AR user — go to dashboard
+        if (arProfile) {
+          // Existing AR user — go to dashboard (setup wizard handles incomplete profiles)
           window.location.href = '/dashboard'
         } else {
           // No AR profile — show interstitial instead of silent redirect
           setShowNoAccount(true)
         }
       } catch {
+        // Query failed (PGRST116 = no rows) — show create-account interstitial
+        // But first, retry once to rule out a transient error
+        try {
+          const { data: retryProfile } = await product
+            .from('ar_profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .single()
+
+          if (retryProfile) {
+            window.location.href = '/dashboard'
+            return
+          }
+        } catch {
+          // Still no profile — fall through
+        }
         setShowNoAccount(true)
       }
     }

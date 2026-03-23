@@ -3,6 +3,22 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// Raw shape from Supabase ar_invites table
+interface ArInviteRow {
+  id: string
+  invited_by: string
+  invitee_name: string | null
+  invitee_email: string
+  invitee_brokerage: string | null
+  invitee_market: string | null
+  status: 'pending' | 'opened' | 'signed_up' | 'active'
+  method: 'email' | 'link' | 'sms'
+  referral_code: string | null
+  message: string | null
+  created_at: string
+}
+
+// Mapped shape consumed by the rest of the app
 export interface ArInvite {
   id: string
   invited_by: string
@@ -15,6 +31,22 @@ export interface ArInvite {
   method: 'email' | 'link' | 'sms'
   referral_code: string | null
   created_at: string
+}
+
+function mapRow(row: ArInviteRow): ArInvite {
+  return {
+    id: row.id,
+    invited_by: row.invited_by,
+    name: row.invitee_name || row.invitee_email.split('@')[0],
+    email: row.invitee_email,
+    brokerage: row.invitee_brokerage,
+    market: row.invitee_market,
+    status: row.status,
+    sent_date: row.created_at,
+    method: row.method,
+    referral_code: row.referral_code,
+    created_at: row.created_at,
+  }
 }
 
 interface UseInvitesOptions {
@@ -54,7 +86,7 @@ export function useInvites({ userId }: UseInvitesOptions = {}): UseInvitesReturn
       setError(fetchError.message)
       setData([])
     } else {
-      setData((invites as ArInvite[]) || [])
+      setData(((invites as ArInviteRow[]) || []).map(mapRow))
     }
 
     setIsLoading(false)
